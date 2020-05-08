@@ -20,8 +20,3 @@ from . import ciphers
 
 from .ciphers import Backends, base, exc
 
-
-__version__ = '0.2.1'
-
-version_info = (0, 2, 1)
-
