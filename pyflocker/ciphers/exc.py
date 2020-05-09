@@ -16,7 +16,3 @@ class AlrealyFinalized(FinalizationError):
 class NotFinalized(FinalizationError):
     pass
 
-
-class BackendError(ModuleNotFoundError):
-    pass
-

@@ -20,6 +20,8 @@ def load_backend(bknd=None):
     Backend must be an attribute of `Backends`.
     If `None` is supplied, loads whichever backenf is available.
     If both are available, loads `Cryptodome`.
+
+    If no backends are available, `ModuleNotFoundError` is raised.
     """
     if bknd is not None:
         if bknd not in list(Backends):
