@@ -1,5 +1,6 @@
 from setuptools import setup, find_packages
 
+
 setup(
     name='PyFLocker',
 
@@ -8,10 +9,16 @@ setup(
     author_email="mydellpc07@gmail.com",
 
     packages=find_packages(),
-    license='MIT License',
 
     description="File Locking library",
     long_description=open("README.md").read(),
+    long_description_content_type="text/markdown",
+    license='MIT License',
+    classifiers=[
+        "Programming Language :: Python :: 3",
+        "License :: OSI Approved :: MIT License",
+        "Operating System :: OS Independent",
+    ],
 
     url="https://github.com/arunanshub/pyflocker",
 )
