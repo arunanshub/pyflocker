@@ -23,7 +23,6 @@ Here are the *unsupported* ones:
 
 Some modes require special treatment as encryption/decryption must happen
 in one round. Hence, they do NOT support gradual input of data.
-
 These special modes can be found in `special` set defined in the module.
 """
 
