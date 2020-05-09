@@ -136,8 +136,8 @@ def lockerf(infile, outfile, password, locking, *,
     crp.update_into(outfile, tag)
 
     if locking:
+        # tag position
         outfile.seek(74)
-        print(crp.calculate_tag())
         outfile.write(crp.calculate_tag())
 
 
