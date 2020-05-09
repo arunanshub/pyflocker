@@ -16,10 +16,10 @@ class Backends(Enum):
 
 
 def load_backend(bknd=None):
-    """Loads backend for getting ciphers.
+    """Loads backend.
     Backend must be an attribute of `Backends`.
-    If `None` is supplied, loads `Cryptodome`
-    backend by default.
+    If `None` is supplied, loads whichever backenf is available.
+    If both are available, loads `Cryptodome`.
     """
     if bknd is not None:
         if bknd not in list(Backends):
@@ -38,5 +38,5 @@ def load_backend(bknd=None):
                 Backends.CRYPTOGRAPHY.value,
                 __package__)
     except ModuleNotFoundError:
-        raise exc.BackendError("no backends found")
+        raise ModuleNotFoundError("no backends found") from None
 

@@ -30,7 +30,7 @@ class BaseCipher(ABC):
         Data is read from the source in blocks specified by `blocksize`. 
         The blocks will have length of at most `blocksize`.
 
-        If `locking` argument is `False`, then the associated `tag` must
+        If `locking` is `False`, then the associated `tag` must
         be supplied, `ValueError` is raised otherwise.
 
         If the `tag` is invalid, `exc.DecryptionError` is raised
@@ -43,14 +43,16 @@ class BaseCipher(ABC):
         Data must be a bytes, bytearray or memoryview object.
         You can call it to pass additional data that must be
         authenticated, but would be transmitted in the clear.
-        If this method is called after calling `update`, TypeError is raised.
+
+        If this method is called after calling `update`,
+        TypeError is raised.
         """
 
     @abstractmethod
     def finalize(self, tag=None):
         """Finalizes and closes the cipher.
         
-        If `locking` argument is `False` and the `tag` is not supplied,
+        If `locking` is `False` and the `tag` is not supplied,
         `ValueError` is raised.
         If `locking` is False (ie. Decrypting), and the supplied tag is
         invalid, `exc.DecryptionError` is raised.
@@ -122,15 +124,19 @@ def _new_state_class(from_cls, supercls, name,
 
 def set_state(cls):
     """Decorator to change cipher's state.
-
-    This is generally used with the `finalize` method of
-    and `OpenedCipher` derived class to change the state
-    to a `ClosedCipher` class.
+    
+    Used this decorator to change the state of the cipher.
+    It must be applied on the method that is called during finalization.
+    It can be called only once.
     """
 
     def decorator(f):
         @wraps(f)
         def wrapper(self, *args, **kwargs):
+            if isinstance(self, cls):
+                raise exc.AlrealyFinalized(
+                    "this method can be called only once "
+                    "during finalization")
             try:
                 return f(self, *args, **kwargs)
             finally:
