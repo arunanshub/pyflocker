@@ -12,7 +12,6 @@ from .. import _utils
 # load implementation counterpart
 _m = _if("AES")
 
-
 supported = {
     _m.MODE_GCM : modes.GCM,
     _m.MODE_CTR : modes.CTR,

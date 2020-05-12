@@ -16,7 +16,6 @@ from .. import _utils
 # get cipher interface
 _m = _if("AES")
 
-
 supported = {
     # classic modes
     _m.MODE_CTR : AES.MODE_CTR,
