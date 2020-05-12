@@ -22,7 +22,7 @@ supported = {
 
 
 @base.cipher
-class AESAEAD(base.Cipher):
+class AEAD(base.Cipher):
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
         self._locking = locking
@@ -85,7 +85,7 @@ class AESAEAD(base.Cipher):
 
 
 @base.cipher
-class AESNonAEAD(_utils.HMACMixin, base.Cipher):
+class NonAEAD(_utils.HMACMixin, base.Cipher):
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
         self._locking = locking

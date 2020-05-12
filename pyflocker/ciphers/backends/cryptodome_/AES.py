@@ -33,7 +33,7 @@ supported = {
 
 
 @base.cipher
-class AESAEAD(base.Cipher):
+class AEAD(base.Cipher):
     """Cipher wrapper for AEAD supported modes"""
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
@@ -92,7 +92,7 @@ class AESAEAD(base.Cipher):
 
 
 @base.cipher
-class AESNonAEAD(_utils.HMACMixin, base.Cipher):
+class NonAEAD(_utils.HMACMixin, base.Cipher):
     """Cipher wrapper for classic modes of AES"""
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
@@ -153,7 +153,7 @@ class AESNonAEAD(_utils.HMACMixin, base.Cipher):
 
 # AES ciphers that needs special attention
 
-class AESAEADOneShot(AESAEAD):
+class AEADOneShot(AEAD):
     """Implements AES modes that does not support
     gradual encryption and decryption, which means,
     everything has to be done in one go (one shot)

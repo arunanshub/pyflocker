@@ -37,10 +37,10 @@ def _aes_cipher_from_mode(mode, bknd):
 
     if mode in aead:
         if mode in special:
-            return bknd.AESAEADOneShot
-        return bknd.AESAEAD
+            return bknd.AEADOneShot
+        return bknd.AEAD
     else:
-        return bknd.AESNonAEAD
+        return bknd.NonAEAD
 
 
 def new(file, locking, key, mode, *args,
