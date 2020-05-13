@@ -40,11 +40,11 @@ class AEAD(base.Cipher):
             self._cipher.authenticate_additional_data(data)
         except bkx.AlreadyUpdated:
             # AEAD ciphers know error
-            raise ValueError(
+            raise TypeError(
                 "cannot authenticate data after update is called") from None
 
     def update(self, blocksize=16384):
-        data = self._file.read(16384)
+        data = self._file.read(blocksize)
         if data:
             return self._cipher.update(data)
 
@@ -87,13 +87,16 @@ class AEAD(base.Cipher):
 class NonAEAD(_utils.HMACMixin, base.Cipher):
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
+        digestmod = kwargs.pop('digestmod', 'sha256')
         self._locking = locking
         self._file = file
-        self._hasher = hmac.new(key, digestmod='sha256')
+        self._hasher = hmac.new(key, digestmod=digestmod)
+
         _cipher = CrCipher(algo.AES(key), supported[mode](*args, **kwargs), defb())
         self._cipher = (_cipher.encryptor()
                         if locking
                         else _cipher.decryptor())
+
         # for authenticate method
         self._updated = False
 
