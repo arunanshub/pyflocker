@@ -33,7 +33,7 @@ def load_cipher(name, bknd=None):
         return import_module(f".{name}",
             bknd.__package__)
     except ModuleNotFoundError:
-        raise NotImplementedError(f"cipher {name} unsupported")
+        raise NotImplementedError(f"cipher {name} unsupported by this backend")
 
 
 def load_backend(bknd=None):

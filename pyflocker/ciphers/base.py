@@ -105,9 +105,7 @@ def _new_state_class(from_cls, supercls, name,
     """
     klass = from_cls
 
-    # all classes except the last
-    # ie. the last is exchanged with supercls
-    bases = klass.__bases__[:-1] + (supercls, )
+    bases = klass.__bases__ + (supercls, )
 
     # update class dict
     clsdict = dict(from_cls.__dict__)

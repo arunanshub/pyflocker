@@ -35,4 +35,4 @@ Read their documentation to learn more.
 from .backends import load_cipher, Backends
 
 # load interfaces
-from .interfaces import AES
+from .interfaces import AES, Camellia
