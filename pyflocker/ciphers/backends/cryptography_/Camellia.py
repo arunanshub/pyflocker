@@ -29,3 +29,6 @@ class NonAEAD(_NonAEAD):
 
         self._hasher = hmac.new(key, digestmod=digestmod)
 
+        # for authenticate method
+        self._updated = False
+

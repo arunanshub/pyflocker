@@ -76,7 +76,7 @@ class Cipher(BaseCipher):
         raise exc.NotFinalized("Ciphers must be finalized before calculating tag.")
 
 
-class ClosedCipher(BaseCipher):
+class ClosedCipher(Cipher):
     """Base class for finalized ciphers."""
 
     def update(self, *args, **kwargs):
@@ -96,7 +96,7 @@ class ClosedCipher(BaseCipher):
 # Decorators and utils for simplifying the creation of cipher wrappers.
 
 
-def _new_state_class(from_cls, supercls, name,
+def _new_state_class(from_cls, to_cls, name,
                      modname=None):
     """Creates new state class with required bases.
 
@@ -105,11 +105,11 @@ def _new_state_class(from_cls, supercls, name,
     """
     klass = from_cls
 
-    bases = klass.__bases__ + (supercls, )
+    bases = klass.__bases__ + (to_cls, )
 
     # update class dict
     clsdict = dict(from_cls.__dict__)
-    clsdict.update(dict(supercls.__dict__))
+    clsdict.update(dict(to_cls.__dict__))
  
     # make the class directly
     new = type(name, bases, clsdict)
@@ -140,11 +140,15 @@ def set_state(cls):
             finally:
                 if sys.exc_info()[0] in (None, exc.DecryptionError):
                     cal = self.calculate_tag
+
+                    # make new state class and replace
                     new = _new_state_class(
                         self.__class__,
-                        ClosedCipher,
-                        'ClosedCipher')
+                        cls,
+                        self.__class__.__name__,
+                        self.__module__)
                     self.__class__ = new
+
                     # If `calculate_tag` is decorated, 
                     # replace with the decorated version.
                     if hasattr(cal, "__wrapped__"):
