@@ -1,11 +1,11 @@
 """Locker -- Utility tools for encrypting files.
 
 This module provides functoions to encrypt and decrypt
-files using AES encryption.
+files using Modes.encryption.
 """
 
 
-from .ciphers import AES, exc
+from .ciphers import AES, exc, Modes, aead, special
 from hashlib import pbkdf2_hmac
 from functools import partial
 import struct
@@ -75,8 +75,8 @@ def lockerf(infile, outfile, password, locking, *,
         raise ValueError("infile and outfile cannot be the same")
 
     # set defaults
-    if (aes_mode == AES.MODE_CTR or
-        aes_mode in AES.special):
+    if (aes_mode == Modes.MODE_CTR or
+        aes_mode in special | aead):
         # for CTR
         # cryptography accepts 16 byte nonce, but
         # cryptodome refuses: can't take risk?
@@ -85,7 +85,7 @@ def lockerf(infile, outfile, password, locking, *,
         # we need gradual encryption ability
         raise NotImplementedError
 
-    aes_mode = aes_mode or AES.MODE_GCM
+    aes_mode = aes_mode or Modes.MODE_GCM
     if metadata is None:
         metadata = b"CREATED BY: PYFLOCKER"
     else:
@@ -120,7 +120,7 @@ def lockerf(infile, outfile, password, locking, *,
     
     # init. cipher
     crp = AES.new(infile, locking, key,
-                  aes_mode or AES.MODE_GCM,
+                  aes_mode or Modes.MODE_GCM,
                   rand, backend=backend)
 
     # authenticate header portion
@@ -156,7 +156,7 @@ def _fetch_header(infile, mode, locking, magic, meta):
 
     if locking:
         # different for GCM
-        if mode == AES.MODE_GCM:
+        if mode == Modes.MODE_GCM:
             rand = os.urandom(12)
         else:
             rand = os.urandom(16)
@@ -173,10 +173,10 @@ def _fetch_header(infile, mode, locking, magic, meta):
                 "The file is not compatible with"                    " PyFLocker")
 
         # get the tag and random part
-        if mode in AES.aead:
+        if mode in aead:
             # tag is 16 bytes
             tag = tag[:16]
-        if mode == AES.MODE_GCM:
+        if mode == Modes.MODE_GCM:
             # GCM uses 12 byte nonce
             rand = rand[:-4]
 
