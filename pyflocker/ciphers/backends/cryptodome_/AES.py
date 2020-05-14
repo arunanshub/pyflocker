@@ -5,9 +5,6 @@ try:
     from Cryptodome.Cipher import AES
 except ModuleNotFoundError:
     from Crypto.Cipher import AES
-    import Crypto
-    if int(Crypto.__version__[0]) < 3:
-        raise
 
 from .. import exc, base, Modes as _m
 from .. import _utils
@@ -128,8 +125,9 @@ class NonAEAD(_utils.HMACMixin, base.Cipher):
         write = file.write
 
         # updater function (see `_utils.updater`)
-        _update = _utils.updater(self._locking, cipherup, 
-                          self._hasher.update)
+        _update = _utils.updater(
+            self._locking, cipherup, 
+            self._hasher.update)
 
         for i in reads:
             if i < blocksize:

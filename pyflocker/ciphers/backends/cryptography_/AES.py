@@ -50,7 +50,7 @@ class AEAD(base.Cipher):
             raise ValueError("Tag is required when decrypring")
         wbuf = memoryview(bytearray(blocksize + 15))
         rbuf = wbuf[:blocksize]
-        _write = wbuf[:-15]
+        # _write = wbuf[:-15]
 
         update = self._cipher.update_into
         write = file.write
@@ -61,7 +61,7 @@ class AEAD(base.Cipher):
                 wbuf = wbuf[:i+15]
                 _write = wbuf[:-15]
             update(rbuf, wbuf)
-            write(_write)
+            write(rbuf)  # write(_write)
         self.finalize(tag)
 
     def finalize(self, tag=None):

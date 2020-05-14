@@ -39,5 +39,5 @@ from .modes import Modes, aead, special
 from .backends import load_cipher, Backends
 
 # import interfaces
-from .interfaces import AES, Camellia
+from .interfaces import AES, Camellia, ChaCha20
 

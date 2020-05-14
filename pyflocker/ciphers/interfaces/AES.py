@@ -48,9 +48,7 @@ def new(file, locking, key, mode, *args,
             `ModuleNotFoundError` if the backend is not found.
              Any other error that is raised is from the backend itself.
     """
-    bknd = _load_cpr("AES", backend)
-    return _aes_cipher_from_mode(mode, bknd)(
+    cpr = _load_cpr("AES", backend)
+    return _aes_cipher_from_mode(mode, cpr)(
         file, locking, key, mode, *args, **kwargs)
-
-
 
