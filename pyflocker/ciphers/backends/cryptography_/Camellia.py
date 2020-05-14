@@ -3,11 +3,9 @@ from cryptography.hazmat.primitives.ciphers import (Cipher,
 from cryptography.hazmat.backends import default_backend as defb
 import hmac
 
-from .. import base, exc, load_interface as _if
+from .. import base, exc, Modes as _m
 from .AES import NonAEAD as _NonAEAD
 
-
-_m = _if("Camellia")
 
 supported = {
     _m.MODE_CFB : modes.CFB,

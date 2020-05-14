@@ -3,7 +3,7 @@
 from enum import Enum
 from importlib import import_module
 
-from .. import base, exc, interfaces
+from .. import base, exc, Modes
 
 
 class Backends(Enum):
@@ -13,15 +13,6 @@ class Backends(Enum):
     CRYPTOGRAPHY = ".cryptography_"
     # Crypto is Cryptodome (for ver. >= 3)
     CRYPTO = CRYPTODOME
-
-
-
-def load_interface(name):
-    """Loads the interface module defined in `..interfaces`.
-    This is used by the cipher-backends to load its interface counterpart.
-    """
-    return import_module(f".{name}",
-        interfaces.__package__)
 
 
 def load_cipher(name, bknd=None):

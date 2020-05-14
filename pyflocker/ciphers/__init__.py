@@ -32,7 +32,12 @@ Read their documentation to learn more.
 """
 
 
+# import the modes class
+from .modes import Modes, aead, special
+
+# import loader and backend class
 from .backends import load_cipher, Backends
 
-# load interfaces
+# import interfaces
 from .interfaces import AES, Camellia
+

@@ -17,11 +17,3 @@ def new(file, locking, key, mode, *args, backend=Backends.CRYPTOGRAPHY, **kwargs
     return _cml_cipher_from_mode(mode, cpr)(
         file, locking, key, mode, *args, **kwargs)
 
-
-# supported modes
-MODE_CFB = "MODE_CFB"
-
-MODE_CTR = "MODE_CTR"
-
-MODE_OFB = "MODE_OFB"
-

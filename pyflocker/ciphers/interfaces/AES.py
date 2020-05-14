@@ -7,27 +7,11 @@ upon the underlying backend.
 The modes and the involved intricacies
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-All modes that are globally supported are defined at the module level.
-
-The modes that support AEAD implicitly, can be found in `aead` set
-in the module.
-
-Please note that some modes are globally not supported even if the
-backend implements them, due to their insecure form or too much
-complexity involved in wrapping.
-
-Here are the *unsupported* ones:
-    - ECB
-    - XTS
-    - CBC
-
-Some modes require special treatment as encryption/decryption must happen
-in one round. Hence, they do NOT support gradual input of data.
-These special modes can be found in `special` set defined in the module.
 """
 
 
-from .. import load_cipher as _load_cpr
+from .. import load_cipher as _load_cpr, Modes as _m
+from .. import aead, special
 
 
 def _aes_cipher_from_mode(mode, bknd):
@@ -69,44 +53,4 @@ def new(file, locking, key, mode, *args,
         file, locking, key, mode, *args, **kwargs)
 
 
-# All AES modes listed here. A backend may not
-# support all modes.
 
-MODE_GCM = "MODE_GCM"
-
-MODE_CTR = "MODE_CTR"
-
-# MODE_CBC = "MODE_CBC"
-
-MODE_CFB = "MODE_CFB"
-
-MODE_OFB = "MODE_OFB"
-
-# MODE_OPENPGP = "MODE_OPENPGP"
-
-MODE_CCM = "MODE_CCM"
-
-MODE_EAX = "MODE_EAX"
-
-MODE_SIV = "MODE_SIV"
-
-MODE_OCB = "MODE_OCB"
-
-
-# authenticated modes
-aead = {
-    MODE_GCM,
-    MODE_CCM,
-    MODE_EAX,
-    MODE_OCB,
-    MODE_SIV,
-}
-
-
-# the special modes
-special = {
-    MODE_SIV,
-    MODE_CCM,
-    MODE_OCB,
-    # MODE_OPENPGP,
-}

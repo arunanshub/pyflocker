@@ -76,7 +76,7 @@ class Cipher(BaseCipher):
         raise exc.NotFinalized("Ciphers must be finalized before calculating tag.")
 
 
-class ClosedCipher(Cipher):
+class ClosedCipher(BaseCipher):
     """Base class for finalized ciphers."""
 
     def update(self, *args, **kwargs):
@@ -105,6 +105,9 @@ def _new_state_class(from_cls, to_cls, name,
     """
     klass = from_cls
 
+    # simply insert the class into base class tuple
+    # side effect: the new class remains a from_cls instance,
+    # even if ClosedCipher is not a subclass of Cipher
     bases = klass.__bases__ + (to_cls, )
 
     # update class dict

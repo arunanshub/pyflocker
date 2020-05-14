@@ -5,12 +5,9 @@ import cryptography.exceptions as bkx
 from functools import partial
 import hmac
 
-from .. import exc, base, load_interface as _if
+from .. import exc, base, Modes as _m
 from .. import _utils
 
-
-# load implementation counterpart
-_m = _if("AES")
 
 supported = {
     _m.MODE_GCM : modes.GCM,

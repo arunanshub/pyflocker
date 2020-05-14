@@ -9,12 +9,9 @@ except ModuleNotFoundError:
     if int(Crypto.__version__[0]) < 3:
         raise
 
-from .. import exc, base, load_interface as _if
+from .. import exc, base, Modes as _m
 from .. import _utils
 
-
-# get cipher interface
-_m = _if("AES")
 
 supported = {
     # classic modes
