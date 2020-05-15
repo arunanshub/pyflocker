@@ -1,7 +1,7 @@
 """Locker -- Utility tools for encrypting files.
 
-This module provides functoions to encrypt and decrypt
-files using Modes.encryption.
+This module provides functions to encrypt and decrypt
+files using AES encryption.
 """
 
 
