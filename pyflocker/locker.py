@@ -76,12 +76,12 @@ def lockerf(infile, outfile, password, locking, *,
 
     # set defaults
     if (aes_mode == Modes.MODE_CTR or
-        aes_mode in special | aead):
-        # for CTR
+        aes_mode in special & aead):
+        # for CTR:
         # cryptography accepts 16 byte nonce, but
         # cryptodome refuses: can't take risk?
 
-        # for one rounds
+        # for one rounds:
         # we need gradual encryption ability
         raise NotImplementedError
 
