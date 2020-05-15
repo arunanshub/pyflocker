@@ -108,14 +108,14 @@ def _new_state_class(from_cls, to_cls, name,
     # simply insert the class into base class tuple
     # side effect: the new class remains a from_cls instance,
     # even if ClosedCipher is not a subclass of Cipher
-    bases = klass.__bases__ + (to_cls, )
+    bases = set(klass.__bases__ + (to_cls, ))
 
     # update class dict
     clsdict = dict(from_cls.__dict__)
     clsdict.update(dict(to_cls.__dict__))
  
     # make the class directly
-    new = type(name, bases, clsdict)
+    new = type(name, tuple(bases), clsdict)
 
     # this module will probably be the source,
     # but can be changed
