@@ -76,7 +76,7 @@ def lockerf(infile, outfile, password, locking, *,
 
     # set defaults
     if (aes_mode == Modes.MODE_CTR or
-        aes_mode in special & aead):
+        aes_mode in special):
         # for CTR:
         # cryptography accepts 16 byte nonce, but
         # cryptodome refuses: can't take risk?
