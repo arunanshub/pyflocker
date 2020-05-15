@@ -113,12 +113,10 @@ def _new_state_class(from_cls, to_cls, name,
     # update class dict
     clsdict = dict(from_cls.__dict__)
     clsdict.update(dict(to_cls.__dict__))
- 
+
     # make the class directly
     new = type(name, tuple(bases), clsdict)
 
-    # this module will probably be the source,
-    # but can be changed
     new.__module__ = modname or __name__
     return new
 

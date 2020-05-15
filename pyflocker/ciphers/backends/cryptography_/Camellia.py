@@ -4,7 +4,7 @@ from cryptography.hazmat.backends import default_backend as defb
 import hmac
 
 from .. import base, exc, Modes as _m
-from .AES import NonAEAD as _NonAEAD
+from .AES import NonAEAD
 
 
 supported = {
@@ -14,7 +14,7 @@ supported = {
 }
 
 
-class NonAEAD(_NonAEAD):
+class Camellia(NonAEAD):
 
     def __init__(self, file, locking, key, mode, *args, **kwargs):
 

@@ -9,7 +9,7 @@ def _cml_cipher_from_mode(mode, bknd):
     if mode not in bknd.supported.keys():
         raise NotImplementedError(
             "backend does not support this mode.")
-    return bknd.NonAEAD 
+    return bknd.Camellia
 
 
 def new(file, locking, key, mode, *args, backend=Backends.CRYPTOGRAPHY, **kwargs):
