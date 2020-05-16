@@ -88,8 +88,8 @@ def finalizer(f):
         finally:
             if sys.exc_info()[0] in (
                 exc.DecryptionError, None):
-                self.__class__._done_ = property(
-                    lambda self: True)
+                self._done_ = True
+
     return wrapper
 
 
