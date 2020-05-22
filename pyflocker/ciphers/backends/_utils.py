@@ -1,13 +1,24 @@
 """Utility tools common to both backend interfaces."""
 
 
-def updater(locking, cipherup, hashup):
-    """Updates a buffer (memoryview), assuming that
-    both read and write views share the same internal
-    buffer. Used by ciphers which explicitly requires
-    HMAC
+def updater(locking, cipherup, hashup, *,
+            shared=True, buffered=True):
+    """todo
     """
+    if hashup is None:
+        return cipherup
+
+    if not buffered:
+        return _bytes_updater(
+            locking, cipherup, hashup)
+
     if locking:
+        if not shared:
+            def fn(rbuf, wbuf):
+                cipherup(rbuf, wbuf)
+                hashup(wbuf)
+            return fn
+
         def fn(rbuf, wbuf):
             cipherup(rbuf, wbuf)
             # assume that rbuf is filled with data
@@ -20,11 +31,28 @@ def updater(locking, cipherup, hashup):
     return fn
 
 
+
+def _bytes_updater(locking, cipherup, hashup):
+    if locking:
+        def fn(data):
+            data = cipherup(data)
+            hashup(data)
+            return data
+    else:
+        def fn(data):
+            hashup(data)
+            return cipherup(data)
+    return fn
+
+
+# may not be needed
 class HMACMixin:
     """Mixin class to add support for HMAC to classic
     ciphers"""
 
     def authenticate(self, data):
+        if self._hasher is None:
+            raise NotImplementedError
         if self._updated:
             raise TypeError(
                 "cannot authenticate data after update is called")
@@ -35,6 +63,8 @@ class HMACMixin:
         self._hasher.update(data)
 
     def calculate_tag(self):
+        if self._hasher is None:
+            raise NotImplementedError
         if self._locking:
             return self._hasher.digest()
 
