@@ -15,28 +15,21 @@ class Cipher(ABC):
     """Base cipher for all other ciphers."""
     
     @abstractmethod
-    def update(self, blocksize=16384):
-        """Reads from the source, passes through the
-        cipher and returns as `bytes` object.
-        Returns None if no more data is available.
-
-        You must finalize by yourself after calling
-        this method.
-        """
-
+    def update(self, data):
+        """Takes bytes-like object and returns
+        encrypted/decrypted bytes object."""
+            
     @abstractmethod
-    def update_into(self, file, tag=None, blocksize=16384):
-        """Writes to `file` and closes the cipher.
-        Data is read from the source in blocks specified by `blocksize`. 
-        The blocks will have length of at most `blocksize`.
+    def update_into(self, data, out):
+        """Works almost like `update` method, except
+        for it fills a preallocated buffer with data
+        with no intermideate copying of data.
 
-        If `locking` is `False`, then the associated `tag` must
-        be supplied, `ValueError` is raised otherwise.
-
-        If the `tag` is invalid, `exc.DecryptionError` is raised
-        (see `finalize` method).
+        Returns None
+        Exception raised, if any, is from the backend
+        itself.
         """
-
+    
     @abstractmethod
     def authenticate(self, data):
         """Authenticates additional data.

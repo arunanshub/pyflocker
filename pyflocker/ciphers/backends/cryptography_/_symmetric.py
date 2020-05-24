@@ -47,19 +47,20 @@ class AEADCipherWrapper(CipherWrapper):
     def authenticate(self, data):
         if not isinstance(data,
                 (bytes, bytearray, memoryview)):
-            raise TypeError('data type incorrect')
+            raise TypeError('bytes-like object is required')
         try:
             (self._cipher.
                 authenticate_additional_data(data))
         except bkx.AlreadyUpadated:
             raise TypeError(
-                'cannot authenticate') from None
+                'cannot authenticate data after '
+                'update has been called') from None
 
     def finalize(self, tag=None):
         try:
             if not self._locking:
                 if tag is None:
-                    raise ValueError('tag required')
+                    raise ValueError('tag is required for decryption')
                 self._cipher.finalize_with_tag(tag)
             self._cipher.finalize()
         except bkx.InvalidTag:
@@ -102,6 +103,14 @@ class FileCipherMixin:
 
     @base.before_finalized
     def update(self, blocksize=16384):
+        """Reads from the source, passes through the
+        cipher and returns as `bytes` object.
+        Returns None if no more data is available.
+
+        You must finalize by yourself after calling
+        this method.
+        """
+
         self._updated = True
         data = self.__file.read(blocksize)
         if data:
@@ -109,8 +118,19 @@ class FileCipherMixin:
 
     @base.before_finalized
     def update_into(self, file, tag=None, blocksize=16384):
+        """Writes to `file` and closes the cipher.
+        Data is read from the source in blocks specified by `blocksize`. 
+        The blocks will have length of at most `blocksize`.
+
+        If `locking` is `False`, then the associated `tag` must
+        be supplied, `ValueError` is raised otherwise.
+
+        If the `tag` is invalid, `exc.DecryptionError` is raised
+        (see `finalize` method).
+        """
+
         if not self._locking and tag is None:
-            raise ValueError('tag required')
+            raise ValueError('tag is required for decryption')
         buf = memoryview(bytearray(blocksize + 15))
         rbuf = buf[:blocksize]
 
