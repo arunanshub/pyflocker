@@ -119,13 +119,13 @@ def lockerf(infile, outfile, password, locking, *,
     key = kdf(password=password, salt=salt, **kwargs)
     
     # init. cipher
-    crp = AES.new(infile, locking, key,
-                  aes_mode or Modes.MODE_GCM,
-                  rand, backend=backend)
+    crp = AES.new(locking, key,
+                  aes_mode or Modes.MODE_GCM, rand,
+                  file=infile, backend=backend)
 
     # authenticate header portion
     crp.authenticate(key+salt+rand)
-    
+ 
     if locking:
         HEADER_FORMAT.pack_into(_BUFFER, 0, MAGIC,
             # these parts are unique
@@ -147,7 +147,7 @@ def _key_length(n):
     elif n in (16, 24, 32):
         return n
     else:
-        raise ValueError("invalid key strength")
+        raise ValueError("invalid key length")
 
 
 def _fetch_header(infile, mode, locking, magic, meta):
