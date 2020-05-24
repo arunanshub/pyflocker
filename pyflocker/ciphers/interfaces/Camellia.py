@@ -5,15 +5,20 @@ from .. import load_cipher as _load_cpr
 from .. import Backends
 
 
-def _cml_cipher_from_mode(mode, bknd):
+def _cml_cipher_from_mode(mode, bknd, hasfile):
     if mode not in bknd.supported.keys():
         raise NotImplementedError(
             "backend does not support this mode.")
-    return bknd.Camellia
+    if not hasfile:
+        return bknd.Camellia
+    return bknd.CamelliaFile
 
 
 def new(file, locking, key, mode, *args, backend=Backends.CRYPTOGRAPHY, **kwargs):
     cpr = _load_cpr("Camellia", backend)
-    return _cml_cipher_from_mode(mode, cpr)(
-        file, locking, key, mode, *args, **kwargs)
+    _cpr = _cml_cipher_from_mode(
+        mode, cpr, file is not None)
+    if file:
+        return _cpr(locking, key, mode, *args, file=file, **kwargs)
+    return _cpr(locking, key, mode, *args, **kwargs)
 

@@ -3,18 +3,25 @@ try:
 except ModuleNotFoundError:
     from Crypto.Cipher import ChaCha20_Poly1305
 
-from .AES import AEAD
+from ._symmetric import AEADCipherWrapper, FileCipherMixin
+from .. import base
 
 
 supported = frozenset()
 
 
-class ChaCha20Poly1305(AEAD):
+@base.cipher
+class ChaCha20Poly1305(AEADCipherWrapper, base.Cipher):
     """The ChaCha20_Poly1305 cipher."""
 
-    def __init__(self, file, locking, key, nonce):
-        self._locking = locking
-        self._file = file
+    def __init__(self, locking, key, nonce):
         self._cipher = ChaCha20_Poly1305.new(
             key=key, nonce=nonce)
+        self._locking = locking
+        super().__init__()
+
+
+class ChaCha20_Poly1305File(FileCipherMixin,
+    ChaCha20_Poly1305):
+    pass
 

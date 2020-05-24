@@ -1,10 +1,9 @@
-from cryptography.hazmat.primitives.ciphers import (Cipher,
-        algorithms as algo, modes)
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher, algorithms as algo, modes)
 from cryptography.hazmat.backends import default_backend as defb
-import hmac
 
 from .. import base, exc, Modes as _m
-from .AES import NonAEAD
+from ._symmetric import HMACipherWrapper
 
 
 supported = {
@@ -14,19 +13,20 @@ supported = {
 }
 
 
-class Camellia(NonAEAD):
+@base.cipher
+class Camellia(HMACipherWrapper, base.Cipher):
 
-    def __init__(self, file, locking, key, mode, *args, **kwargs):
-
-        digestmod = kwargs.pop('digestmod', 'sha256')
-        self._file = file
+    def __init__(self, locking, key, mode, *args, 
+                 hashed=True, digestmod='sha256',
+                 **kwargs):
+        self._cipher = Cipher(
+            algo.Camellia(key),
+            supported[mode](*args, **kwargs),
+            defb())
         self._locking = locking
+        super().__init__(key=key, hashed=hashed, digestmod=digestmod)
 
-        _cipher = Cipher(algo.Camellia(key), supported[mode](*args, **kwargs), defb())
-        self._cipher = _cipher.encryptor() if locking else _cipher.decryptor()
 
-        self._hasher = hmac.new(key, digestmod=digestmod)
-
-        # for authenticate method
-        self._updated = False
+class CamelliaFile(FileCipherMixin, Camellia):
+    pass
 

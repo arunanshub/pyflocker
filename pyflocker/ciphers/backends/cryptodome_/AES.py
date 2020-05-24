@@ -7,8 +7,10 @@ except ModuleNotFoundError:
     from Crypto.Cipher import AES
 
 from .. import exc, base, Modes as _m
-from .. import _utils
-from .utils import FileCipherMixin
+from ._symmetric import (
+    FileCipherMixin,
+    AEADCipherWrapper,
+    HMACCipherWrapper)
 
 
 supported = {
@@ -26,52 +28,21 @@ supported = {
 }
 
 
+def _aes_cipher(key, mode, *args, **kwargs):
+    return AES.new(key, supported[mode],
+                   *args, **kwargs)
+
+
 @base.cipher
-class AEAD(base.Cipher):
+class AEAD(AEADCipherWrapper, base.Cipher):
     """Cipher wrapper for AEAD supported modes"""
 
     def __init__(self, locking, key, mode,
                  *args, **kwargs):
-
+        self._cipher = _aes_cipher(key, mode, *args,
+            **kwargs)
         self._locking = locking
-        self._cipher = AES.new(key,
-            supported[mode], *args, **kwargs)
-
-        self._update = (self._cipher.encrypt
-                        if locking
-                        else self._cipher.decrypt)
-
-    def update(self, data):
-        return self._update(data)
-
-    def update_into(self, data, out):
-        return self._update(data, out)
-
-    def authenticate(self, data):
-        if not isinstance(data,
-            (bytes, memoryview, bytearray)):
-            raise TypeError(
-                "data must be a bytes object")
-        try:
-            self._cipher.update(data)
-        except TypeError:
-            # AEAD ciphers know error
-            raise TypeError(
-                "cannot authenticate data after "
-                "update is called") from None
-
-    def finalize(self, tag=None):
-        try:
-            if not self._locking:
-                if tag is None:
-                    raise ValueError("tag is required for decryption")
-                self._cipher.verify(tag)
-        except ValueError:
-            raise exc.DecryptionError from None
-
-    def calculate_tag(self):
-        if self._locking:
-            return self._cipher.digest()
+        super().__init__()
 
 
 class AEADFile(FileCipherMixin, AEAD):
@@ -79,73 +50,31 @@ class AEADFile(FileCipherMixin, AEAD):
 
 
 @base.cipher
-class NonAEAD(_utils.HMACMixin, base.Cipher):
+class NonAEAD(HMACCipherWrapper, base.Cipher):
     """Cipher wrapper for classic modes of AES"""
 
     def __init__(self, locking, key, mode,
-                 *args, **kwargs):
-
+                 *args,
+                 hashed=True, digestmod='sha256',
+                 **kwargs):
+        self._cipher = _aes_cipher(key, mode, *args, **kwargs)
         self._locking = locking
+        super().__init__(key=key, hashed=hashed,
+                         digestmod=digestmod)
 
-        if kwargs.pop('hashed', True):
-            self._hasher = hmac.new(key,
-                digestmod=kwargs.pop(
-                    'digestmod', 'sha256'))
-            _hashup = self._hasher.update
-        else:
-            self._hasher = None
-            _hashup = None
-
-        self._cipher = AES.new(key,
-            supported[mode], *args, **kwargs)
-        
-        _crpup = (self._cipher.encrypt
-                  if locking
-                  else self._cipher.decrypt)
-        
-        # used as generic cipher
-        self._update = _utils.updater(
-            locking, _crpup, _hashup,
-            buffered=False)
-        
-        self._update_into = _utils.updater(
-            locking, _crpup, _hashup,
-            shared=False)
-
-        # for authenticate method
-        self._updated = False
-    
-    def update(self, data):
-        self._updated = True
-        return self._update(data)
-
-    def update_into(self, data, out):
-        return self._update_into(data, out)
-
-    def finalize(self, tag=None):
-        if self._hasher is None:
-            return
-        if not self._locking:
-            if tag is None:
-                raise ValueError("tag is required for decryption")
-            if not hmac.compare_digest(
-                self._hasher.digest(), tag):
-                raise exc.DecryptionError
-
-
+ 
 class NonAEADFile(FileCipherMixin, NonAEAD):
     pass
 
 
 # AES ciphers that needs special attention
-
 class AEADOneShot(AEAD):
     """Implements AES modes that does not support
     gradual encryption and decryption, which means,
     everything has to be done in one go (one shot)
     """
 
-    def update(self, data, out=None, tag=None):
+    def update_into(self, data, out, tag=None):
         if self._locking:
             return self._cipher.encrypt_and_digest(
                 data, out)[0]
@@ -160,6 +89,6 @@ class AEADOneShot(AEAD):
             pass
         self.finalize(tag)
 
-    def update_into(self, data, out, tag=None):
-        self.update(data, out, tag)
+    def update(self, data, tag=None):
+        self.update_into(data, out=None, tag=tag)
 

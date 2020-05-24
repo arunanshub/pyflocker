@@ -14,27 +14,34 @@ from .. import load_cipher as _load_cpr, Modes as _m
 from .. import aead, special
 
 
-def _aes_cipher_from_mode(mode, bknd):
+def _aes_cipher_from_mode(mode, bknd, hasfile):
     if mode not in bknd.supported.keys():
         raise NotImplementedError(
             "backend does not support this mode.")
 
     if mode in aead:
         if mode in special:
+            if hasfile:
+                raise TypeError('this mode does not support R/W to file')
             return bknd.AEADOneShot
+        if hasfile:
+            return bknd.AEADFile
         return bknd.AEAD
     else:
+        if hasfile:
+            return bknd.NonAEADFile
         return bknd.NonAEAD
 
 
-def new(file, locking, key, mode, *args,
-        backend=None, **kwargs):
+def new(locking, key, mode, *args,
+        file=None, backend=None, **kwargs):
     """Make a new AES cipher wrapper.
 
-    file: The source file to read from.
     locking: True is encryption and False is decryption.
     key: The key for the cipher.
     mode: The mode to use. A backend may not support it.
+
+    file: The source file to read from.
     backend: The backend to use.
              It must be a value from `ciphers.backends.Backends`
 
@@ -49,6 +56,10 @@ def new(file, locking, key, mode, *args,
              Any other error that is raised is from the backend itself.
     """
     cpr = _load_cpr("AES", backend)
-    return _aes_cipher_from_mode(mode, cpr)(
-        file, locking, key, mode, *args, **kwargs)
+    _cpr= _aes_cipher_from_mode(mode, cpr, 
+        file is not None)
+    if file:
+        return _cpr(locking, key, mode, *args,
+                    file=file, **kwargs)
+    return _cpr(locking, key, mode, *args, **kwargs)
 
