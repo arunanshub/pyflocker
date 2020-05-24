@@ -21,7 +21,7 @@ class ChaCha20Poly1305(AEADCipherWrapper, base.Cipher):
         super().__init__()
 
 
-class ChaCha20_Poly1305File(FileCipherMixin,
-    ChaCha20_Poly1305):
+class ChaCha20Poly1305File(FileCipherMixin,
+    ChaCha20Poly1305):
     pass
 
