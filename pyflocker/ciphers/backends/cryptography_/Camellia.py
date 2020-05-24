@@ -3,7 +3,7 @@ from cryptography.hazmat.primitives.ciphers import (
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, exc, Modes as _m
-from ._symmetric import HMACipherWrapper
+from ._symmetric import HMACCipherWrapper, FileCipherMixin
 
 
 supported = {
@@ -14,7 +14,7 @@ supported = {
 
 
 @base.cipher
-class Camellia(HMACipherWrapper, base.Cipher):
+class Camellia(HMACCipherWrapper, base.Cipher):
 
     def __init__(self, locking, key, mode, *args, 
                  hashed=True, digestmod='sha256',

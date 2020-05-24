@@ -32,9 +32,11 @@ class HMACMixin:
     def authenticate(self, data):
         # cipher with hmac/hasher disabled
         if self._hasher is None:
-            raise NotImplementedError
+            raise NotImplementedError('HMAC is disabled')
         if self._updated:
-            raise TypeError('cannot authenticate')
+            raise TypeError(
+                'cannot authenticate data after '
+                'update has been called')
         self._hasher.update(data)
 
     def finalize(self, tag=None):
@@ -44,7 +46,8 @@ class HMACMixin:
 
         if not self._locking:
             if tag is None:
-                raise ValueError('tag required')
+                raise ValueError(
+                    'tag is required for decryption')
             if not hmac.compare_digest(
                 self._hasher.digest(), tag):
                 raise DecryptionError
@@ -52,8 +55,7 @@ class HMACMixin:
     def calculate_tag(self):
         # cipher with no hmac/hasher
         if self._hasher is None:
-            raise NotImplementedError
-
+            raise NotImplementedError('HMAC is disabled')
         if self._locking:
             return self._hasher.digest()
 

@@ -14,7 +14,8 @@ def _cml_cipher_from_mode(mode, bknd, hasfile):
     return bknd.CamelliaFile
 
 
-def new(file, locking, key, mode, *args, backend=Backends.CRYPTOGRAPHY, **kwargs):
+def new(locking, key, mode, *args, file=None,
+        backend=Backends.CRYPTOGRAPHY, **kwargs):
     cpr = _load_cpr("Camellia", backend)
     _cpr = _cml_cipher_from_mode(
         mode, cpr, file is not None)
