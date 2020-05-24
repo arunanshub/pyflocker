@@ -3,7 +3,7 @@
 
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .._utils import updater
-from .. import base
+from .. import base, exc
 
 from functools import partial
 from .._utils import updater
