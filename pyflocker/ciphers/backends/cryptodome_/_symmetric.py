@@ -63,6 +63,7 @@ class AEADCipherWrapper(CipherWrapper):
 class HMACCipherWrapper(HMACMixin, CipherWrapper):
     pass
 
+
 class FileCipherMixin:
     """ciphers that support r/w to file and file-like
     objects. Mix with cipher wrappers"""
@@ -89,7 +90,7 @@ class FileCipherMixin:
             _crpup, _hashup, buffered=False)
         self.__update_into = updater(self._locking,
             _crpup, _hashup)
-    
+ 
     @base.before_finalized
     def update(self, blocksize=16384):
         """Reads from the source, passes through the

@@ -16,7 +16,8 @@ def updater(locking, cipherup, hashup, *,
         if not shared:
             def fn(rbuf, wbuf):
                 cipherup(rbuf, wbuf)
-                hashup(wbuf)
+                ix = len(wbuf) - len(rbuf)
+                hashup(wbuf[:-ix])
             return fn
 
         def fn(rbuf, wbuf):

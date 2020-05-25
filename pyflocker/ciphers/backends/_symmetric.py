@@ -3,6 +3,7 @@ This will be shared by all available backends"""
 
 
 import hmac
+from .. import exc
 
 
 class CipherWrapperBase:
@@ -55,7 +56,7 @@ class HMACMixin:
                     'tag is required for decryption')
             if not hmac.compare_digest(
                 self._hasher.digest(), tag):
-                raise DecryptionError
+                raise exc.DecryptionError
 
     def calculate_tag(self):
         # cipher with no hmac/hasher
