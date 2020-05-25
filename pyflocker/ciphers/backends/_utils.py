@@ -31,7 +31,6 @@ def updater(locking, cipherup, hashup, *,
     return fn
 
 
-
 def _bytes_updater(locking, cipherup, hashup):
     if locking:
         def fn(data):
@@ -43,28 +42,4 @@ def _bytes_updater(locking, cipherup, hashup):
             hashup(data)
             return cipherup(data)
     return fn
-
-
-# may not be needed
-class HMACMixin:
-    """Mixin class to add support for HMAC to classic
-    ciphers"""
-
-    def authenticate(self, data):
-        if self._hasher is None:
-            raise NotImplementedError
-        if self._updated:
-            raise TypeError(
-                "cannot authenticate data after update is called")
-        if not isinstance(data,
-            (bytes, memoryview, bytearray)):
-            raise TypeError("data must be a bytes object")
- 
-        self._hasher.update(data)
-
-    def calculate_tag(self):
-        if self._hasher is None:
-            raise NotImplementedError
-        if self._locking:
-            return self._hasher.digest()
 
