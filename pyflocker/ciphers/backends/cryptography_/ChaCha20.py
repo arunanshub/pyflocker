@@ -17,13 +17,23 @@ supported = frozenset()
 class ChaCha20Poly1305(CipherWrapper, base.Cipher):
 
     def __init__(self, locking, key, nonce):
+        self._locking = locking
         self._hasher = Poly1305(key)
         self._cipher = CrCipher(
             algo.ChaCha20(key, nonce), None, defb())
         self._tag = None
+        self._updated = False
         super().__init__()
 
+    def authenticate(self, data):
+        if self._updated:
+            raise TypeError(
+                'cannot authenticate data '
+                'after update has been called')
+        self._hasher.update(data)
+
     def finalize(self, tag=None):
+        self._cipher.finalize()
         if not self._locking:
             try:
                 self._hasher.verify(tag)

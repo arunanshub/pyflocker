@@ -40,6 +40,11 @@ class HMACMixin:
         self._hasher.update(data)
 
     def finalize(self, tag=None):
+        try:
+            self._cipher.finalize()
+        except AttributeError:
+            pass
+
         # cipher with hmac/hasher disabled
         if self._hasher is None:
             return

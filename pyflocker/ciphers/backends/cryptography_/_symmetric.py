@@ -14,7 +14,6 @@ from .._utils import updater
 class CipherWrapper(CipherWrapperBase):
 
     def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
         if not hasattr(self, '_hasher'):
             self._hasher = None
 
@@ -22,9 +21,10 @@ class CipherWrapper(CipherWrapperBase):
                    else self._hasher.update)
 
         locking = self._locking
-        _crp = (self._cipher.encryptor()
-                if locking
-                else self._cipher.decryptor())
+        self._cipher = _crp = (
+            self._cipher.encryptor()
+            if locking
+            else self._cipher.decryptor())
         # for generic ciphers only
         self._update = updater(locking,
             _crp.update,
@@ -35,15 +35,11 @@ class CipherWrapper(CipherWrapperBase):
  
         # for non-aead ciphers only
         self._updated = False
-
+        super().__init__(*args, **kwargs)
 
 
 class AEADCipherWrapper(CipherWrapper):
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, hasher=None,
-            **kwargs)
-
     def authenticate(self, data):
         if not isinstance(data,
                 (bytes, bytearray, memoryview)):
@@ -60,7 +56,7 @@ class AEADCipherWrapper(CipherWrapper):
         try:
             if not self._locking:
                 if tag is None:
-                    raise ValueError('tag is required for decryption')
+                    raise TypeError('tag is required for decryption')
                 self._cipher.finalize_with_tag(tag)
             self._cipher.finalize()
         except bkx.InvalidTag:
@@ -141,7 +137,7 @@ class FileCipherMixin:
 
         for i in reads:
             if i < blocksize:
-                buf = buf[:i]
+                rbuf = rbuf[:i]
             update(rbuf, buf)
             write(rbuf)
         self.finalize(tag)
