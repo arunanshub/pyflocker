@@ -49,6 +49,8 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
         self._cipher = _aes_cipher(key, mode,
             *args, **kwargs)
         # for HMAC mixin
+        key = AES.new(key, AES.MODE_ECB
+            ).encrypt(bytes(16))
         super().__init__(key=key, hashed=hashed,
             digestmod=digestmod,)
 

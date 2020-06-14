@@ -59,6 +59,10 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                  **kwargs):
         self._cipher = _aes_cipher(key, mode, *args, **kwargs)
         self._locking = locking
+        _crp = CrCipher(algo.AES(key), modes.ECB()
+            ).encryptor()
+        key = _crp.update(bytes(16))
+        _crp.finalize()
         super().__init__(key=key, hashed=hashed,
                          digestmod=digestmod)
 
