@@ -22,4 +22,3 @@ setup(
 
     url="https://github.com/arunanshub/pyflocker",
 )
-

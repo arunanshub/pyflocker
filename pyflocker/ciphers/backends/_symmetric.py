@@ -1,13 +1,11 @@
 """Symmetric cipher wrapper for all backends.
 This will be shared by all available backends"""
 
-
 import hmac
 from .. import exc
 
 
 class CipherWrapperBase:
-
     def update(self, data):
         # for non-aead only; has no effect on aead
         self._updated = True
@@ -21,11 +19,9 @@ class HMACMixin:
     """Ciphers that need hmac.
     It is NOT necessary for them to support it
     """
-    def __init__(self, *args, key, hashed=True,
-        digestmod='sha256', **kwargs):
+    def __init__(self, *args, key, hashed=True, digestmod='sha256', **kwargs):
         if hashed:
-            self._hasher = hmac.new(key,
-                digestmod=digestmod)
+            self._hasher = hmac.new(key, digestmod=digestmod)
         else:
             self._hasher = None
         super().__init__(*args, **kwargs)
@@ -35,9 +31,8 @@ class HMACMixin:
         if self._hasher is None:
             raise NotImplementedError('HMAC is disabled')
         if self._updated:
-            raise TypeError(
-                'cannot authenticate data after '
-                'update has been called')
+            raise TypeError('cannot authenticate data after '
+                            'update has been called')
         self._hasher.update(data)
 
     def finalize(self, tag=None):
@@ -52,10 +47,8 @@ class HMACMixin:
 
         if not self._locking:
             if tag is None:
-                raise ValueError(
-                    'tag is required for decryption')
-            if not hmac.compare_digest(
-                self._hasher.digest(), tag):
+                raise ValueError('tag is required for decryption')
+            if not hmac.compare_digest(self._hasher.digest(), tag):
                 raise exc.DecryptionError
 
     def calculate_tag(self):
@@ -64,6 +57,3 @@ class HMACMixin:
             raise NotImplementedError('HMAC is disabled')
         if self._locking:
             return self._hasher.digest()
-
-
-

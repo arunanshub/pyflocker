@@ -4,24 +4,24 @@ This module provides functions to encrypt and decrypt
 files using AES encryption.
 """
 
-
 from .ciphers import AES, exc, Modes, aead, special
 from hashlib import pbkdf2_hmac
 from functools import partial
 import struct
 import os
 
-
-HEADER_FORMAT = struct.Struct(
-    '>I 32s 32s 6x 32s 6x 16s')
+HEADER_FORMAT = struct.Struct('>I 32s 32s 6x 32s 6x 16s')
 
 MAGIC = 0xc8e52e4b
 
 _BUFFER = memoryview(bytearray(HEADER_FORMAT.size))
 
 
-def locker(file, password, locking=None,
-           remove=True, *,
+def locker(file,
+           password,
+           locking=None,
+           remove=True,
+           *,
            ext=None,
            newfile=None,
            **kwargs):
@@ -30,7 +30,7 @@ def locker(file, password, locking=None,
     # checks
     if newfile and ext:
         raise ValueError('newfile and ext are mutually exclusive')
-    
+
     # default extension if not provided
     ext = ext or '.pyflk'
 
@@ -40,18 +40,17 @@ def locker(file, password, locking=None,
             locking = True
         else:
             locking = False
-    
+
     # make newfile name if not provided
     if newfile is None:
         if locking:
             newfile = file + ext
         else:
             newfile = os.path.splitext(file)[0]
-    
+
     try:
         with open(file, 'rb') as infile, open(newfile, 'wb') as outfile:
-            lockerf(infile, outfile, password,
-                    locking, **kwargs)
+            lockerf(infile, outfile, password, locking, **kwargs)
     except exc.DecryptionError:
         # remove invalid file
         os.remove(newfile)
@@ -62,21 +61,28 @@ def locker(file, password, locking=None,
             os.remove(file)
 
 
-def lockerf(infile, outfile, password, locking, *,
-    kdf=None, aes_mode=None, blocksize=16364,
-    metadata=None, dklen=32, backend=None, **kwargs):
+def lockerf(infile,
+            outfile,
+            password,
+            locking,
+            *,
+            kdf=None,
+            aes_mode=None,
+            blocksize=16364,
+            metadata=None,
+            dklen=32,
+            backend=None,
+            **kwargs):
     """Utility tool for encrypting files.
 
     # ToDo: documentation
     """
 
-    if os.path.samefile(infile.fileno(),
-                        outfile.fileno()):
+    if os.path.samefile(infile.fileno(), outfile.fileno()):
         raise ValueError("infile and outfile cannot be the same")
 
     # set defaults
-    if (aes_mode == Modes.MODE_CTR or
-        aes_mode in special):
+    if (aes_mode == Modes.MODE_CTR or aes_mode in special):
         # for CTR:
         # cryptography accepts 16 byte nonce, but
         # cryptodome refuses: can't take risk?
@@ -94,8 +100,7 @@ def lockerf(infile, outfile, password, locking, *,
 
     # header extract if decrypting,
     # else create values.
-    salt, tag, rand = _fetch_header(
-        infile, aes_mode, locking, MAGIC, metadata)
+    salt, tag, rand = _fetch_header(infile, aes_mode, locking, MAGIC, metadata)
 
     # password -> key
     if kdf is None:
@@ -117,19 +122,28 @@ def lockerf(infile, outfile, password, locking, *,
     # arguments except `password, salt` are supplied
     # through kwargs
     key = kdf(password=password, salt=salt, **kwargs)
-    
+
     # init. cipher
-    crp = AES.new(locking, key,
-                  aes_mode or Modes.MODE_GCM, rand,
-                  file=infile, backend=backend)
+    crp = AES.new(locking,
+                  key,
+                  aes_mode or Modes.MODE_GCM,
+                  rand,
+                  file=infile,
+                  backend=backend)
 
     # authenticate header portion
-    crp.authenticate(key+salt+rand)
- 
+    crp.authenticate(key + salt + rand)
+
     if locking:
-        HEADER_FORMAT.pack_into(_BUFFER, 0, MAGIC,
+        HEADER_FORMAT.pack_into(
+            _BUFFER,
+            0,
+            MAGIC,
             # these parts are unique
-            metadata, salt, tag, rand)
+            metadata,
+            salt,
+            tag,
+            rand)
         outfile.write(_BUFFER)
 
     # write
@@ -167,10 +181,10 @@ def _fetch_header(infile, mode, locking, magic, meta):
         m, c, salt, tag, rand = HEADER_FORMAT.unpack_from(_BUFFER, 0)
 
         # header check
-        if m != magic or meta != c[:-(32-len(meta))]:
-            raise TypeError(
-                "invalid file header format. "
-                "The file is not compatible with"                    " PyFLocker")
+        if m != magic or meta != c[:-(32 - len(meta))]:
+            raise TypeError("invalid file header format. "
+                            "The file is not compatible with"
+                            " PyFLocker")
 
         # get the tag and random part
         if mode in aead:
@@ -181,4 +195,3 @@ def _fetch_header(infile, mode, locking, magic, meta):
             rand = rand[:-4]
 
     return salt, tag, rand
-

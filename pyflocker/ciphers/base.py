@@ -5,7 +5,7 @@
 
 import sys
 
-from functools import wraps
+from functools import wraps, partial
 from abc import ABC, abstractmethod
 
 from . import exc
@@ -13,12 +13,11 @@ from . import exc
 
 class Cipher(ABC):
     """Base cipher for all other ciphers."""
-    
     @abstractmethod
     def update(self, data):
         """Takes bytes-like object and returns
         encrypted/decrypted bytes object."""
-            
+
     @abstractmethod
     def update_into(self, data, out):
         """Works almost like `update` method, except
@@ -29,7 +28,7 @@ class Cipher(ABC):
         Exception raised, if any, is from the backend
         itself.
         """
-    
+
     @abstractmethod
     def authenticate(self, data):
         """Authenticates additional data.
@@ -52,7 +51,7 @@ class Cipher(ABC):
         If `locking` is `True`, the cipher is closed. You must calculate
         the associated tag using `calculate_tag` method.
         """
-    
+
     @abstractmethod
     def calculate_tag(self):
         """Calculates and returns the associated `tag`.
@@ -62,25 +61,39 @@ class Cipher(ABC):
         """
 
 
+class BaseHash(ABC):
+    @abstractmethod
+    def update(self, data):
+        """Update the hash function
+        """
+
+    @abstractmethod
+    def digest(self):
+        """Finalize and return the hash as bytes object.
+        """
+
+
 # ===========================================================
 # Decorators and utils for simplifying the creation of cipher wrappers.
 
 
-def finalizer(f):
+def finalizer(f=None, *, allow=False):
     """Finalizes the cipher.
     The wrapped function must be called only once in the
     entire cipher context.
     """
+    if f is None:
+        return partial(finalizer, allow=allow)
+
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        if hasattr(self, '_done_'):
+        if hasattr(self, '_done_') and not allow:
             raise exc.AlrealyFinalized("cipher has already been finalized")
 
         try:
             return f(self, *args, **kwargs)
         finally:
-            if sys.exc_info()[0] in (
-                exc.DecryptionError, None):
+            if sys.exc_info()[0] in (exc.DecryptionError, None):
                 self._done_ = True
 
     return wrapper
@@ -98,6 +111,7 @@ def before_finalized(f):
             return f(self, *args, **kwargs)
         raise exc.AlrealyFinalized(
             "this method can only be called before finalizing")
+
     return wrapper
 
 
@@ -113,6 +127,7 @@ def after_finalized(f):
             return f(self, *args, **kwargs)
         raise exc.NotFinalized(
             "Ciphers must be finalized before calling this method.")
+
     return wrapper
 
 
@@ -126,16 +141,13 @@ def cipher(cls):
     `Cipher` class.
     """
     if not issubclass(cls, Cipher):
-        raise TypeError(
-        f"Class must be derived from `{Cipher.__name__}`")
+        raise TypeError(f"Class must be derived from `{Cipher.__name__}`")
 
     # decorate methods
     cls.finalize = finalizer(cls.finalize)
-    cls.calculate_tag = after_finalized(
-        cls.calculate_tag)
+    cls.calculate_tag = after_finalized(cls.calculate_tag)
     cls.authenticate = before_finalized(cls.authenticate)
     cls.update = before_finalized(cls.update)
     cls.update_into = before_finalized(cls.update_into)
 
     return cls
-

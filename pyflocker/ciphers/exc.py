@@ -15,4 +15,3 @@ class AlrealyFinalized(FinalizationError):
 
 class NotFinalized(FinalizationError):
     pass
-
