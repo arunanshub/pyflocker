@@ -21,8 +21,7 @@ def load_cipher(name, bknd=None):
     """
     bknd = load_backend(bknd)
     try:
-        return import_module(f".{name}",
-            bknd.__package__)
+        return import_module(f".{name}", bknd.__package__)
     except ModuleNotFoundError:
         raise NotImplementedError(f"cipher {name} unsupported by this backend")
 
@@ -38,19 +37,13 @@ def load_backend(bknd=None):
     if bknd is not None:
         if bknd not in list(Backends):
             raise NotImplementedError
-        return import_module(bknd.value,
-            __package__)
+        return import_module(bknd.value, __package__)
 
     # try to find backend automatically
     try:
         try:
-            return import_module(
-                Backends.CRYPTODOME.value,
-                __package__)
+            return import_module(Backends.CRYPTODOME.value, __package__)
         except ModuleNotFoundError:
-            return import_module(
-                Backends.CRYPTOGRAPHY.value,
-                __package__)
+            return import_module(Backends.CRYPTOGRAPHY.value, __package__)
     except ModuleNotFoundError:
         raise ModuleNotFoundError("no backends found") from None
-

@@ -26,7 +26,6 @@ aead = {
     Modes.MODE_SIV,
 }
 
-
 # the special modes
 special = {
     Modes.MODE_SIV,
@@ -34,4 +33,3 @@ special = {
     Modes.MODE_OCB,
     # MODE_OPENPGP,
 }
-

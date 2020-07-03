@@ -1,5 +1,4 @@
-"Symmetric cipher wrapper for this backend only."""
-
+"Symmetric cipher wrapper for this backend only." ""
 
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .._utils import updater
@@ -10,7 +9,6 @@ from .._utils import updater
 
 
 class CipherWrapper(CipherWrapperBase):
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # no hasher defined
@@ -18,33 +16,26 @@ class CipherWrapper(CipherWrapperBase):
             self._hasher = None
 
         locking = self._locking
-        _crpup = (self._cipher.encrypt if locking
-                  else self._cipher.decrypt)
-        _hashup = (None if self._hasher is None
-                   else self._hasher.update)
- 
+        _crpup = (self._cipher.encrypt if locking else self._cipher.decrypt)
+        _hashup = (None if self._hasher is None else self._hasher.update)
+
         # for generic ciphers only
-        self._update = updater(locking, _crpup,
-            _hashup, buffered=False)
-        self._update_into = updater(locking, _crpup,
-            _hashup, shared=False)
- 
+        self._update = updater(locking, _crpup, _hashup, buffered=False)
+        self._update_into = updater(locking, _crpup, _hashup, shared=False)
+
         # for non-aead ciphers only
         self._updated = False
 
 
 class AEADCipherWrapper(CipherWrapper):
-
     def authenticate(self, data):
-        if not isinstance(data,
-                (bytes, bytearray, memoryview)):
+        if not isinstance(data, (bytes, bytearray, memoryview)):
             raise TypeError('bytes-like object is required')
         try:
             self._cipher.update(data)
         except TypeError:
-            raise TypeError(
-                'cannot authenticate data after '
-                'update has been called') from None
+            raise TypeError('cannot authenticate data after '
+                            'update has been called') from None
 
     def finalize(self, tag=None):
         try:
@@ -78,19 +69,16 @@ class FileCipherMixin:
         super().__init__(*args, **kwargs)
 
         _crpup = (self._cipher.encrypt
-                  if self._locking
-                  else self._cipher.decrypt)
+                  if self._locking else self._cipher.decrypt)
 
         if self._hasher is not None:
             _hashup = self._hasher.update
         else:
             _hashup = None
 
-        self.__update = updater(self._locking,
-            _crpup, _hashup, buffered=False)
-        self.__update_into = updater(self._locking,
-            _crpup, _hashup)
- 
+        self.__update = updater(self._locking, _crpup, _hashup, buffered=False)
+        self.__update_into = updater(self._locking, _crpup, _hashup)
+
     @base.before_finalized
     def update(self, blocksize=16384):
         """Reads from the source, passes through the
@@ -122,8 +110,7 @@ class FileCipherMixin:
         buf = memoryview(bytearray(blocksize))
 
         write = file.write
-        reads = iter(partial(
-            self.__file.readinto, buf), 0)
+        reads = iter(partial(self.__file.readinto, buf), 0)
         update = self.__update_into
 
         for i in reads:
@@ -132,4 +119,3 @@ class FileCipherMixin:
             update(buf, buf)
             write(buf)
         self.finalize(tag)
-

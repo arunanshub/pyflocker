@@ -1,9 +1,7 @@
-"Symmetric cipher wrapper for this backend only."""
-
+"Symmetric cipher wrapper for this backend only." ""
 
 import cryptography.exceptions as bkx
-from .._symmetric import (
-    CipherWrapperBase, HMACMixin)
+from .._symmetric import (CipherWrapperBase, HMACMixin)
 from .._utils import updater
 from .. import base, exc
 
@@ -12,45 +10,36 @@ from .._utils import updater
 
 
 class CipherWrapper(CipherWrapperBase):
-
     def __init__(self, *args, **kwargs):
         if not hasattr(self, '_hasher'):
             self._hasher = None
 
-        _hashup = (None if self._hasher is None
-                   else self._hasher.update)
+        _hashup = (None if self._hasher is None else self._hasher.update)
 
         locking = self._locking
-        self._cipher = _crp = (
-            self._cipher.encryptor()
-            if locking
-            else self._cipher.decryptor())
+        self._cipher = _crp = (self._cipher.encryptor()
+                               if locking else self._cipher.decryptor())
         # for generic ciphers only
-        self._update = updater(locking,
-            _crp.update,
-            _hashup, buffered=False)
+        self._update = updater(locking, _crp.update, _hashup, buffered=False)
         self._update_into = updater(locking,
-            _crp.update_into,
-            _hashup, shared=False)
- 
+                                    _crp.update_into,
+                                    _hashup,
+                                    shared=False)
+
         # for non-aead ciphers only
         self._updated = False
         super().__init__(*args, **kwargs)
 
 
 class AEADCipherWrapper(CipherWrapper):
-    
     def authenticate(self, data):
-        if not isinstance(data,
-                (bytes, bytearray, memoryview)):
+        if not isinstance(data, (bytes, bytearray, memoryview)):
             raise TypeError('bytes-like object is required')
         try:
-            (self._cipher.
-                authenticate_additional_data(data))
+            (self._cipher.authenticate_additional_data(data))
         except bkx.AlreadyUpadated:
-            raise TypeError(
-                'cannot authenticate data after '
-                'update has been called') from None
+            raise TypeError('cannot authenticate data after '
+                            'update has been called') from None
 
     def finalize(self, tag=None):
         try:
@@ -67,9 +56,7 @@ class AEADCipherWrapper(CipherWrapper):
             return self._cipher.tag
 
 
-class HMACCipherWrapper(
-    HMACMixin,
-    CipherWrapper):
+class HMACCipherWrapper(HMACMixin, CipherWrapper):
     pass
 
 
@@ -91,11 +78,12 @@ class FileCipherMixin:
             _hashup = None
 
         self.__update = updater(self._locking,
-            self._cipher.update,
-            _hashup, buffered=False)
+                                self._cipher.update,
+                                _hashup,
+                                buffered=False)
 
-        self.__update_into = updater(self._locking,
-            self._cipher.update_into, _hashup)
+        self.__update_into = updater(self._locking, self._cipher.update_into,
+                                     _hashup)
 
     @base.before_finalized
     def update(self, blocksize=16384):
@@ -131,8 +119,7 @@ class FileCipherMixin:
         rbuf = buf[:blocksize]
 
         write = file.write
-        reads = iter(partial(
-            self.__file.readinto, buf), 0)
+        reads = iter(partial(self.__file.readinto, buf), 0)
         update = self.__update_into
 
         for i in reads:
@@ -141,4 +128,3 @@ class FileCipherMixin:
             update(rbuf, buf)
             write(rbuf)
         self.finalize(tag)
-

@@ -18,7 +18,6 @@ Parts of the package
 - exc : Exceptions raised by `pyflocker`.
 """
 
-
 # import the modes class
 from .modes import Modes, aead, special
 
@@ -26,5 +25,8 @@ from .modes import Modes, aead, special
 from .backends import load_cipher, Backends
 
 # import interfaces
-from .interfaces import AES, Camellia, ChaCha20
+from .interfaces import AES, Camellia, ChaCha20, RSA
+from .interfaces import Hash
 
+# other imports which have now specific interface
+from .backends._asymmetric import OAEP, PSS, MGF1
