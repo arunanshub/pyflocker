@@ -128,14 +128,14 @@ class RSAPublicKey(_RSAKey):
 
 def _get_padding(pad):
     _pad = padding[pad.__class__]
-    mhash = _hashes[pad.mgf.hash]
+    mhash = _hashes[pad.mgf.hash]()
     _mgf = lambda x, y: padding[pad.mgf.__class__](x, y, mhash)
     return _pad, _mgf
 
 
 def _get_cipher(key, pad):
     _pad, _mgf = _get_padding(pad)
-    phash = _hashes[pad.hash]
+    phash = _hashes[pad.hash]()
     return _pad(key, hashAlgo=phash, mgfunc=_mgf)
 
 
