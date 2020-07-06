@@ -66,12 +66,12 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                 master_key=key,
                 dklen=len(key),
                 hashalgo=digestmod,
-                salt=_randpart,
+                salt=iv_or_nonce,
                 info=b"auth-key",
                 num_keys=2,
             )
         else:
-            hkey, _randpart = None, None
+            hkey = None
 
         self._cipher = _aes_cipher(key, mode, iv_or_nonce)
         # for HMAC mixin
@@ -79,7 +79,7 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
             key=hkey,
             hashed=hashed,
             digestmod=digestmod,
-            rand=_randpart,
+            rand=iv_or_nonce,
         )
 
 
