@@ -3,16 +3,20 @@ import hmac
 
 try:
     from Cryptodome.Cipher import AES
+    from Cryptodome.Protocol import KDF
 except ModuleNotFoundError:
     from Crypto.Cipher import AES
+    from Crypto.Protocol import KDF
 
 from .. import exc, base, Modes as _m
 from ._symmetric import (FileCipherMixin, AEADCipherWrapper, HMACCipherWrapper)
+from ._hashes import hashes
 
 supported = {
     # classic modes
     _m.MODE_CTR: AES.MODE_CTR,
     _m.MODE_CFB: AES.MODE_CFB,
+    _m.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
     _m.MODE_OFB: AES.MODE_OFB,
 
     # AEAD modes
@@ -24,7 +28,16 @@ supported = {
 }
 
 
-def _aes_cipher(key, mode, *args, **kwargs):
+def _aes_cipher(key, mode, iv_or_nonce):
+    args = (iv_or_nonce, )
+    kwargs = dict()
+
+    if mode == _m.MODE_CFB:
+        kwargs = dict(segment_size=128)  # compat with pyca/cryptography's
+                                         # CFB(...) mode
+    elif mode == _m.MODE_CTR:
+        kwargs = dict(nonce=iv_or_nonce)
+
     return AES.new(key, supported[mode], *args, **kwargs)
 
 
@@ -48,16 +61,30 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                  locking,
                  key,
                  mode,
-                 *args,
-                 hashed=True,
-                 digestmod='sha256',
-                 **kwargs):
-        self._cipher = _aes_cipher(key, mode, *args, **kwargs)
+                 iv_or_nonce,
+                 *,
+                 hashed=False,
+                 digestmod='sha256'):
         self._locking = locking
-        _crp = CrCipher(algo.AES(key), modes.ECB()).encryptor()
-        key = _crp.update(bytes(16))
-        _crp.finalize()
-        super().__init__(key=key, hashed=hashed, digestmod=digestmod)
+        hkey = None
+
+        if hashed:
+
+            # derive the keys (length same as of the original key)
+            key, hkey = KDF.HKDF(master=key,
+                                 key_len=len(key),
+                                 salt=iv_or_nonce,
+                                 hashmod=hashes[digestmod](),
+                                 num_keys=2,
+                                 context=b"auth-key")
+
+        self._cipher = _aes_cipher(key, mode, iv_or_nonce)
+        super().__init__(
+            key=hkey,
+            hashed=hashed,
+            digestmod=digestmod,
+            rand=iv_or_nonce,
+        )
 
 
 class NonAEADFile(FileCipherMixin, NonAEAD):

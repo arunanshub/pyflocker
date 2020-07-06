@@ -1,7 +1,6 @@
 from enum import Enum
 
 
-# define all modes
 class Modes(Enum):
     """All modes supported by pyflocker and various ciphers."""
 
@@ -9,6 +8,7 @@ class Modes(Enum):
     MODE_CTR = "MODE_CTR"
     # MODE_CBC = "MODE_CBC"
     MODE_CFB = "MODE_CFB"
+    MODE_CFB8 = "MODE_CFB8"
     MODE_OFB = "MODE_OFB"
     # MODE_OPENPGP = "MODE_OPENPGP"
     MODE_CCM = "MODE_CCM"

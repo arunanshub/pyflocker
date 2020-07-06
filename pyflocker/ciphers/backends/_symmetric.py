@@ -19,9 +19,16 @@ class HMACMixin:
     """Ciphers that need hmac.
     It is NOT necessary for them to support it
     """
-    def __init__(self, *args, key, hashed=True, digestmod='sha256', **kwargs):
+    def __init__(self,
+                 *args,
+                 key,
+                 rand,
+                 hashed=True,
+                 digestmod='sha256',
+                 **kwargs):
         if hashed:
             self._hasher = hmac.new(key, digestmod=digestmod)
+            self._hasher.update(rand)
         else:
             self._hasher = None
         super().__init__(*args, **kwargs)
