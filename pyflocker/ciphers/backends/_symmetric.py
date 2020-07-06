@@ -43,6 +43,10 @@ class HMACMixin:
         self._hasher.update(data)
 
     def finalize(self, tag=None):
+        if not self._locking:
+            if tag is None:
+                raise ValueError('tag is required for decryption')
+
         try:
             self._cipher.finalize()
         except AttributeError:
@@ -53,8 +57,6 @@ class HMACMixin:
             return
 
         if not self._locking:
-            if tag is None:
-                raise ValueError('tag is required for decryption')
             if not hmac.compare_digest(self._hasher.digest(), tag):
                 raise exc.DecryptionError
 
