@@ -31,7 +31,7 @@ def _aes_cipher_from_mode(mode, bknd, hasfile):
         return bknd.NonAEAD
 
 
-def new(locking, key, mode, *args, file=None, backend=None, **kwargs):
+def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
     """Make a new AES cipher wrapper.
 
     locking: True is encryption and False is decryption.
@@ -55,5 +55,5 @@ def new(locking, key, mode, *args, file=None, backend=None, **kwargs):
     cpr = _load_cpr("AES", backend)
     _cpr = _aes_cipher_from_mode(mode, cpr, file is not None)
     if file:
-        return _cpr(locking, key, mode, *args, file=file, **kwargs)
-    return _cpr(locking, key, mode, *args, **kwargs)
+        return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)
+    return _cpr(locking, key, mode, iv_or_nonce, **kwargs)
