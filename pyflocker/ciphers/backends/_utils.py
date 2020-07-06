@@ -38,13 +38,13 @@ def _bytes_updater(locking, cipherup, hashup):
     if locking:
 
         def fn(data):
-            data = cipherup(data)
-            hashup(data)
-            return data
+            ctxt = cipherup(data)
+            hashup(ctxt)
+            return ctxt
     else:
 
-        def fn(data):
-            hashup(data)
-            return cipherup(data)
+        def fn(ctxt):
+            hashup(ctxt)
+            return cipherup(ctxt)
 
     return fn

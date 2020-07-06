@@ -33,19 +33,24 @@ class AEADFile(FileCipherMixin, AEAD):
     pass
 
 
-def _derive_key(master_key, dklen, hashalgo, salt, info, num_keys):
-    kdf = HKDF(
+def _derive_key(master_key, dklen, hashalgo, salt):
+    """Derive key materials for HMAC from given master key."""
+    key = HKDF(
         _hashes[hashalgo](),
-        num_keys * dklen,
+        dklen,
         salt,
-        info,
+        b"enc-key",
         defb(),
-    )
-    drkey = kdf.derive(master_key)
-    keys = [
-        drkey[idx:idx + dklen] for idx in range(0, dklen * num_keys, dklen)
-    ]
-    return keys
+    ).derive(master_key)
+
+    hkey = HKDF(
+        _hashes[hashalgo](),
+        32,
+        salt,
+        b"auth-key",
+        defb(),
+    ).derive(master_key)
+    return key, hkey
 
 
 @base.cipher
@@ -60,15 +65,12 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                  digestmod='sha256'):
         self._locking = locking
         if hashed:
-
             # derive the keys (length same as of the original key)
             key, hkey = _derive_key(
                 master_key=key,
                 dklen=len(key),
                 hashalgo=digestmod,
                 salt=iv_or_nonce,
-                info=b"auth-key",
-                num_keys=2,
             )
         else:
             hkey = None

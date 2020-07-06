@@ -37,6 +37,7 @@ def _aes_cipher(key, mode, iv_or_nonce):
         kwargs = dict(segment_size=128)
     elif mode == _m.MODE_CTR:
         kwargs = dict(nonce=iv_or_nonce)
+        args = ()
 
     return AES.new(key, supported[mode], *args, **kwargs)
 
@@ -54,6 +55,28 @@ class AEADFile(FileCipherMixin, AEAD):
     pass
 
 
+def _derive_key(master_key, dklen, hashalgo, salt):
+    """Derive key materials for HMAC from given master key."""
+    key = KDF.HKDF(
+        master=master_key,
+        key_len=dklen,
+        salt=salt,
+        hashmod=hashes[hashalgo](),
+        num_keys=1,
+        context=b"enc-key",
+    )
+
+    hkey = KDF.HKDF(
+        master=master_key,
+        key_len=32,
+        salt=salt,
+        hashmod=hashes[hashalgo](),
+        num_keys=1,
+        context=b"auth-key",
+    )
+    return key, hkey
+
+
 @base.cipher
 class NonAEAD(HMACCipherWrapper, base.Cipher):
     """Cipher wrapper for classic modes of AES"""
@@ -69,14 +92,8 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
         hkey = None
 
         if hashed:
-
             # derive the keys (length same as of the original key)
-            key, hkey = KDF.HKDF(master=key,
-                                 key_len=len(key),
-                                 salt=iv_or_nonce,
-                                 hashmod=hashes[digestmod](),
-                                 num_keys=2,
-                                 context=b"auth-key")
+            key, hkey = _derive_key(key, len(key), digestmod, iv_or_nonce)
 
         self._cipher = _aes_cipher(key, mode, iv_or_nonce)
         super().__init__(

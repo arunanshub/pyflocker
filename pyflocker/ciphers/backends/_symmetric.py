@@ -16,7 +16,7 @@ class CipherWrapperBase:
 
 
 class HMACMixin:
-    """Ciphers that need hmac.
+    """Ciphers that can use an HMAC.
     It is NOT necessary for them to support it
     """
     def __init__(self,
