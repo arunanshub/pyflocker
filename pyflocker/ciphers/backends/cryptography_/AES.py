@@ -42,8 +42,9 @@ def _derive_key(master_key, dklen, hashalgo, salt, info, num_keys):
         defb(),
     )
     drkey = kdf.derive(master_key)
-    keys = [drkey[idx:idx + dklen]
-            for idx in range(0, dklen * num_keys, dklen)]
+    keys = [
+        drkey[idx:idx + dklen] for idx in range(0, dklen * num_keys, dklen)
+    ]
     return keys
 
 

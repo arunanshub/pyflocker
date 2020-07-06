@@ -33,8 +33,8 @@ def _aes_cipher(key, mode, iv_or_nonce):
     kwargs = dict()
 
     if mode == _m.MODE_CFB:
-        kwargs = dict(segment_size=128)  # compat with pyca/cryptography's
-                                         # CFB(...) mode
+        # compat with pyca/cryptography's CFB(...) mode
+        kwargs = dict(segment_size=128)
     elif mode == _m.MODE_CTR:
         kwargs = dict(nonce=iv_or_nonce)
 
