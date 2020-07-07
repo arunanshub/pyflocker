@@ -12,6 +12,9 @@ The modes and the involved intricacies
 from .. import load_cipher as _load_cpr, Modes as _m
 from .. import aead, special
 
+# shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
+globals().update({val.name: val for val in list(_m)})
+
 
 def _aes_cipher_from_mode(mode, bknd, hasfile):
     if mode not in bknd.supported.keys():
