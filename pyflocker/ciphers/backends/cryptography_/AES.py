@@ -1,12 +1,15 @@
 from cryptography.hazmat.primitives.ciphers import (Cipher as CrCipher, modes,
                                                     algorithms as algo)
-from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, Modes as _m
 
-from ._symmetric import (AEADCipherWrapper, HMACCipherWrapper, FileCipherMixin)
-from ._hashes import hashes as _hashes
+from ._symmetric import (
+    AEADCipherWrapper,
+    HMACCipherWrapper,
+    FileCipherMixin,
+    derive_key as _derive_key,
+)
 
 supported = {
     _m.MODE_GCM: modes.GCM,
@@ -31,26 +34,6 @@ class AEAD(AEADCipherWrapper, base.Cipher):
 
 class AEADFile(FileCipherMixin, AEAD):
     pass
-
-
-def _derive_key(master_key, dklen, hashalgo, salt):
-    """Derive key materials for HMAC from given master key."""
-    key = HKDF(
-        _hashes[hashalgo](),
-        dklen,
-        salt,
-        b"enc-key",
-        defb(),
-    ).derive(master_key)
-
-    hkey = HKDF(
-        _hashes[hashalgo](),
-        32,
-        salt,
-        b"auth-key",
-        defb(),
-    ).derive(master_key)
-    return key, hkey
 
 
 @base.cipher

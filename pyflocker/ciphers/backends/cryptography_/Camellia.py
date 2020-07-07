@@ -3,7 +3,11 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms as algo,
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, exc, Modes as _m
-from ._symmetric import HMACCipherWrapper, FileCipherMixin
+from ._symmetric import (
+    HMACCipherWrapper,
+    FileCipherMixin,
+    derive_key as _derive_key,
+)
 
 supported = {
     _m.MODE_CFB: modes.CFB,
@@ -18,15 +22,33 @@ class Camellia(HMACCipherWrapper, base.Cipher):
                  locking,
                  key,
                  mode,
-                 *args,
-                 hashed=True,
-                 digestmod='sha256',
-                 **kwargs):
-        self._cipher = Cipher(algo.Camellia(key), supported[mode](*args,
-                                                                  **kwargs),
-                              defb())
+                 iv_or_nonce,
+                 *,
+                 hashed=False,
+                 digestmod='sha256'):
+        if hashed:
+            # derive the keys (length same as of the original key)
+            key, hkey = _derive_key(
+                master_key=key,
+                dklen=len(key),
+                hashalgo=digestmod,
+                salt=iv_or_nonce,
+            )
+        else:
+            hkey = None
+
+        self._cipher = Cipher(
+            algo.Camellia(key),
+            supported[mode](iv_or_nonce),
+            defb(),
+        )
         self._locking = locking
-        super().__init__(key=key, hashed=hashed, digestmod=digestmod)
+        super().__init__(
+            key=hkey,
+            hashed=hashed,
+            digestmod=digestmod,
+            rand=iv_or_nonce,
+        )
 
 
 class CamelliaFile(FileCipherMixin, Camellia):

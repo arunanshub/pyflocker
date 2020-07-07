@@ -1,4 +1,8 @@
 "Symmetric cipher wrapper for this backend only." ""
+try:
+    from Cryptodome.Protocol import KDF
+except ModuleNotFoundError:
+    from Crypto.Protocol import KDF
 
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .._utils import updater
@@ -6,6 +10,28 @@ from .. import base, exc
 
 from functools import partial
 from .._utils import updater
+
+
+def derive_key(master_key, dklen, hashalgo, salt):
+    """Derive key materials for HMAC from given master key."""
+    key = KDF.HKDF(
+        master=master_key,
+        key_len=dklen,
+        salt=salt,
+        hashmod=hashes[hashalgo](),
+        num_keys=1,
+        context=b"enc-key",
+    )
+
+    hkey = KDF.HKDF(
+        master=master_key,
+        key_len=32,
+        salt=salt,
+        hashmod=hashes[hashalgo](),
+        num_keys=1,
+        context=b"auth-key",
+    )
+    return key, hkey
 
 
 class CipherWrapper(CipherWrapperBase):

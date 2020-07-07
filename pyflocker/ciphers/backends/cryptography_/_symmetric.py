@@ -1,12 +1,35 @@
 "Symmetric cipher wrapper for this backend only." ""
 
 import cryptography.exceptions as bkx
+from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+from cryptography.hazmat.backends import default_backend as defb
 from .._symmetric import (CipherWrapperBase, HMACMixin)
 from .._utils import updater
 from .. import base, exc
 
 from functools import partial
 from .._utils import updater
+from ._hashes import hashes as _hashes
+
+
+def derive_key(master_key, dklen, hashalgo, salt):
+    """Derive key materials for HMAC from given master key."""
+    key = HKDF(
+        _hashes[hashalgo](),
+        dklen,
+        salt,
+        b"enc-key",
+        defb(),
+    ).derive(master_key)
+
+    hkey = HKDF(
+        _hashes[hashalgo](),
+        32,
+        salt,
+        b"auth-key",
+        defb(),
+    ).derive(master_key)
+    return key, hkey
 
 
 class CipherWrapper(CipherWrapperBase):

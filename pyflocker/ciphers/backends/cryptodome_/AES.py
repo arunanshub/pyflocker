@@ -3,13 +3,16 @@ import hmac
 
 try:
     from Cryptodome.Cipher import AES
-    from Cryptodome.Protocol import KDF
 except ModuleNotFoundError:
     from Crypto.Cipher import AES
-    from Crypto.Protocol import KDF
 
 from .. import exc, base, Modes as _m
-from ._symmetric import (FileCipherMixin, AEADCipherWrapper, HMACCipherWrapper)
+from ._symmetric import (
+    FileCipherMixin,
+    AEADCipherWrapper,
+    HMACCipherWrapper,
+    derive_key as _derive_key,
+)
 from ._hashes import hashes
 
 supported = {
@@ -53,28 +56,6 @@ class AEAD(AEADCipherWrapper, base.Cipher):
 
 class AEADFile(FileCipherMixin, AEAD):
     pass
-
-
-def _derive_key(master_key, dklen, hashalgo, salt):
-    """Derive key materials for HMAC from given master key."""
-    key = KDF.HKDF(
-        master=master_key,
-        key_len=dklen,
-        salt=salt,
-        hashmod=hashes[hashalgo](),
-        num_keys=1,
-        context=b"enc-key",
-    )
-
-    hkey = KDF.HKDF(
-        master=master_key,
-        key_len=32,
-        salt=salt,
-        hashmod=hashes[hashalgo](),
-        num_keys=1,
-        context=b"auth-key",
-    )
-    return key, hkey
 
 
 @base.cipher
