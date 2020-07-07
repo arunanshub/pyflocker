@@ -39,11 +39,16 @@ def load_backend(bknd=None):
             raise NotImplementedError
         return import_module(bknd.value, __package__)
 
-    # try to find backend automatically
-    try:
+    failed = []
+    m = None
+    for each in list(Backends):
         try:
-            return import_module(Backends.CRYPTODOME.value, __package__)
+            m = import_module(each.value, __package__)
         except ModuleNotFoundError:
-            return import_module(Backends.CRYPTOGRAPHY.value, __package__)
-    except ModuleNotFoundError:
-        raise ModuleNotFoundError("no backends found") from None
+            failed.append(each)
+    if failed == list(Backends):
+        raise ModuleNotFoundError(
+            "Pyflocker needs atleast one backend among " +
+            ", ".join(each.name.capitalize()
+                      for each in failed) + " but none were found")
+    return m
