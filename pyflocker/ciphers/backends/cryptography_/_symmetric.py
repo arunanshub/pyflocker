@@ -46,8 +46,8 @@ class AEADCipherWrapper(CipherWrapper):
             if not self._locking:
                 if tag is None:
                     raise TypeError('tag is required for decryption')
-                self._cipher.finalize_with_tag(tag)
-            self._cipher.finalize()
+                return self._cipher.finalize_with_tag(tag)
+            return self._cipher.finalize()
         except bkx.InvalidTag:
             raise exc.DecryptionError from None
 
