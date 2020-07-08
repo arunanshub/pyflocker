@@ -90,24 +90,27 @@ class NonAEADFile(FileCipherMixin, NonAEAD):
 
 
 # AES ciphers that needs special attention
+@base.cipher
 class AEADOneShot(AEAD):
-    """Implements AES modes that does not support
+    """Implements AES modes that do not support
     gradual encryption and decryption, which means,
     everything has to be done in one go (one shot)
     """
     def update_into(self, data, out, tag=None):
         if self._locking:
-            return self._cipher.encrypt_and_digest(data, out)[0]
+            dat = self._cipher.encrypt_and_digest(data, out)[0]
             self.finalize()
-        else:
-            if tag is None:
-                raise ValueError('tag required')
-            crpup = self._cipher.decrypt_and_verify
+            return dat
+
+        if tag is None:
+            raise ValueError('tag is required for decryption')
+        crpup = self._cipher.decrypt_and_verify
         try:
-            return crpup(data, tag, out)
+            dat = crpup(data, tag, out)
         except ValueError:
-            pass
+            dat = None
         self.finalize(tag)
+        return dat
 
     def update(self, data, tag=None):
-        self.update_into(data, out=None, tag=tag)
+        return self.update_into(data, out=None, tag=tag)
