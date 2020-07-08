@@ -4,6 +4,7 @@ try:
 except ModuleNotFoundError:
     from Crypto.Protocol import KDF
 
+from ._hashes import hashes as _hashes
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .._utils import updater
 from .. import base, exc
@@ -18,7 +19,7 @@ def derive_key(master_key, dklen, hashalgo, salt):
         master=master_key,
         key_len=dklen,
         salt=salt,
-        hashmod=hashes[hashalgo](),
+        hashmod=_hashes[hashalgo](),
         num_keys=1,
         context=b"enc-key",
     )
@@ -27,7 +28,7 @@ def derive_key(master_key, dklen, hashalgo, salt):
         master=master_key,
         key_len=32,
         salt=salt,
-        hashmod=hashes[hashalgo](),
+        hashmod=_hashes[hashalgo](),
         num_keys=1,
         context=b"auth-key",
     )
