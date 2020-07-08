@@ -40,10 +40,9 @@ def load_backend(bknd=None):
         return import_module(bknd.value, __package__)
 
     failed = []
-    m = None
     for each in list(Backends):
         try:
-            m = import_module(each.value, __package__)
+            return import_module(each.value, __package__)
         except ModuleNotFoundError:
             failed.append(each)
     if failed == list(Backends):
@@ -51,4 +50,3 @@ def load_backend(bknd=None):
             "Pyflocker needs atleast one backend among " +
             ", ".join(each.name.capitalize()
                       for each in failed) + " but none were found")
-    return m
