@@ -21,7 +21,24 @@ _supported_encodings = frozenset((
 ))
 
 
-class RSAPrivateKey:
+class _RSANumbers:
+    def _numbers(self):
+        try:
+            k = self._key.public_numbers()
+        except AttributeError:
+            k = self._key.private_numbers().public_numbers
+        return k
+
+    @property
+    def e(self):
+        return self._numbers().e
+
+    @property
+    def n(self):
+        return self._numbers().n
+
+
+class RSAPrivateKey(_RSANumbers):
     def __init__(self, n=None, e=65537, **kwargs):
         if kwargs:
             # we have the key made beforehand
@@ -81,7 +98,7 @@ class RSAPrivateKey:
         return cls(key=key)
 
 
-class RSAPublicKey:
+class RSAPublicKey(_RSANumbers):
     def __init__(self, key):
         self._key = key
 
