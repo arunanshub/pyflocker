@@ -18,5 +18,5 @@ Read the documentation of these modules to know more.
 
 from . import ciphers
 
-from .ciphers import Backends, base, exc
+from .ciphers import Backends, exc
 from .ciphers.backends import set_default_backend
