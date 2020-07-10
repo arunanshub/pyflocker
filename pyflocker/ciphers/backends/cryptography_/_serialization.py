@@ -12,9 +12,13 @@ private_format = {
     'PKCS8': ser.PrivateFormat.PKCS8,
     'TraditionalOpenSSL': ser.PrivateFormat.TraditionalOpenSSL,
     'Raw': ser.PrivateFormat.Raw,
-    # 'OpenSSH' : ser.PrivateFormat.OpenSSH,
     'PKCS1': ser.PrivateFormat.TraditionalOpenSSL,  # compat with Cryptodome
 }
+
+try:
+    private_format['OpenSSH'] = ser.PrivateFormat.OpenSSH
+except AttributeError:
+    pass
 
 public_format = {
     'SubjectPublicKeyInfo': ser.PublicFormat.SubjectPublicKeyInfo,

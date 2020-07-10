@@ -63,15 +63,41 @@ class RSAPrivateKey(_RSANumbers):
         return self._q
 
     def public_key(self):
+        """Returns public key from the private key"""
         return RSAPublicKey(self._key.public_key())
 
     def decryptor(self, padding=OAEP()):
+        """
+        Returns a decryption context with OAEP padding and MGF1
+        as mask generation function.
+        """
         return RSADecryptionCtx(self._key, padding)
 
     def signer(self, padding=PSS()):
+        """
+        Returns a signer context.
+
+        `padding` is PSS, and the default hash function used
+        by PSS and MGF1 (the default mask generation function)
+        is `sha256`.
+        """
         return RSASignerCtx(self._key, padding)
 
     def serialize(self, encoding='PEM', format='PKCS8', passphrase=None):
+        """Serialize the private key.
+
+        - `encoding` can be PEM or DER (defaults to PEM).
+        - The `format` can be:
+            - PKCS8 (default)
+            - TraditionalOpenSSL
+            - Raw
+            - OpenSSH (available from pyca/cryptography version >=3.X)
+            - PKCS1
+
+        - `passphrase` must be a bytes object.
+          If `passphrase` is None, the private key will be exported
+          in the clear!
+        """
         if encoding not in _supported_encodings ^ {'OpenSSH'}:
             raise TypeError('Encoding must be PEM or DER')
 
@@ -86,6 +112,11 @@ class RSAPrivateKey(_RSANumbers):
 
     @classmethod
     def load(cls, data, password=None):
+        """Loads the private key and returns a Key interface.
+
+        `password` must be a `bytes` object if the key was encrypted
+        while serialization, otherwise `None`.
+        """
         if data.startswith(b'-----BEGIN OPENSSH PRIVATE KEY'):
             key = ser.load_ssh_private_key(data, password)
 
@@ -99,22 +130,43 @@ class RSAPrivateKey(_RSANumbers):
 
 
 class RSAPublicKey(_RSANumbers):
+    """RSA Public Key wrapper class."""
     def __init__(self, key):
         self._key = key
 
     def encryptor(self, padding=OAEP()):
+        """
+        Returns a encryption context with OAEP padding and MGF1
+        as mask generation function.
+        """
         return RSAEncryptionCtx(self._key, padding)
 
     def verifier(self, padding=PSS()):
+        """
+        Returns a verifier context.
+
+        `padding` is PSS, and the default hash function used
+        by PSS and MGF1 (the default mask generation function)
+        is `sha256`.
+        """
         return RSAVerifierCtx(self._key, padding)
 
     def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
+        """Serialize the private key.
+
+        - `encoding` can be PEM, DER or OpenSSH (defaults to PEM).
+        - `format` can be:
+            - SubjectPublicKeyInfo (default)
+            - PKCS1
+            - OpenSSH
+        """
         encd = encodings[encoding]
         fmt = public_format[format]
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
     def load(cls, data):
+        """Loads the public key and returns a Key interface."""
         if data.startswith(b'ssh-rsa '):
             key = ser.load_ssh_public_key(data, defb())
 
@@ -151,11 +203,19 @@ class Context:
 
 class RSAEncryptionCtx(Context):
     def encrypt(self, plaintext):
+        """Encrypts the plaintext and returns the ciphertext.
+
+        `plaintext` must be a `bytes` or `bytes-like` object.
+        """
         return self._encrypt(plaintext)
 
 
 class RSADecryptionCtx(Context):
     def decrypt(self, ciphertext):
+        """Decrypts the ciphertext and returns the plaintext.
+
+        `ciphertext` must be a `bytes` or `bytes-like` object.
+        """
         return self._decrypt(ciphertext)
 
 
@@ -179,12 +239,27 @@ class SigVerContext:
 
 class RSASignerCtx(SigVerContext):
     def sign(self, msghash):
+        """Return the signature of the message hash.
+        
+        `mhash` must be an instance of `BaseHash` and must be
+        generated with the same backend as of the RSA key.
+
+        Refer to `Hash.new` function's documentation.
+        """
         return self._sign(msghash.digest(),
                           algorithm=utils.Prehashed(hashes[msghash._name]()))
 
 
 class RSAVerifierCtx(SigVerContext):
     def verify(self, msghash, signature):
+        """Verifies the signature of the message hash.
+
+        `mhash` must be an instance of `BaseHash` and must be
+        generated with the same backend as of the RSA key.
+        Refer to `Hash.new` function's documentation.
+ 
+        `signature` must be a `bytes` or `bytes-like` object.
+        """
         return self._verify(signature,
                             msghash.digest(),
                             algorithm=utils.Prehashed(hashes[msghash._name]()))
