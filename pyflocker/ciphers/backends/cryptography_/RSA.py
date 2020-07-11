@@ -90,9 +90,8 @@ class RSAPrivateKey(_RSANumbers):
         - The `format` can be:
             - PKCS8 (default)
             - TraditionalOpenSSL
-            - Raw
             - OpenSSH (available from pyca/cryptography version >=3.X)
-            - PKCS1
+            - PKCS1 (alias to TraditionalOpenSSL for PyCryptodome(x) compat)
 
         - `passphrase` must be a bytes object.
           If `passphrase` is None, the private key will be exported
