@@ -58,7 +58,8 @@ class DHParameters:
 
     @classmethod
     def load_from_parameters(cls, p, g=2, q=None):
-        return cls(parameter=dh.DHParameterNumbers(g, p, q))
+        param_nos = dh.DHParameterNumbers(p, g, q)
+        return cls(parameter=param_nos.parameters(defb()))
 
 
 class _DHKey:
@@ -90,7 +91,7 @@ class DHPrivateKey(_DHKey):
         else:
             prot = ser.BestAvailableEncryption(
                 memoryview(passphrase).tobytes(), )
-        return ser._key.private_bytes(
+        return self._key.private_bytes(
             encodings[encoding],
             private_format[format],
             prot,

@@ -18,7 +18,7 @@ def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters(key_size, g)
 
 
-def load_from_parameters(p, g=2, q=None):
+def load_from_parameters(p, g=2, q=None, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters.load_from_parameters(p, g, q)
 
 
