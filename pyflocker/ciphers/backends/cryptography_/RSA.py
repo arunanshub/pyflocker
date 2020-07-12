@@ -2,7 +2,11 @@ from functools import partial
 
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives.asymmetric import rsa, padding as pads, utils
+from cryptography.hazmat.primitives.asymmetric import (
+    rsa,
+    padding as pads,
+    utils,
+)
 
 from .._asymmetric import OAEP, MGF1, PSS
 from ._hashes import hashes
@@ -119,12 +123,14 @@ class RSAPrivateKey(_RSANumbers):
         if data.startswith(b'-----BEGIN OPENSSH PRIVATE KEY'):
             key = ser.load_ssh_private_key(data, password)
 
-        if data.startswith(b'-----'):
+        elif data.startswith(b'-----'):
             key = ser.load_pem_private_key(data, password, defb())
 
-        if data[0] == 0x30:
+        elif data[0] == 0x30:
             key = ser.load_der_private_key(data, password, defb())
 
+        else:
+            raise ValueError('incorrect key format')
         return cls(key=key)
 
 
@@ -175,6 +181,8 @@ class RSAPublicKey(_RSANumbers):
         if data[0] == 0x30:
             key = ser.load_der_public_key(data, defb())
 
+        else:
+            raise ValueError('incorrect key format')
         return cls(key=key)
 
 
@@ -188,16 +196,23 @@ class Context:
     def __init__(self, key, padding):
         pad, mgf = _get_padding(padding)
         try:
-            self._encrypt = partial(key.encrypt,
-                                    padding=pad(mgf, hashes[padding.hash](),
-                                                padding.label))
+            self._encrypt = partial(
+                key.encrypt,
+                padding=pad(
+                    mgf,
+                    hashes[padding.hash](),
+                    padding.label,
+                ),
+            )
         except AttributeError:
-            self._decrypt = partial(key.decrypt,
-                                    padding=pad(
-                                        mgf,
-                                        hashes[padding.hash](),
-                                        padding.label,
-                                    ))
+            self._decrypt = partial(
+                key.decrypt,
+                padding=pad(
+                    mgf,
+                    hashes[padding.hash](),
+                    padding.label,
+                ),
+            )
 
 
 class RSAEncryptionCtx(Context):
@@ -245,8 +260,10 @@ class RSASignerCtx(SigVerContext):
 
         Refer to `Hash.new` function's documentation.
         """
-        return self._sign(msghash.digest(),
-                          algorithm=utils.Prehashed(hashes[msghash._name]()))
+        return self._sign(
+            msghash.digest(),
+            algorithm=utils.Prehashed(hashes[msghash._name]()),
+        )
 
 
 class RSAVerifierCtx(SigVerContext):
@@ -259,6 +276,8 @@ class RSAVerifierCtx(SigVerContext):
  
         `signature` must be a `bytes` or `bytes-like` object.
         """
-        return self._verify(signature,
-                            msghash.digest(),
-                            algorithm=utils.Prehashed(hashes[msghash._name]()))
+        return self._verify(
+            signature,
+            msghash.digest(),
+            algorithm=utils.Prehashed(hashes[msghash._name]()),
+        )
