@@ -26,7 +26,7 @@ from .backends import load_cipher, Backends
 
 # import interfaces
 from .interfaces import AES, Camellia, ChaCha20, RSA
-from .interfaces import Hash
+from .interfaces import Hash, DH
 
-# other imports which have now specific interface
+# other imports which have specific interface
 from .backends._asymmetric import OAEP, PSS, MGF1
