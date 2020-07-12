@@ -27,3 +27,7 @@ public_format = {
     'CompressedPoint': ser.PublicFormat.CompressedPoint,
     'UncompressedPoint': ser.PublicFormat.UncompressedPoint,
 }
+
+parameter_format = {
+    'PKCS3': ser.ParameterFormat.PKCS3,
+}
