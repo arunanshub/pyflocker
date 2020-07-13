@@ -32,9 +32,23 @@ class ECCPrivateKey:
             self._key = ec.generate_private_key(curves[curve], defb())
 
     def public_key(self):
+        """Returns public key from the private key"""
         return ECCPublicKey(self._key.public_key())
 
     def serialize(self, encoding='PEM', format='PKCS8', passphrase=None):
+        """Serialize the private key.
+
+        - `encoding` can be PEM or DER (defaults to PEM).
+        - The `format` can be:
+            - PKCS8 (default)
+            - TraditionalOpenSSL
+            - OpenSSH (available from pyca/cryptography version >=3.X)
+            - PKCS1 (alias to TraditionalOpenSSL for PyCryptodome(x) compat)
+
+        - `passphrase` must be a bytes object.
+          If `passphrase` is None, the private key will be exported
+          in the clear!
+        """
         encd = encodings[encoding]
         fmt = private_format[format]
         if passphrase is None:
@@ -45,6 +59,13 @@ class ECCPrivateKey:
         return self._key.private_bytes(encd, fmt, prot)
 
     def exchange(self, peer_public_key, algorithm='ECDH'):
+        """Perform a key exchange and return shared secret as
+        bytes object.
+
+        The `peer_public_key` can be a `ECCPublicKey` object or
+        a serialized public key. If latter is the case, the key
+        is loaded and then the exchange is performed.
+        """
         if isinstance(peer_public_key, (bytes, bytearray, memoryview)):
             peer_public_key = ECCPublicKey.load(peer_public_key)
 
@@ -54,9 +75,7 @@ class ECCPrivateKey:
         )
 
     def signer(self, algorithm='ECDSA'):
-        """
-        Returns a signer context.
-        """
+        """Returns a signer context."""
         return ECCSignerCtx(self._key, algorithm)
 
     @classmethod
@@ -85,9 +104,20 @@ class ECCPublicKey:
         self._key = key
 
     def verifier(self, algorithm='ECDSA'):
+        """Returns a verifier context using the given 1algorithm`"""
         return ECCVerifierCtx(self._key, algorithm)
 
     def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
+        """Serialize the public key.
+
+        - `encoding` can be PEM, DER, OpenSSH, X962 (defaults to PEM).
+        - `format` can be:
+            - SubjectPublicKeyInfo (default)
+            - PKCS1
+            - OpenSSH
+            - ComperssedPoint
+            - UncompressedPoint
+        """
         encd = encodings[encoding]
         fmt = public_format[format]
         return self._key.public_bytes(encd, fmt)
