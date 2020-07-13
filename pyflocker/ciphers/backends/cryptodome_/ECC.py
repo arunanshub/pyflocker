@@ -43,26 +43,24 @@ class ECCPrivateKey(_ECCKey):
         if encoding not in encodings.keys() ^ {'OpenSSH'}:
             raise TypeError('encoding must be PEM or DER')
 
-        if protection is not None:
-            if protection not in protection_schemes:
-                raise TypeError('invalid protection scheme')
-
         if format not in formats:
             raise KeyError('invalid format')
 
-        if format == 'PKCS1' and protection is not None:
-            raise TypeError('protection is meaningful only for PKCS8')
-
         if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
-            protection = 'PBKDF2WithHMAC-SHA1AndAES256-CBC'
+            prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
+
+        if format == 'PKCS1':
+            if protection is not None:
+                raise TypeError('protection is meaningful only for PKCS8')
+            prot = {}
 
         return self._key.export_key(
             format=encodings[encoding],
             use_pkcs8=(True if format == 'PKCS8' else False),
             passphrase=(memoryview(passphrase).tobytes()
                         if passphrase is not None else None),
-            protection=protection,
+            **prot,
         )
 
     def signer(self, *, mode='fips-186-3', encoding='binary'):
