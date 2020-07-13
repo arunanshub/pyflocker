@@ -4,35 +4,13 @@ from Crypto.Signature import PKCS1_PSS
 
 from .._asymmetric import OAEP, PSS, MGF1
 from ._hashes import hashes as _hashes
+from ._serialization import encodings, formats, protection_schemes
 
 padding = {
     OAEP: PKCS1_OAEP.new,
     PSS: PKCS1_PSS.new,
     MGF1: PKCS1_OAEP.MGF1,
 }
-
-# required for limiting invalid interactions
-encodings = {
-    'PEM': 'PEM',
-    'DER': 'DER',
-    'OpenSSH': 'OpenSSH',
-}
-
-formats = {
-    'PKCS1': 1,
-    'PKCS8': 8,
-}
-
-# PKCS#8 password derivation mechanisms
-protection_schemes = frozenset((
-    'PBKDF2WithHMAC-SHA1AndAES128-CBC',
-    'PBKDF2WithHMAC-SHA1AndAES192-CBC',
-    'PBKDF2WithHMAC-SHA1AndAES256-CBC',
-    'PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC',
-    'scryptAndAES128-CBC',
-    'scryptAndAES192-CBC',
-    'scryptAndAES256-CBC',
-))
 
 
 class _RSAKey:

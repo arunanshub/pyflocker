@@ -175,10 +175,10 @@ class RSAPublicKey(_RSANumbers):
         if data.startswith(b'ssh-rsa '):
             key = ser.load_ssh_public_key(data, defb())
 
-        if data.startswith(b'-----'):
+        elif data.startswith(b'-----'):
             key = ser.load_pem_public_key(data, defb())
 
-        if data[0] == 0x30:
+        elif data[0] == 0x30:
             key = ser.load_der_public_key(data, defb())
 
         else:
