@@ -157,7 +157,7 @@ class RSAPublicKey(_RSANumbers):
         return RSAVerifierCtx(self._key, padding)
 
     def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
-        """Serialize the private key.
+        """Serialize the public key.
 
         - `encoding` can be PEM, DER or OpenSSH (defaults to PEM).
         - `format` can be:
