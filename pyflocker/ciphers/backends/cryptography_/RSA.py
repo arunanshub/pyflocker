@@ -8,6 +8,7 @@ from cryptography.hazmat.primitives.asymmetric import (
     utils,
 )
 
+from .. import base
 from .._asymmetric import OAEP, MGF1, PSS
 from ._hashes import hashes
 from ._serialization import encodings, private_format, public_format
@@ -42,7 +43,7 @@ class _RSANumbers:
         return self._numbers().n
 
 
-class RSAPrivateKey(_RSANumbers):
+class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
     def __init__(self, n=None, e=65537, **kwargs):
         if kwargs:
             # we have the key made beforehand
@@ -134,7 +135,7 @@ class RSAPrivateKey(_RSANumbers):
         return cls(key=key)
 
 
-class RSAPublicKey(_RSANumbers):
+class RSAPublicKey(_RSANumbers, base.BasePublicKey):
     """RSA Public Key wrapper class."""
     def __init__(self, key):
         self._key = key

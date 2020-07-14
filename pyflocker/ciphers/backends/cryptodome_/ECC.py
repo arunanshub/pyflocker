@@ -1,6 +1,7 @@
 from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
 
+from .. import base
 from ._serialization import encodings, formats, protection_schemes
 
 _sig_encodings = {
@@ -27,7 +28,7 @@ class _ECCKey:
         return cls(key=ECC.import_key(data, passphrase))
 
 
-class ECCPrivateKey(_ECCKey):
+class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
     """Represents ECC private key."""
     def __init__(self, curve=None, **kwargs):
         if kwargs:
@@ -91,7 +92,7 @@ class ECCPrivateKey(_ECCKey):
             'key exchange is currently not supported by the backend.')
 
 
-class ECCPublicKey(_ECCKey):
+class ECCPublicKey(_ECCKey, base.BasePublicKey):
     """Represents ECC public key."""
     def __init__(self, key):
         self._key = key

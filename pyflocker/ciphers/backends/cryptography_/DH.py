@@ -2,6 +2,7 @@ from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives import serialization as ser
 
+from .. import base
 from ._serialization import (
     private_format,
     public_format,
@@ -71,7 +72,7 @@ class _DHKey:
         return self._key.key_size
 
 
-class DHPrivateKey(_DHKey):
+class DHPrivateKey(_DHKey, base.BasePrivateKey):
     def __init__(self, key):
         self._key = key
 
@@ -122,7 +123,7 @@ class DHPrivateKey(_DHKey):
         return cls(key=key)
 
 
-class DHPublicKey(_DHKey):
+class DHPublicKey(_DHKey, base.BasePublicKey):
     def __init__(self, key):
         self._key = key
 

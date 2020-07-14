@@ -3,6 +3,7 @@ from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import ec, utils
 
 from ._hashes import hashes
+from .. import base
 from ._serialization import encodings, private_format, public_format
 from .._asymmetric import PSS
 
@@ -21,12 +22,10 @@ curves = {
     'p256': ec.SECP256R1,
     'P-256': ec.SECP256R1,
     'prime256v1': ec.SECP256R1,
-
     'NIST P-384': ec.SECP384R1,
     'p384': ec.SECP384R1,
     'P-384': ec.SECP384R1,
     'prime384v1': ec.SECP384R1,
-
     'NIST P-521': ec.SECP521R1,
     'p521': ec.SECP521R1,
     'P-521': ec.SECP521R1,
@@ -42,7 +41,7 @@ signature_algorithms = {
 }
 
 
-class ECCPrivateKey:
+class ECCPrivateKey(base.BasePrivateKey):
     """Represents ECC private key."""
     def __init__(self, curve=None, **kwargs):
         if kwargs:
@@ -118,7 +117,7 @@ class ECCPrivateKey:
         return cls(key=key)
 
 
-class ECCPublicKey:
+class ECCPublicKey(base.BasePublicKey):
     """Represents ECC public key."""
     def __init__(self, key):
         self._key = key

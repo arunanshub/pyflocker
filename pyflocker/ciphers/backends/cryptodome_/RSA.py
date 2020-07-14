@@ -2,6 +2,7 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_PSS
 
+from .. import base
 from .._asymmetric import OAEP, PSS, MGF1
 from ._hashes import hashes as _hashes
 from ._serialization import encodings, formats, protection_schemes
@@ -34,7 +35,7 @@ class _RSAKey:
         return cls(key=RSA.import_key(data, password))
 
 
-class RSAPrivateKey(_RSAKey):
+class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     """RSA private key wrapper class."""
     def __init__(self, n=None, e=65537, **kwargs):
         if kwargs:
@@ -122,7 +123,7 @@ class RSAPrivateKey(_RSAKey):
         )
 
 
-class RSAPublicKey(_RSAKey):
+class RSAPublicKey(_RSAKey, base.BasePublicKey):
     """RSA Public Key wrapper class."""
     def __init__(self, key):
         self._key = key
