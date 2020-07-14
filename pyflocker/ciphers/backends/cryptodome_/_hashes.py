@@ -17,12 +17,12 @@ hashes = {
     'sha256': SHA256.new,
     'sha384': SHA384.new,
     'sha512': SHA512.new,
-    'sha512_224': lambda data: SHA512.new(data, '224'),
-    'sha512_256': lambda data: SHA512.new(data, '224'),
-    'sha3_224': SHA3_224,
-    'sha3_256': SHA3_256,
-    'sha3_384': SHA3_384,
-    'sha3_512': SHA3_512,
+    'sha512_224': lambda data=b'': SHA512.new(data, '224'),
+    'sha512_256': lambda data=b'': SHA512.new(data, '224'),
+    'sha3_224': SHA3_224.new,
+    'sha3_256': SHA3_256.new,
+    'sha3_384': SHA3_384.new,
+    'sha3_512': SHA3_512.new,
 }
 
 
