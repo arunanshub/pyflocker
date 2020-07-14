@@ -28,6 +28,7 @@ class _ECCKey:
 
 
 class ECCPrivateKey(_ECCKey):
+    """Represents ECC private key."""
     def __init__(self, curve=None, **kwargs):
         if kwargs:
             self._key = kwargs.pop('curve')
@@ -91,6 +92,7 @@ class ECCPrivateKey(_ECCKey):
 
 
 class ECCPublicKey(_ECCKey):
+    """Represents ECC public key."""
     def __init__(self, key):
         self._key = key
 
@@ -119,6 +121,7 @@ class SigVerContext:
 
 
 class ECCSignerCtx(SigVerContext):
+    """Signing context for ECC private key."""
     def sign(self, msghash):
         """Return the signature of the message hash.
         
@@ -131,6 +134,7 @@ class ECCSignerCtx(SigVerContext):
 
 
 class ECCVerifierCtx(SigVerContext):
+    """Verification context for ECC public key."""
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 

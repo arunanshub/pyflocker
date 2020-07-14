@@ -13,6 +13,24 @@ curves = {
     'secp224r1': ec.SECP224R1,
     'secp192r1': ec.SECP192R1,
     'secp256k1': ec.SECP256K1,
+
+    # aliases for PyCryptodome
+    # note that only those curves are aliased which are
+    # currently supported by the same.
+    'NIST P-256': ec.SECP256R1,
+    'p256': ec.SECP256R1,
+    'P-256': ec.SECP256R1,
+    'prime256v1': ec.SECP256R1,
+
+    'NIST P-384': ec.SECP384R1,
+    'p384': ec.SECP384R1,
+    'P-384': ec.SECP384R1,
+    'prime384v1': ec.SECP384R1,
+
+    'NIST P-521': ec.SECP521R1,
+    'p521': ec.SECP521R1,
+    'P-521': ec.SECP521R1,
+    'prime521v1': ec.SECP521R1,
 }
 
 exchange_algorithms = {
@@ -25,6 +43,7 @@ signature_algorithms = {
 
 
 class ECCPrivateKey:
+    """Represents ECC private key."""
     def __init__(self, curve=None, **kwargs):
         if kwargs:
             self._key = kwargs.pop('key')
@@ -100,6 +119,7 @@ class ECCPrivateKey:
 
 
 class ECCPublicKey:
+    """Represents ECC public key."""
     def __init__(self, key):
         self._key = key
 
@@ -149,6 +169,7 @@ class SigVerContext:
 
 
 class ECCSignerCtx(SigVerContext):
+    """Signing context for ECC private key."""
     def sign(self, msghash):
         """Return the signature of the message hash.
         
@@ -164,6 +185,7 @@ class ECCSignerCtx(SigVerContext):
 
 
 class ECCVerifierCtx(SigVerContext):
+    """Verification context for ECC public key."""
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
