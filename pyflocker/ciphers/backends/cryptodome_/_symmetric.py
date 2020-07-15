@@ -60,9 +60,9 @@ class AEADCipherWrapper(CipherWrapper):
             raise TypeError('bytes-like object is required')
         try:
             self._cipher.update(data)
-        except TypeError:
+        except TypeError as e:
             raise TypeError('cannot authenticate data after '
-                            'update has been called') from None
+                            'update has been called') from e
 
     def finalize(self, tag=None):
         try:
@@ -70,8 +70,8 @@ class AEADCipherWrapper(CipherWrapper):
                 if tag is None:
                     raise TypeError('tag is required for decryption')
                 self._cipher.verify(tag)
-        except ValueError:
-            raise exc.DecryptionError from None
+        except ValueError as e:
+            raise exc.DecryptionError from e
 
     def calculate_tag(self):
         if self._locking:

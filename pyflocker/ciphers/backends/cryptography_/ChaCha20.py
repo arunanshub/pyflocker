@@ -32,8 +32,8 @@ class ChaCha20Poly1305(CipherWrapper, base.Cipher):
         if not self._locking:
             try:
                 self._hasher.verify(tag)
-            except bkx.InvalidSignature:
-                raise exc.DecryptionError from None
+            except bkx.InvalidSignature as e:
+                raise exc.DecryptionError from e
 
     def calculate_tag(self):
         if self._locking:

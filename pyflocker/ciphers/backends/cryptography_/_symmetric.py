@@ -1,4 +1,4 @@
-"Symmetric cipher wrapper for this backend only." ""
+"""Symmetric cipher wrapper for this backend only."""
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
@@ -60,19 +60,22 @@ class AEADCipherWrapper(CipherWrapper):
             raise TypeError('bytes-like object is required')
         try:
             (self._cipher.authenticate_additional_data(data))
-        except bkx.AlreadyUpadated:
+        except bkx.AlreadyUpadated as e:
             raise TypeError('cannot authenticate data after '
-                            'update has been called') from None
+                            'update has been called') from e
 
     def finalize(self, tag=None):
         try:
             if not self._locking:
                 if tag is None:
                     raise TypeError('tag is required for decryption')
+                # finalize: decryption
                 return self._cipher.finalize_with_tag(tag)
+            # finalize: encryption
             return self._cipher.finalize()
-        except bkx.InvalidTag:
-            raise exc.DecryptionError from None
+
+        except bkx.InvalidTag as e:
+            raise exc.DecryptionError from e
 
     def calculate_tag(self):
         if self._locking:
