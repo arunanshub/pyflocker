@@ -32,7 +32,7 @@ Before you read on, check if you agree to at least one of these points:
     have made life more easy.
 -   You sometimes think that the file locking script you wrote were faster somehow and played with both
     backends very well, but you weren't sure what to do.
-        -   And all the other solutions (and nonsolutions!) on the internet just confuses you more!
+	-   And all the other solutions (and nonsolutions!) on the internet just confuses you more!
 
 Look no more, you have arrived at the right destination!
 
