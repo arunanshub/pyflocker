@@ -148,4 +148,3 @@ class MyCustomCipher(base.Cipher):
 [pyca]: <https://github.com/pyca/cryptography>
 
 [pyca_vs_self]: <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/?highlight=RSA#key-serialization>
->>>>>>> cff7bec... Add some details to README.md
