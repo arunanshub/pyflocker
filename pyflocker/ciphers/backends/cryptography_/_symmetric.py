@@ -94,8 +94,6 @@ class FileCipherMixin:
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
-        # must use hasher
-        kwargs.pop('hashed', None)
 
         super().__init__(*args, **kwargs)
         if self._hasher is not None:

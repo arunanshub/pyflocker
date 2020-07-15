@@ -57,6 +57,8 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
     """
     cpr = _load_cpr("AES", backend)
     _cpr = _aes_cipher_from_mode(mode, cpr, file is not None)
+    if mode in aead:
+        kwargs.pop('hashed', None)
     if file:
         return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)
     return _cpr(locking, key, mode, iv_or_nonce, **kwargs)

@@ -129,6 +129,7 @@ def lockerf(infile,
                   aes_mode or Modes.MODE_GCM,
                   rand,
                   file=infile,
+                  hashed=True,
                   backend=backend)
 
     # authenticate header portion
