@@ -5,6 +5,10 @@ class DecryptionError(Exception):
     pass
 
 
+class SignatureError(Exception):
+    pass
+
+
 class FinalizationError(Exception):
     pass
 

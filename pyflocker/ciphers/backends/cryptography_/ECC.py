@@ -1,9 +1,10 @@
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import ec, utils
+import cryptography.exceptions as bkx
 
-from ._hashes import hashes
-from .. import base
+from ._hashes import hashes, Hash
+from .. import base, exc
 from ._serialization import encodings, private_format, public_format
 from .._asymmetric import PSS
 
@@ -104,17 +105,32 @@ class ECCPrivateKey(base.BasePrivateKey):
         while serialization, otherwise `None`.
         """
         if data.startswith(b'-----BEGIN OPENSSH PRIVATE KEY'):
-            key = ser.load_ssh_private_key(data, password)
+            loader = ser.load_ssh_private_key
 
         elif data.startswith(b'-----'):
-            key = ser.load_pem_private_key(data, password, defb())
+            loader = ser.load_pem_private_key
 
         elif data[0] == 0x30:
-            key = ser.load_der_private_key(data, password, defb())
+            loader = ser.load_der_private_key
 
         else:
             raise ValueError('incorrect key format')
-        return cls(key=key)
+
+        # type check
+        if password is not None:
+            password = memoryview(password)
+
+        try:
+            return cls(key=loader(
+                memoryview(data),
+                password,
+                defb(),
+            ), )
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Either Key format is invalid or '
+                'password is missing or incorrect.', ) from e
 
 
 class ECCPublicKey(base.BasePublicKey):
@@ -145,17 +161,23 @@ class ECCPublicKey(base.BasePublicKey):
     def load(cls, data):
         """Loads the public key and returns a Key interface."""
         if data.startswith(b'ecdsa-'):
-            key = ser.load_ssh_public_key(data, defb())
+            loader = ser.load_ssh_public_key
 
         elif data.startswith(b'-----'):
-            key = ser.load_pem_public_key(data, defb())
+            loader = ser.load_pem_public_key
 
         elif data[0] == 0x30:
-            key = ser.load_der_public_key(data, defb())
+            loader = ser.load_der_public_key
 
         else:
             raise ValueError('incorrect key format')
-        return cls(key=key)
+
+        try:
+            return cls(key=loader(memoryview(data), defb()))
+        except ValueError as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Incorrect key format.', ) from e
 
 
 class SigVerContext:
@@ -177,6 +199,10 @@ class ECCSignerCtx(SigVerContext):
 
         Refer to `Hash.new` function's documentation.
         """
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the ECC key.', )
         return self._sign(
             msghash.digest(),
             self._algo(utils.Prehashed(hashes[msghash._name]())),
@@ -194,8 +220,15 @@ class ECCVerifierCtx(SigVerContext):
  
         `signature` must be a `bytes` or `bytes-like` object.
         """
-        return self._verify(
-            signature,
-            msghash.digest(),
-            self._algo(utils.Prehashed(hashes[msghash._name]())),
-        )
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the ECC key.', )
+        try:
+            return self._verify(
+                signature,
+                msghash.digest(),
+                self._algo(utils.Prehashed(hashes[msghash._name]())),
+            )
+        except bkx.InvalidSignature as e:
+            raise exc.SignatureError from e

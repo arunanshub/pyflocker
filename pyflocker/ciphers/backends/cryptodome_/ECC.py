@@ -1,8 +1,9 @@
 from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
 
-from .. import base
+from .. import base, exc
 from ._serialization import encodings, formats, protection_schemes
+from ._hashes import Hash
 
 _sig_encodings = {
     'binary': 'binary',
@@ -25,7 +26,13 @@ class _ECCKey:
         For a private key,`password` must be a `bytes` object if the
         key was encrypted while serialization, otherwise `None`.
         """
-        return cls(key=ECC.import_key(data, passphrase))
+        try:
+            return cls(key=ECC.import_key(data, passphrase))
+        except ValueError as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Either Key format is invalid or '
+                'password is missing or incorrect.', ) from e
 
 
 class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
@@ -131,6 +138,10 @@ class ECCSignerCtx(SigVerContext):
 
         Refer to `Hash.new` function's documentation.
         """
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the ECC key.', )
         return self._sig.sign(msghash._hasher)
 
 
@@ -145,6 +156,13 @@ class ECCVerifierCtx(SigVerContext):
  
         `signature` must be a `bytes` or `bytes-like` object.
         """
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the ECC key.', )
         # confusingly, PyCryptodome returns False;
         # better raise errors than returning
-        self._sig.verify(msghash._hasher, signature)
+        try:
+            self._sig.verify(msghash._hasher, signature)
+        except ValueError as e:
+            raise exc.SignatureError from e

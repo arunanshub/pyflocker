@@ -105,22 +105,29 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
     @classmethod
     def load(cls, data, passphrase=None):
         if data.startswith(b'-----'):
-            key = ser.load_pem_private_key(
-                data,
-                memoryview(passphrase),
-                defb(),
-            )
+            loader = ser.load_pem_private_key
 
         elif data[0] == 0x30:
-            key = ser.load_der_private_key(
-                data,
-                memoryview(passphrase),
-                defb(),
-            )
+            loader = ser.load_der_private_key
 
         else:
             raise ValueError('incorrect key format')
-        return cls(key=key)
+
+        # type check
+        if password is not None:
+            password = memoryview(password)
+
+        try:
+            return cls(key=loader(
+                memoryview(data),
+                password,
+                defb(),
+            ), )
+        except (ValueError, TypeError) as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Either Key format is invalid or '
+                'password is missing or incorrect.', ) from e
 
 
 class DHPublicKey(_DHKey, base.BasePublicKey):
@@ -140,11 +147,17 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
     @classmethod
     def load(cls, data):
         if data.startswith(b'-----'):
-            key = ser.load_pem_public_key(memoryview(data), defb())
+            loader = ser.load_pem_public_key
 
         elif data[0] == 0x30:
-            key = ser.load_der_public_key(memoryview(data), defb())
+            loader = ser.load_der_public_key
 
         else:
             raise ValueError('incorrect key format')
-        return cls(key=key)
+
+        try:
+            return cls(key=loader(data, defb()))
+        except ValueError as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Incorrect key format.', ) from e

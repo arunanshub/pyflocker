@@ -2,9 +2,9 @@ from Crypto.PublicKey import RSA
 from Crypto.Cipher import PKCS1_OAEP
 from Crypto.Signature import PKCS1_PSS
 
-from .. import base
+from .. import base, exc
 from .._asymmetric import OAEP, PSS, MGF1
-from ._hashes import hashes as _hashes
+from ._hashes import hashes as _hashes, Hash
 from ._serialization import encodings, formats, protection_schemes
 
 padding = {
@@ -32,7 +32,13 @@ class _RSAKey:
         while serialization, otherwise `None`.
         `password` has no meaning for public key.
         """
-        return cls(key=RSA.import_key(data, password))
+        try:
+            return cls(key=RSA.import_key(data, password))
+        except ValueError as e:
+            raise ValueError(
+                'Cannot deserialize key. '
+                'Either Key format is invalid or '
+                'password is missing or incorrect.', ) from e
 
 
 class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
@@ -42,7 +48,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             self._key = kwargs.pop('key')
         else:
             if n is None:
-                raise ValueError('modulus not provided')
+                raise ValueError('RSA modulus not provided')
             self._key = RSA.generate(n, e=e)
 
     @property
@@ -107,8 +113,11 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             if protection not in protection_schemes:
                 raise TypeError('invalid protection scheme')
 
-        if format == 'PKCS1' and protection is not None:
-            raise TypeError('protection is meaningful only for PKCS8')
+        if format == 'PKCS1':
+            if protection is not None:
+                raise ValueError('protection is meaningful only for PKCS8')
+            if encoding == 'DER':
+                raise ValueError('cannot use DER with PKCS1 format')
 
         if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
@@ -178,7 +187,10 @@ class RSAEncryptionCtx(CipherContext):
 
         `plaintext` must be a `bytes` or `bytes-like` object.
         """
-        return self._cipher.encrypt(plaintext)
+        try:
+            return self._cipher.encrypt(plaintext)
+        except ValueError as e:
+            raise ValueError('the message is too long') from e
 
 
 class RSADecryptionCtx(CipherContext):
@@ -187,7 +199,10 @@ class RSADecryptionCtx(CipherContext):
 
         `ciphertext` must be a `bytes` or `bytes-like` object.
         """
-        return self._cipher.decrypt(ciphertext)
+        try:
+            return self._cipher.decrypt(ciphertext)
+        except ValueError as e:
+            raise exc.DecryptionError from e
 
 
 def _get_signer(key, pad):
@@ -210,7 +225,14 @@ class RSASignerCtx(SigVerContext):
         instantiated from the same backend as that of the RSA key.
         Refer to `Hash.new` function's documentation.
         """
-        return self._sig.sign(msghash._hasher)
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the RSA key.', )
+        try:
+            return self._sig.sign(msghash._hasher)
+        except ValueError as e:
+            raise ValueError('RSA key is not long enough') from e
 
 
 class RSAVerifierCtx(SigVerContext):
@@ -223,4 +245,11 @@ class RSAVerifierCtx(SigVerContext):
  
         `signature` must be a `bytes` or `bytes-like` object.
         """
-        return self._sig.verify(msghash._hasher, signature)
+        if not isinstance(msghash, Hash):
+            raise TypeError(
+                'the message hashing object must be instantiated '
+                'from the same backend as that of the RSA key.', )
+        try:
+            return self._sig.verify(msghash._hasher, signature)
+        except ValueError as e:
+            raise exc.SignatureError from e
