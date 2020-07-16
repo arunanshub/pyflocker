@@ -104,7 +104,7 @@ from pyflocker.locker import locker
 from pyflocker.ciphers import AES
 
 passwd = b'no not this'
-locker('./MySuperSecretFile.txt', passwd, aes_mode=AES.MODE_CTR)  # default is AES-GCM-256
+locker('./MySuperSecretFile.txt', passwd, aes_mode=AES.MODE_CFB)  # default is AES-GCM-256
 # file stored as MySuperSecretFile.txt.pyflk
 ```
 
