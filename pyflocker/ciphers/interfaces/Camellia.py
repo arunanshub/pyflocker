@@ -15,12 +15,14 @@ def _cml_cipher_from_mode(mode, bknd, hasfile):
 def new(locking,
         key,
         mode,
-        *args,
+        iv_or_nonce,
+        *,
         file=None,
         backend=Backends.CRYPTOGRAPHY,
         **kwargs):
     cpr = _load_cpr("Camellia", backend)
     _cpr = _cml_cipher_from_mode(mode, cpr, file is not None)
     if file:
-        return _cpr(locking, key, mode, *args, file=file, **kwargs)
-    return _cpr(locking, key, mode, *args, **kwargs)
+        kwargs.update(dict(hashed=True))  # Always use HMAC
+        return _cpr(locking, key, mode, file=file, **kwargs)
+    return _cpr(locking, key, mode, **kwargs)
