@@ -77,6 +77,7 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
         if format not in formats:
             raise KeyError('invalid format')
 
+        prot = {}
         if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
             prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
