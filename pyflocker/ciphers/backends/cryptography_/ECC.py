@@ -1,6 +1,12 @@
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import ec, utils
+from cryptography.hazmat.primitives.asymmetric import (
+    x448,
+    x25519,
+    ed448,
+    ed25519,
+)
 import cryptography.exceptions as bkx
 
 from ._hashes import hashes, Hash
@@ -33,6 +39,17 @@ curves = {
     'prime521v1': ec.SECP521R1,
 }
 
+# some special cases which require extra handling...
+special_curves = {
+    'x448': x448.X448PrivateKey,
+    'x25519': x25519.X25519PrivateKey,
+    'ed448': ed448.Ed448PrivateKey,
+    'ed25519': ed25519.Ed25519PrivateKey,
+}
+
+# ...but they are still curves
+curves.update(special_curves)
+
 exchange_algorithms = {
     'ECDH': ec.ECDH,
 }
@@ -48,7 +65,13 @@ class ECCPrivateKey(base.BasePrivateKey):
         if kwargs:
             self._key = kwargs.pop('key')
         else:
-            self._key = ec.generate_private_key(curves[curve], defb())
+            if curve not in special_curves:
+                self._key = ec.generate_private_key(
+                    curves[curve],
+                    defb(),
+                )
+            else:
+                self._key = curves[curve].generate()
 
     def public_key(self):
         """Returns public key from the private key"""
@@ -85,8 +108,14 @@ class ECCPrivateKey(base.BasePrivateKey):
         a serialized public key. If latter is the case, the key
         is loaded and then the exchange is performed.
         """
+        if not hasattr(self._key, 'exchange'):
+            raise NotImplementedError
+
         if isinstance(peer_public_key, (bytes, bytearray, memoryview)):
             peer_public_key = ECCPublicKey.load(peer_public_key)
+
+        if not hasattr(self._key, 'sign'):
+            return self._key.exchange(peer_public_key._key)
 
         return self._key.exchange(
             exchange_algorithms[algorithm](),
@@ -95,7 +124,14 @@ class ECCPrivateKey(base.BasePrivateKey):
 
     def signer(self, algorithm='ECDSA'):
         """Returns a signer context."""
-        return ECCSignerCtx(self._key, algorithm)
+        # special case 1: x* key
+        if not hasattr(self._key, 'sign'):
+            raise NotImplementedError
+        # special case 2: ed* key
+        if not hasattr(self._key, 'exchange'):
+            return ECCSignerCtx(self._key, None)
+
+        return ECCSignerCtx(self._key, signature_algorithms[algorithm])
 
     @classmethod
     def load(cls, data, password=None):
@@ -140,7 +176,14 @@ class ECCPublicKey(base.BasePublicKey):
 
     def verifier(self, algorithm='ECDSA'):
         """Returns a verifier context using the given 1algorithm`"""
-        return ECCVerifierCtx(self._key, algorithm)
+        # Special case 1: x* only key
+        if not hasattr(self._key, 'verify'):
+            raise NotImplementedError
+
+        # Special case 2: ed* only key
+        if not hasattr(self._key, 'curve'):
+            return ECCVerifierCtx(self._key, None)
+        return ECCVerifierCtx(self._key, signature_algorithms[algorithm])
 
     def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
         """Serialize the public key.
@@ -182,7 +225,7 @@ class ECCPublicKey(base.BasePublicKey):
 
 class SigVerContext:
     def __init__(self, key, algo):
-        self._algo = signature_algorithms[algo]
+        self._algo = algo
         try:
             self._sign = key.sign
         except AttributeError:
@@ -203,6 +246,10 @@ class ECCSignerCtx(SigVerContext):
             raise TypeError(
                 'the message hashing object must be instantiated '
                 'from the same backend as that of the ECC key.', )
+        # special case 1: x* only key
+        if self._algo is None:
+            return self._sign(msghash.digest())
+
         return self._sign(
             msghash.digest(),
             self._algo(utils.Prehashed(hashes[msghash._name]())),
@@ -224,6 +271,18 @@ class ECCVerifierCtx(SigVerContext):
             raise TypeError(
                 'the message hashing object must be instantiated '
                 'from the same backend as that of the ECC key.', )
+        
+        # special case 1: ed* only key
+        if self._algo is None:
+            try:
+                return self._verify(
+                    signature,
+                    msghash.digest(),
+                )
+            except bkx.InvalidSignature as e:
+                raise exc.SignatureError from e
+
+        # normal case
         try:
             return self._verify(
                 signature,
