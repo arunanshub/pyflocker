@@ -1,3 +1,4 @@
+from functools import partial
 from cryptography.hazmat.primitives.ciphers import (algorithms as algo, Cipher
                                                     as CrCipher)
 from cryptography import exceptions as bkx
@@ -12,35 +13,153 @@ supported = frozenset()
 
 
 @base.cipher
-class ChaCha20Poly1305(CipherWrapper, base.Cipher):
+class ChaCha20Poly1305(base.Cipher):
     def __init__(self, locking, key, nonce):
+        if not len(nonce) == 12:
+            raise ValueError('A 12 byte nonce is required')
+
         self._locking = locking
-        self._hasher = Poly1305(key)
-        self._cipher = CrCipher(algo.ChaCha20(key, nonce), None, defb())
+        cipher = CrCipher(
+            algo.ChaCha20(
+                key,
+                (1).to_bytes(4, 'little') + nonce,
+            ),
+            None,
+            defb(),
+        )
+        if locking:
+            self._cipher = cipher.encryptor()
+        else:
+            self._cipher = cipher.decryptor()
+
+        # generate Poly1305 key (r, s) and instantiate
+        cpr = CrCipher(
+            algo.ChaCha20(key,
+                          bytes(4) + nonce),
+            None,
+            defb(),
+        ).encryptor()
+        rs = cpr.update(bytes(32))
+        self._hasher = Poly1305(rs)
+
         self._tag = None
         self._updated = False
-        super().__init__()
+
+        self._len_aad = 0
+        self._len_ct = 0
+
+        self._update = self._get_update()
+        self._update_into = self._get_update_into()
 
     def authenticate(self, data):
         if self._updated:
             raise TypeError('cannot authenticate data '
                             'after update has been called')
+        self._len_aad += data
         self._hasher.update(data)
+
+    def _pad_aad(self):
+        if self._len_aad & 0x0F:
+            self._hasher.update(bytes(16 - (self._len_aad & 0x0F)))
+
+    def update(self, data):
+        if not self._updated:
+            self._pad_aad()
+            self._updated = True
+        return self._update(data)
+
+    def update_into(self, data, out):
+        if not self._updated:
+            self._pad_aad()
+            self._updated = True
+        self._update_into(data, out)
 
     def finalize(self, tag=None):
         self._cipher.finalize()
+        self._pad_aad()
+
+        if self._len_ct & 0x0F:
+            self._hasher.update(bytes(16 - (self._len_ct & 0x0F)))
+
+        self._hasher.update(self._len_aad.to_bytes(8, 'little'))
+        self._hasher.update(self._len_ct.to_bytes(8, 'little'))
+
         if not self._locking:
             try:
                 self._hasher.verify(tag)
             except bkx.InvalidSignature as e:
                 raise exc.DecryptionError from e
+        else:
+            self._tag = self._hasher.finalize()
 
     def calculate_tag(self):
         if self._locking:
-            if not self._tag:
-                self._tag = self._hasher.finalize()
             return self._tag
 
+    def _get_update(self):
+        if self._locking:
 
-class ChaCha20Poly1305File(FileCipherMixin, ChaCha20Poly1305):
-    pass
+            def update(data):
+                res = self._cipher.update(data)
+                self._len_ct += len(data)
+                self._hasher.update(res)
+                return res
+        else:
+
+            def update(data):
+                self._hasher.update(data)
+                self._len_ct += len(data)
+                return self._cipher.update(data)
+
+        return update
+
+    def _get_update_into(self):
+        if self._locking:
+
+            def update_into(data, out):
+                self._cipher.update_into(data, out)
+                self._len_ct += len(data)
+                self._hasher.update(out[:-15])
+        else:
+
+            def update_into(data, out):
+                self._hasher.update(data)
+                self._len_ct += len(data)
+                self._cipher.update_into(data, out)
+
+        return update_into
+
+
+@base.cipher
+class ChaCha20Poly1305File(ChaCha20Poly1305):
+    def __init__(self, *args, file, **kwargs):
+        self.__file = file
+        super().__init__(*args, **kwargs)
+
+        self.__update = super().update
+        self.__update_into = super().update_into
+
+    def update(self, blocksize=16384):
+        data = self.__file.read(blocksize)
+        if data:
+            return self.__update(data)
+
+    def update_into(self, file, tag=None, blocksize=16384):
+        if not self._locking and tag is None:
+            raise ValueError
+
+        wbuf = memoryview(bytearray(blocksize + 15))
+        rbuf = wbuf[:blocksize]
+
+        reads = iter(partial(self.__file.readinto, rbuf), 0)
+        write = file.write
+
+        update_into = self.__update_into
+
+        for i in reads:
+            if i < blocksize:
+                rbuf = rbuf[:i]
+            update_into(rbuf, wbuf)
+            write(rbuf)
+
+        self.finalize(tag)
