@@ -15,8 +15,10 @@ supported = frozenset()
 @base.cipher
 class ChaCha20Poly1305(base.Cipher):
     def __init__(self, locking, key, nonce):
-        if not len(nonce) == 12:
-            raise ValueError('A 12 byte nonce is required')
+        if not len(nonce) in (8, 12):
+            raise ValueError('A 8 or 12 byte nonce is required')
+        if len(nonce) == 8:
+            nonce = bytes(4) + nonce
 
         self._locking = locking
         cipher = CrCipher(
