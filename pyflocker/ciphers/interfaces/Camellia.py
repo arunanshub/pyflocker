@@ -24,5 +24,5 @@ def new(locking,
     _cpr = _cml_cipher_from_mode(mode, cpr, file is not None)
     if file:
         kwargs.update(dict(hashed=True))  # Always use HMAC
-        return _cpr(locking, key, mode, file=file, **kwargs)
-    return _cpr(locking, key, mode, **kwargs)
+        return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)
+    return _cpr(locking, key, mode, iv_or_nonce, **kwargs)
