@@ -87,14 +87,15 @@ class BaseAsymmetricKey(ABC):
 
 class BasePrivateKey(BaseAsymmetricKey):
     """Represents the base interface for private key."""
-    @abstractmethod
     def signer(self):
         """Instantiate and return a signer object."""
+
+    def exchange(self):
+        """Perform a key exchange."""
 
 
 class BasePublicKey(BaseAsymmetricKey):
     """Represents the base interface for public key."""
-    @abstractmethod
     def verifier(self):
         """Instantiate and return a verifier object."""
 
