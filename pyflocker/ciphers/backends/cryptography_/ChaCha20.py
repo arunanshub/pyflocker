@@ -42,7 +42,7 @@ class ChaCha20Poly1305(base.Cipher):
             defb(),
         ).encryptor()
         rs = cpr.update(bytes(32))
-        self._hasher = Poly1305(rs)
+        self._auth = Poly1305(rs)
 
         self._tag = None
         self._updated = False
@@ -58,11 +58,11 @@ class ChaCha20Poly1305(base.Cipher):
             raise TypeError('cannot authenticate data '
                             'after update has been called')
         self._len_aad += data
-        self._hasher.update(data)
+        self._auth.update(data)
 
     def _pad_aad(self):
         if self._len_aad & 0x0F:
-            self._hasher.update(bytes(16 - (self._len_aad & 0x0F)))
+            self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
 
     def update(self, data):
         if not self._updated:
@@ -81,18 +81,18 @@ class ChaCha20Poly1305(base.Cipher):
         self._pad_aad()
 
         if self._len_ct & 0x0F:
-            self._hasher.update(bytes(16 - (self._len_ct & 0x0F)))
+            self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
 
-        self._hasher.update(self._len_aad.to_bytes(8, 'little'))
-        self._hasher.update(self._len_ct.to_bytes(8, 'little'))
+        self._auth.update(self._len_aad.to_bytes(8, 'little'))
+        self._auth.update(self._len_ct.to_bytes(8, 'little'))
 
         if not self._locking:
             try:
-                self._hasher.verify(tag)
+                self._auth.verify(tag)
             except bkx.InvalidSignature as e:
                 raise exc.DecryptionError from e
         else:
-            self._tag = self._hasher.finalize()
+            self._tag = self._auth.finalize()
 
     def calculate_tag(self):
         if self._locking:
@@ -104,12 +104,12 @@ class ChaCha20Poly1305(base.Cipher):
             def update(data):
                 res = self._cipher.update(data)
                 self._len_ct += len(data)
-                self._hasher.update(res)
+                self._auth.update(res)
                 return res
         else:
 
             def update(data):
-                self._hasher.update(data)
+                self._auth.update(data)
                 self._len_ct += len(data)
                 return self._cipher.update(data)
 
@@ -121,11 +121,11 @@ class ChaCha20Poly1305(base.Cipher):
             def update_into(data, out):
                 self._cipher.update_into(data, out)
                 self._len_ct += len(data)
-                self._hasher.update(out[:-15])
+                self._auth.update(out[:-15])
         else:
 
             def update_into(data, out):
-                self._hasher.update(data)
+                self._auth.update(data)
                 self._len_ct += len(data)
                 self._cipher.update_into(data, out)
 

@@ -39,8 +39,8 @@ class CipherWrapper(CipherWrapperBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # no hasher defined
-        if not hasattr(self, '_hasher'):
-            self._hasher = None
+        if not hasattr(self, '_auth'):
+            self._auth = None
 
         locking = self._locking
         # for generic ciphers only
@@ -54,7 +54,7 @@ class CipherWrapper(CipherWrapperBase):
     def _get_update(self):
         crpup = (self._cipher.encrypt
                  if self._locking else self._cipher.decrypt)
-        hashup = (None if self._hasher is None else self._hasher.update)
+        hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -85,7 +85,7 @@ class CipherWrapper(CipherWrapperBase):
     def _get_update_into(self):
         crpup = (self._cipher.encrypt
                  if self._locking else self._cipher.decrypt)
-        hashup = (None if self._hasher is None else self._hasher.update)
+        hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -154,11 +154,6 @@ class FileCipherMixin:
 
         _crpup = (self._cipher.encrypt
                   if self._locking else self._cipher.decrypt)
-
-        if self._hasher is not None:
-            _hashup = self._hasher.update
-        else:
-            _hashup = None
 
         self.__update = super().update
         self.__update_into = super().update_into

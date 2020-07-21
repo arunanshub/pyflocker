@@ -36,10 +36,10 @@ def derive_key(master_key, dklen, hashalgo, salt):
 class CipherWrapper(CipherWrapperBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not hasattr(self, '_hasher'):
-            self._hasher = None
+        if not hasattr(self, '_auth'):
+            self._auth = None
 
-        _hashup = (None if self._hasher is None else self._hasher.update)
+        _hashup = (None if self._auth is None else self._auth.update)
 
         locking = self._locking
         self._cipher = _crp = (self._cipher.encryptor()
@@ -49,12 +49,13 @@ class CipherWrapper(CipherWrapperBase):
         self._update = self._get_update()
         self._update_into = self._get_update_into()
 
+        # for ciphers with HMAC enabled
         self._updated = False
         self._len_ct = 0
 
     def _get_update(self):
         crpup = self._cipher.update
-        hashup = (None if self._hasher is None else self._hasher.update)
+        hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -84,7 +85,7 @@ class CipherWrapper(CipherWrapperBase):
 
     def _get_update_into(self):
         crpup = self._cipher.update_into
-        hashup = (None if self._hasher is None else self._hasher.update)
+        hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -117,7 +118,7 @@ class AEADCipherWrapper(CipherWrapper):
         if not isinstance(data, (bytes, bytearray, memoryview)):
             raise TypeError('bytes-like object is required')
         try:
-            (self._cipher.authenticate_additional_data(data))
+            self._cipher.authenticate_additional_data(data)
         except bkx.AlreadyUpadated as e:
             raise TypeError('cannot authenticate data after '
                             'update has been called') from e

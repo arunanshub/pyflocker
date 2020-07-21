@@ -6,6 +6,8 @@ from .. import exc
 
 
 class CipherWrapperBase:
+    """Represents the general functionality of ciphers
+    performing generic functionality."""
     def update(self, data):
         return self._update(data)
 
@@ -19,31 +21,34 @@ class HMACMixin:
     """
     def __init__(self,
                  *args,
-                 key,
-                 rand,
+                 key=None,
+                 rand=None,
                  hashed=True,
                  digestmod='sha256',
                  **kwargs):
-        if hashed:
-            self._hasher = hmac.new(key, digestmod=digestmod)
-            self._hasher.update(rand)
-        else:
-            self._hasher = None
-        self._len_aad = 0
         super().__init__(*args, **kwargs)
+        if hashed:
+            self._auth = hmac.new(key, digestmod=digestmod)
+            self._auth.update(rand)
+        else:
+            self._auth = None
+        self._len_aad = 0
 
     def _pad_aad(self):
+        """Pads the Additional authenticated data.
+        Must be called only once before calling `update` or
+        `update_into`."""
         if self._len_aad & 0x0F:
-            self._hasher.update(bytes(16 - (self._len_aad & 0x0F)))
+            self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
 
     def authenticate(self, data):
         # cipher with hmac/hasher disabled
-        if self._hasher is None:
+        if self._auth is None:
             raise NotImplementedError('HMAC is disabled')
         if self._updated:
             raise TypeError('cannot authenticate data after '
                             'update has been called')
-        self._hasher.update(data)
+        self._auth.update(data)
         self._len_aad += len(data)
 
     def finalize(self, tag=None):
@@ -52,24 +57,26 @@ class HMACMixin:
                 raise ValueError('tag is required for decryption')
 
         try:
+            # pyca/cryptography ciphers needs to be finalized
             self._cipher.finalize()
         except AttributeError:
             pass
 
         # cipher with hmac/hasher disabled
-        if self._hasher is None:
+        if self._auth is None:
             return
 
+        # pad the ciphertext to hasher
         if self._len_ct & 0x0F:
-            self._hasher.update(bytes(16 - (self._len_ct & 0x0F)))
+            self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
 
         if not self._locking:
-            if not hmac.compare_digest(self._hasher.digest(), tag):
+            if not hmac.compare_digest(self._auth.digest(), tag):
                 raise exc.DecryptionError
 
     def calculate_tag(self):
         # cipher with no hmac/hasher
-        if self._hasher is None:
+        if self._auth is None:
             raise NotImplementedError('HMAC is disabled')
         if self._locking:
-            return self._hasher.digest()
+            return self._auth.digest()
