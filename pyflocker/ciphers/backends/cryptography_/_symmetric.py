@@ -22,9 +22,10 @@ def derive_key(master_key, dklen, hashalgo, salt):
         defb(),
     ).derive(master_key)
 
+    hash_ = _hashes[hashalgo](),
     hkey = HKDF(
-        _hashes[hashalgo](),
-        32,
+        hash_,
+        hash_.digest_size // 8,
         salt,
         b"auth-key",
         defb(),
@@ -34,6 +35,7 @@ def derive_key(master_key, dklen, hashalgo, salt):
 
 class CipherWrapper(CipherWrapperBase):
     def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         if not hasattr(self, '_hasher'):
             self._hasher = None
 
@@ -42,16 +44,72 @@ class CipherWrapper(CipherWrapperBase):
         locking = self._locking
         self._cipher = _crp = (self._cipher.encryptor()
                                if locking else self._cipher.decryptor())
-        # for generic ciphers only
-        self._update = updater(locking, _crp.update, _hashup, buffered=False)
-        self._update_into = updater(locking,
-                                    _crp.update_into,
-                                    _hashup,
-                                    shared=False)
 
-        # for non-aead ciphers only
+        # for generic ciphers only
+        self._update = self._get_update()
+        self._update_into = self._get_update_into()
+
         self._updated = False
-        super().__init__(*args, **kwargs)
+        self._len_ct = 0
+
+    def _get_update(self):
+        crpup = self._cipher.update
+        hashup = (None if self._hasher is None else self._hasher.update)
+
+        # AEAD ciphers or HMAC disabled
+        if hashup is None:
+            return crpup
+
+        if self._locking:
+
+            def update(data):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                res = crpup(data)
+                self._len_ct += len(res)
+                hashup(res)
+                return res
+        else:
+
+            def update(data):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                hashup(data)
+                self._len_ct += len(data)
+                return crpup(data)
+
+        return update
+
+    def _get_update_into(self):
+        crpup = self._cipher.update_into
+        hashup = (None if self._hasher is None else self._hasher.update)
+
+        # AEAD ciphers or HMAC disabled
+        if hashup is None:
+            return crpup
+
+        if self._locking:
+
+            def update_into(data, out):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                crpup(data, out)
+                self._len_ct += len(out)
+                hashup(out[:-15])
+        else:
+
+            def update_into(data, out):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                hashup(data)
+                self._len_ct += len(data)
+                crpup(data, out)
+
+        return update_into
 
 
 class AEADCipherWrapper(CipherWrapper):
@@ -96,18 +154,9 @@ class FileCipherMixin:
         self.__file = file
 
         super().__init__(*args, **kwargs)
-        if self._hasher is not None:
-            _hashup = self._hasher.update
-        else:
-            _hashup = None
 
-        self.__update = updater(self._locking,
-                                self._cipher.update,
-                                _hashup,
-                                buffered=False)
-
-        self.__update_into = updater(self._locking, self._cipher.update_into,
-                                     _hashup)
+        self.__update = super()._update
+        self.__update_into = super()._update_into
 
     @base.before_finalized
     def update(self, blocksize=16384):
@@ -118,8 +167,6 @@ class FileCipherMixin:
         You must finalize by yourself after calling
         this method.
         """
-
-        self._updated = True
         data = self.__file.read(blocksize)
         if data:
             return self.__update(data)

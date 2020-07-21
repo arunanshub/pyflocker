@@ -7,8 +7,6 @@ from .. import exc
 
 class CipherWrapperBase:
     def update(self, data):
-        # for non-aead only; has no effect on aead
-        self._updated = True
         return self._update(data)
 
     def update_into(self, data, out):
@@ -31,7 +29,12 @@ class HMACMixin:
             self._hasher.update(rand)
         else:
             self._hasher = None
+        self._len_aad = 0
         super().__init__(*args, **kwargs)
+
+    def _pad_aad(self):
+        if self._len_aad & 0x0F:
+            self._hasher.update(bytes(16 - (self._len_aad & 0x0F)))
 
     def authenticate(self, data):
         # cipher with hmac/hasher disabled
@@ -41,6 +44,7 @@ class HMACMixin:
             raise TypeError('cannot authenticate data after '
                             'update has been called')
         self._hasher.update(data)
+        self._len_aad += len(data)
 
     def finalize(self, tag=None):
         if not self._locking:
@@ -55,6 +59,9 @@ class HMACMixin:
         # cipher with hmac/hasher disabled
         if self._hasher is None:
             return
+
+        if self._len_ct & 0x0F:
+            self._hasher.update(bytes(16 - (self._len_ct & 0x0F)))
 
         if not self._locking:
             if not hmac.compare_digest(self._hasher.digest(), tag):

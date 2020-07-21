@@ -43,15 +43,74 @@ class CipherWrapper(CipherWrapperBase):
             self._hasher = None
 
         locking = self._locking
-        _crpup = (self._cipher.encrypt if locking else self._cipher.decrypt)
-        _hashup = (None if self._hasher is None else self._hasher.update)
-
         # for generic ciphers only
-        self._update = updater(locking, _crpup, _hashup, buffered=False)
-        self._update_into = updater(locking, _crpup, _hashup, shared=False)
+        self._update = self._get_update()
+        self._update_into = self._get_update_into()
 
         # for non-aead ciphers only
         self._updated = False
+        self._len_ct = 0  # will be needed by HMACMixin
+
+    def _get_update(self):
+        crpup = (self._cipher.encrypt
+                 if self._locking else self._cipher.decrypt)
+        hashup = (None if self._hasher is None else self._hasher.update)
+
+        # AEAD ciphers or HMAC disabled
+        if hashup is None:
+            return crpup
+
+        if self._locking:
+
+            def update(data):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                res = crpup(data)
+                self._len_ct += len(res)
+                hashup(res)
+                return res
+        else:
+
+            def update(data):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                hashup(data)
+                self._len_ct += len(data)
+                return crpup(data)
+
+        return update
+
+    def _get_update_into(self):
+        crpup = (self._cipher.encrypt
+                 if self._locking else self._cipher.decrypt)
+        hashup = (None if self._hasher is None else self._hasher.update)
+
+        # AEAD ciphers or HMAC disabled
+        if hashup is None:
+            return crpup
+
+        if self._locking:
+
+            def update_into(data, out):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                crpup(data, out)
+                self._len_ct += len(out)
+                hashup(out)
+        else:
+
+            def update_into(data, out):
+                if not self._updated:
+                    self._pad_aad()
+                    self._updated = True
+                hashup(data)
+                self._len_ct += len(data)
+                crpup(data, out)
+
+        return update_into
 
 
 class AEADCipherWrapper(CipherWrapper):
@@ -101,8 +160,8 @@ class FileCipherMixin:
         else:
             _hashup = None
 
-        self.__update = updater(self._locking, _crpup, _hashup, buffered=False)
-        self.__update_into = updater(self._locking, _crpup, _hashup)
+        self.__update = super().update
+        self.__update_into = super().update_into
 
     @base.before_finalized
     def update(self, blocksize=16384):
@@ -113,7 +172,6 @@ class FileCipherMixin:
         You must finalize by yourself after calling
         this method.
         """
-        self._updated = True
         data = self.__file.read(blocksize)
         if data:
             return self.__update(data)
