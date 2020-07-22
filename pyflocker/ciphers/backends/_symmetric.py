@@ -66,9 +66,8 @@ class HMACMixin:
         if self._auth is None:
             return
 
-        # pad the ciphertext to hasher
-        if self._len_ct & 0x0F:
-            self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
+        self._auth.update(self._len_aad.to_bytes(8, 'little'))
+        self._auth.update(self._len_ct.to_bytes(8, 'little'))
 
         if not self._locking:
             if not hmac.compare_digest(self._auth.digest(), tag):
