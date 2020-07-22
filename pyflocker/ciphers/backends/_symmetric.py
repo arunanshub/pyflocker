@@ -34,13 +34,6 @@ class HMACMixin:
             self._auth = None
         self._len_aad = 0
 
-    def _pad_aad(self):
-        """Pads the Additional authenticated data.
-        Must be called only once before calling `update` or
-        `update_into`."""
-        if self._len_aad & 0x0F:
-            self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
-
     def authenticate(self, data):
         # cipher with hmac/hasher disabled
         if self._auth is None:

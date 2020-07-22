@@ -24,11 +24,12 @@ def derive_key(master_key, dklen, hashalgo, salt):
         context=b"enc-key",
     )
 
+    hash_ = _hashes[hashalgo]()
     hkey = KDF.HKDF(
         master=master_key,
-        key_len=32,
+        key_len=hash_.digest_size,
         salt=salt,
-        hashmod=_hashes[hashalgo](),
+        hashmod=hash_,
         num_keys=1,
         context=b"auth-key",
     )
@@ -42,18 +43,13 @@ class CipherWrapper(CipherWrapperBase):
         if not hasattr(self, '_auth'):
             self._auth = None
 
-        locking = self._locking
-        # for generic ciphers only
-        self._update = self._get_update()
-        self._update_into = self._get_update_into()
-
         # for non-aead ciphers only
         self._updated = False
         self._len_ct = 0  # will be needed by HMACMixin
 
     def _get_update(self):
-        crpup = (self._cipher.encrypt
-                 if self._locking else self._cipher.decrypt)
+        crpup = (self._cipher.encrypt if self._locking
+                 else self._cipher.decrypt)
         hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
@@ -61,24 +57,18 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
-
             def update(data):
-                if not self._updated:
-                    self._pad_aad()
-                    self._updated = True
-                res = crpup(data)
-                self._len_ct += len(res)
-                hashup(res)
-                return res
+                self._updated = True
+                ctxt = crpup(data)
+                self._len_ct += len(ctxt)
+                hashup(ctxt)
+                return ctxt
         else:
-
-            def update(data):
-                if not self._updated:
-                    self._pad_aad()
-                    self._updated = True
-                hashup(data)
-                self._len_ct += len(data)
-                return crpup(data)
+            def update(ctxt):
+                self._updated = True
+                hashup(ctxt)
+                self._len_ct += len(ctxt)
+                return crpup(ctxt)
 
         return update
 
@@ -92,20 +82,14 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
-
             def update_into(data, out):
-                if not self._updated:
-                    self._pad_aad()
-                    self._updated = True
+                self._updated = True
                 crpup(data, out)
                 self._len_ct += len(out)
                 hashup(out)
         else:
-
             def update_into(data, out):
-                if not self._updated:
-                    self._pad_aad()
-                    self._updated = True
+                self._updated = True
                 hashup(data)
                 self._len_ct += len(data)
                 crpup(data, out)
@@ -114,6 +98,11 @@ class CipherWrapper(CipherWrapperBase):
 
 
 class AEADCipherWrapper(CipherWrapper):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self._update = self._get_update()
+        self._update_into = self._get_update_into()
+
     def authenticate(self, data):
         if not isinstance(data, (bytes, bytearray, memoryview)):
             raise TypeError('bytes-like object is required')
@@ -138,7 +127,12 @@ class AEADCipherWrapper(CipherWrapper):
 
 
 class HMACCipherWrapper(HMACMixin, CipherWrapper):
-    pass
+    def __init__(self, *args, **kwargs):
+        # we need to do it here since CipherWrapper
+        # cannot reach _auth defined in HMACMixin
+        super().__init__(*args, **kwargs)
+        self._update = self._get_update()
+        self._update_into = self._get_update_into()
 
 
 class FileCipherMixin:
