@@ -1,4 +1,5 @@
 "Symmetric cipher wrapper for this backend only." ""
+from functools import partial
 try:
     from Cryptodome.Protocol import KDF
 except ModuleNotFoundError:
@@ -6,11 +7,7 @@ except ModuleNotFoundError:
 
 from ._hashes import hashes as _hashes
 from .._symmetric import CipherWrapperBase, HMACMixin
-from .._utils import updater
 from .. import base, exc
-
-from functools import partial
-from .._utils import updater
 
 
 def derive_key(master_key, dklen, hashalgo, salt):

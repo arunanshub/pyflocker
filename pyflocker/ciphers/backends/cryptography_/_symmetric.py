@@ -1,14 +1,13 @@
 """Symmetric cipher wrapper for this backend only."""
 
+from functools import partial
+
 import cryptography.exceptions as bkx
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend as defb
-from .._symmetric import (CipherWrapperBase, HMACMixin)
-from .._utils import updater
-from .. import base, exc
 
-from functools import partial
-from .._utils import updater
+from .._symmetric import CipherWrapperBase, HMACMixin
+from .. import base, exc
 from ._hashes import hashes as _hashes
 
 
