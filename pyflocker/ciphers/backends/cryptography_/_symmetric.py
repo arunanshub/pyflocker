@@ -22,7 +22,7 @@ def derive_key(master_key, dklen, hashalgo, salt):
         defb(),
     ).derive(master_key)
 
-    hash_ = _hashes[hashalgo](),
+    hash_ = _hashes[hashalgo]()
     hkey = HKDF(
         hash_,
         hash_.digest_size // 8,
