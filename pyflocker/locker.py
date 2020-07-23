@@ -82,11 +82,7 @@ def lockerf(infile,
         raise ValueError("infile and outfile cannot be the same")
 
     # set defaults
-    if (aes_mode == Modes.MODE_CTR or aes_mode in special):
-        # for CTR:
-        # cryptography accepts 16 byte nonce, but
-        # cryptodome refuses: can't take risk?
-
+    if aes_mode in special:
         # for one rounds:
         # we need gradual encryption ability
         raise NotImplementedError
