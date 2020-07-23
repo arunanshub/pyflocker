@@ -45,8 +45,8 @@ class CipherWrapper(CipherWrapperBase):
         self._len_ct = 0  # will be needed by HMACMixin
 
     def _get_update(self):
-        crpup = (self._cipher.encrypt if self._locking
-                 else self._cipher.decrypt)
+        crpup = (self._cipher.encrypt
+                 if self._locking else self._cipher.decrypt)
         hashup = (None if self._auth is None else self._auth.update)
 
         # AEAD ciphers or HMAC disabled
@@ -54,6 +54,7 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
+
             def update(data):
                 self._updated = True
                 ctxt = crpup(data)
@@ -61,6 +62,7 @@ class CipherWrapper(CipherWrapperBase):
                 hashup(ctxt)
                 return ctxt
         else:
+
             def update(ctxt):
                 self._updated = True
                 hashup(ctxt)
@@ -79,12 +81,14 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
+
             def update_into(data, out):
                 self._updated = True
                 crpup(data, out)
                 self._len_ct += len(out)
                 hashup(out)
         else:
+
             def update_into(data, out):
                 self._updated = True
                 hashup(data)

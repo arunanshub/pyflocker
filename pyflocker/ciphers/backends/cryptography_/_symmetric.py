@@ -38,8 +38,8 @@ class CipherWrapper(CipherWrapperBase):
         if not hasattr(self, '_auth'):
             self._auth = None
         locking = self._locking
-        self._cipher = _crp = (self._cipher.encryptor()
-                               if locking else self._cipher.decryptor())
+        self._cipher = (self._cipher.encryptor()
+                        if locking else self._cipher.decryptor())
         # for ciphers with HMAC enabled
         self._updated = False
         self._len_ct = 0
@@ -53,6 +53,7 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
+
             def update(data):
                 self._updated = True
                 ctxt = crpup(data)
@@ -60,6 +61,7 @@ class CipherWrapper(CipherWrapperBase):
                 hashup(ctxt)
                 return ctxt
         else:
+
             def update(ctxt):
                 self._updated = True
                 hashup(ctxt)
@@ -77,12 +79,14 @@ class CipherWrapper(CipherWrapperBase):
             return crpup
 
         if self._locking:
+
             def update_into(data, out):
                 self._updated = True
                 crpup(data, out)
                 self._len_ct += len(out)
                 hashup(out[:-15])
         else:
+
             def update_into(data, out):
                 self._updated = True
                 hashup(data)

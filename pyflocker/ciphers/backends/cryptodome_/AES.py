@@ -39,7 +39,11 @@ def _aes_cipher(key, mode, iv_or_nonce):
         # compat with pyca/cryptography's CFB(...) mode
         kwargs = dict(segment_size=128)
     elif mode == _m.MODE_CTR:
-        kwargs = dict(nonce=iv_or_nonce)
+        kwargs = dict(
+            # initial value of Cryptodome is nonce for pyca/cryptography
+            initial_value=int.from_bytes(iv_or_nonce, 'big'),
+            nonce=b'',
+        )
         args = ()
 
     return AES.new(key, supported[mode], *args, **kwargs)
