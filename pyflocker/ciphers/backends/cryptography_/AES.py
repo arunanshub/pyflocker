@@ -41,30 +41,41 @@ class AEADFile(FileCipherMixin, AEAD):
     pass
 
 
-class _EAX:
-    def __init__(self, key, nonce):
-        self._omac = [
-            cmac.CMAC(algo.AES(key), defb())
-            for i in range(3)
-        ]
+def strxor(x, y):
+    """ XOR two byte strings """
+    return bytes([ix ^ iy for ix, iy in zip(x, y)])
 
-        [self._omac[i].update(
-            bytes(1) * (algo.AES.block_size - 1) + struct.pack('B', i)
-        )
-        for i in range(3)]
+
+class _EAX:
+    """Pseudo pyca/cryptography style cipher for EAX mode."""
+    def __init__(self, key, nonce, mac_len=16):
+        self._mac_len = 16
+        self._omac = [cmac.CMAC(algo.AES(key), defb()) for i in range(3)]
+
+        [
+            self._omac[i].update(
+                bytes(1) * (algo.AES.block_size // 8 - 1) +
+                struct.pack('B', i)) for i in range(3)
+        ]
 
         self._omac[0].update(nonce)
         self._auth = self._omac[1]
 
+        # create a cache since cryptography allows us to calculate tag
+        # only once... why...
+        self._omac_cache = []
+        self._omac_cache.append(self._omac[0].finalize())
+
         self._cipher = CrCipher(
             algo.AES(key),
-            modes.CTR(self._omac[0].finalize()),
+            modes.CTR(self._omac_cache[0]),
             defb(),
         )
 
         self._update = None
         self._update_into = None
         self._updated = False
+        self._tag = None
 
     def authenticate_additional_data(self, data):
         if self._updated:
@@ -72,6 +83,14 @@ class _EAX:
         self._auth.update(data)
 
     def encryptor(self):
+        """Create a pseudo-encryptor context.
+        
+        Pseudo in the sense that, pyca/cryptography uses a encryption
+        or decryption context, but we replace the object variable.
+
+        Replaces the variables `_update` and `_update_into`
+        with suitable functions.
+        """
         self._cipher = self._cipher.encryptor()
 
         hashup = self._omac[2].update
@@ -92,6 +111,14 @@ class _EAX:
         return self
 
     def decryptor(self):
+        """Create a pseudo-encryptor context.
+        
+        Pseudo in the sense that, pyca/cryptography uses a encryption
+        or decryption context, but we replace the object variable.
+
+        Replaces the variables `_update` and `_update_into`
+        with suitable functions.
+        """
         self._cipher = self._cipher.decryptor()
 
         hashup = self._omac[2].update
@@ -120,14 +147,26 @@ class _EAX:
         self._update_into(data, out)
 
     def finalize(self):
-        ...
+        """Finalizes the cipher. It is not affected by the number of
+        calls to it."""
+        if not self._tag:
+            tag = bytes(algo.AES.block_size // 8)
+            for i in range(3):
+                try:
+                    tag = strxor(tag, self._omac_cache[i])
+                except IndexError:
+                    self._omac_cache.append(self._omac[i].finalize())
+                    tag = strxor(tag, self._omac_cache[i])
+            self._tag = tag[:self._mac_len]
 
     def finalize_with_tag(self, tag):
-        ...
+        self.finalize()
+        if not hmac.compare_digest(tag, self._tag):
+            raise exc.DecryptionError
 
     @property
     def tag(self):
-        ...
+        return self._tag
 
 
 @base.cipher
