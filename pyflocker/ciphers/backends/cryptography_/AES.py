@@ -1,5 +1,7 @@
+import struct
 from cryptography.hazmat.primitives.ciphers import (Cipher as CrCipher, modes,
                                                     algorithms as algo)
+from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, Modes as _m
@@ -13,6 +15,7 @@ from ._symmetric import (
 
 supported = {
     _m.MODE_GCM: modes.GCM,
+    _m.MODE_EAX: None,  # not defined by backend
     _m.MODE_CTR: modes.CTR,
     _m.MODE_CFB8: modes.CFB8,
     _m.MODE_CFB: modes.CFB,
@@ -21,6 +24,8 @@ supported = {
 
 
 def _aes_cipher(key, mode, nonce_or_iv):
+    if mode == _m.MODE_EAX:
+        return _EAX(key, nonce_or_iv)
     return CrCipher(algo.AES(key), supported[mode](nonce_or_iv), defb())
 
 
@@ -34,6 +39,95 @@ class AEAD(AEADCipherWrapper, base.Cipher):
 
 class AEADFile(FileCipherMixin, AEAD):
     pass
+
+
+class _EAX:
+    def __init__(self, key, nonce):
+        self._omac = [
+            cmac.CMAC(algo.AES(key), defb())
+            for i in range(3)
+        ]
+
+        [self._omac[i].update(
+            bytes(1) * (algo.AES.block_size - 1) + struct.pack('B', i)
+        )
+        for i in range(3)]
+
+        self._omac[0].update(nonce)
+        self._auth = self._omac[1]
+
+        self._cipher = CrCipher(
+            algo.AES(key),
+            modes.CTR(self._omac[0].finalize()),
+            defb(),
+        )
+
+        self._update = None
+        self._update_into = None
+        self._updated = False
+
+    def authenticate_additional_data(self, data):
+        if self._updated:
+            raise ValueError
+        self._auth.update(data)
+
+    def encryptor(self):
+        self._cipher = self._cipher.encryptor()
+
+        hashup = self._omac[2].update
+        cipherup1 = self._cipher.update
+        cipherup2 = self._cipher.update_into
+
+        def update(data):
+            ctxt = cipherup1(data)
+            hashup(ctxt)
+            return ctxt
+
+        def update_into(data, out):
+            cipherup2(data, out)
+            hashup(out[:-15])
+
+        self._update = update
+        self._update_into = update_into
+        return self
+
+    def decryptor(self):
+        self._cipher = self._cipher.decryptor()
+
+        hashup = self._omac[2].update
+        cipherup1 = self._cipher.update
+        cipherup2 = self._cipher.update_into
+
+        def update(ctxt):
+            hashup(ctxt)
+            data = cipherup1(ctxt)
+            return data
+
+        def update_into(data, out):
+            hashup(data)
+            cipherup2(data, out)
+
+        self._update = update
+        self._update_into = update_into
+        return self
+
+    def update(self, data):
+        self._updated = True
+        return self._update(data)
+
+    def update_into(self, data, out):
+        self._updated = True
+        self._update_into(data, out)
+
+    def finalize(self):
+        ...
+
+    def finalize_with_tag(self, tag):
+        ...
+
+    @property
+    def tag(self):
+        ...
 
 
 @base.cipher
