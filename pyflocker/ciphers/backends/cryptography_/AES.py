@@ -1,7 +1,8 @@
-import struct
+import struct, hmac
 from cryptography.hazmat.primitives.ciphers import (Cipher as CrCipher, modes,
                                                     algorithms as algo)
 from cryptography.hazmat.primitives import cmac
+import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, Modes as _m
@@ -162,7 +163,7 @@ class _EAX:
     def finalize_with_tag(self, tag):
         self.finalize()
         if not hmac.compare_digest(tag, self._tag):
-            raise exc.DecryptionError
+            raise bkx.InvalidTag
 
     @property
     def tag(self):
