@@ -148,8 +148,8 @@ class FileCipherMixin:
 
         super().__init__(*args, **kwargs)
 
-        self.__update = super()._update
-        self.__update_into = super()._update_into
+        self.__update = super()._get_update()
+        self.__update_into = super()._get_update_into()
 
     @base.before_finalized
     def update(self, blocksize=16384):
@@ -197,7 +197,7 @@ class FileCipherMixin:
         rbuf = buf[:blocksize]
 
         write = file.write
-        reads = iter(partial(self.__file.readinto, buf), 0)
+        reads = iter(partial(self.__file.readinto, rbuf), 0)
         update = self.__update_into
 
         for i in reads:
