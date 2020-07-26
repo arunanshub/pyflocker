@@ -56,7 +56,7 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
         backend:
             The backend to use. It must be a value from `Backends`.
 
-        The following arguments must be passed if the `mode` is not an
+        The following arguments must not be passed if the `mode` is an
         AEAD mode.
         hashed:
             Should the cipher use HMAC as authentication or not,
@@ -70,7 +70,7 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
         AES cipher wrapper from the appropriate backend module.
 
     Raises:
-        `ValueError` if the `mode` is not an AEAD mode and still the
+        `ValueError` if the `mode` is an AEAD mode and still the
         extra kwargs are provided.
         `NotImplementedError` if backend does not support that mode.
         `ModuleNotFoundError` if the backend is not found.
