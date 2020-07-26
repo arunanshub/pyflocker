@@ -145,7 +145,6 @@ class FileCipherMixin:
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
-        print('fcmixin', args, kwargs, sep='\n')
         super().__init__(*args, **kwargs)
 
         self.__update = super()._get_update()
