@@ -1,19 +1,15 @@
-from functools import partial
-import hmac
-
 try:
     from Cryptodome.Cipher import AES
 except ModuleNotFoundError:
     from Crypto.Cipher import AES
 
-from .. import exc, base, Modes as _m
+from .. import base, Modes as _m
 from ._symmetric import (
     FileCipherMixin,
     AEADCipherWrapper,
     HMACCipherWrapper,
     derive_key as _derive_key,
 )
-from ._hashes import hashes
 
 supported = {
     # classic modes

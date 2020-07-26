@@ -25,10 +25,24 @@ curves = {k: k for k in ECC._curves}
 class _ECCKey:
     @classmethod
     def load(cls, data, passphrase=None):
-        """Loads the private/public key and returns a Key interface.
+        """Loads the public or private key as `bytes` object
+        and returns the Key interface.
 
-        For a private key,`password` must be a `bytes` object if the
-        key was encrypted while serialization, otherwise `None`.
+        Args:
+            data:
+                The key as bytes object.
+            password:
+                The password that deserializes the private key.
+                `password` must be a `bytes` object if the key
+                was encrypted while serialization, otherwise `None`.
+                `password` has no meaning for public key.
+
+        Returns:
+            ECCPrivateKey or ECCPublicKey interface depending upon the
+            key.
+
+        Raises:
+            ValueError if the key could not be deserialized.
         """
         try:
             return cls(key=ECC.import_key(data, passphrase))
@@ -48,28 +62,47 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
         self._key = ECC.generate(curve=curves[curve])
 
     def public_key(self):
-        """Returns public key from the private key"""
+        """Creates a public key from the private key
+
+        Args:
+            None
+
+        Returns:
+            ECCPublicKey interface.
+        """
         return ECCPublicKey(self._key.public_key())
 
-    def serialize(
-        self,
-        encoding='PEM',
-        format='PKCS8',
-        passphrase=None,
-        *,
-        protection=None,
-    ):
+    def serialize(self,
+                  encoding='PEM',
+                  format='PKCS8',
+                  passphrase=None,
+                  *,
+                  protection=None):
         """Serialize the private key.
 
-        - `encoding` can be PEM or DER (defaults to PEM).
-        - The `format` can be:
-            - PKCS8 (default)
-            - PKCS1
+        Args:
+            encoding: PEM or DER (defaults to PEM).
+            format: PKCS8 (default) or PKCS1.
+            passphrase:
+                A bytes-like object to protect the private key.
+                If `passphrase` is None, the private key will
+                be exported in the clear!
 
-        - `passphrase` must be a bytes object.
-          If `passphrase` is None, the private key will be exported
-          in the clear!
-        - `protection` ...
+        Kwargs:
+            protection:
+                The protection scheme to use. If password is provided
+                and protection is None, 'PBKDF2WithHMAC-SHA1AndAES256-CBC'
+                is used.
+
+        Returns:
+            The private key as a bytes object.
+
+        Raises:
+            ValueError:
+                If the encoding is incorrect or,
+                if DER is used with PKCS1 or protection value
+                is supplied with PKCS1 format.
+            KeyError: if the format is invalid or not supported.
         """
         if encoding not in encodings.keys() ^ {'OpenSSH'}:
             raise TypeError('encoding must be PEM or DER')
@@ -78,25 +111,48 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
             raise KeyError('invalid format')
 
         prot = {}
-        if passphrase is not None and protection is None:
-            # use a curated encryption choice and not DES-EDE3-CBC
-            prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
 
         if format == 'PKCS1':
             if protection is not None:
                 raise TypeError('protection is meaningful only for PKCS8')
-            prot = {}
+
+        if protection not in protection_schemes:
+            raise ValueError('invalid protection scheme')
+
+        if passphrase is not None:
+            if protection is not None:
+                prot = dict(protection=protection)
+            else:
+                # use a curated encryption choice and not DES-EDE3-CBC
+                prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
 
         return self._key.export_key(
             format=encodings[encoding],
-            use_pkcs8=(True if format == 'PKCS8' else False),
+            use_pkcs8=(format == 'PKCS8'),
             passphrase=(memoryview(passphrase).tobytes()
                         if passphrase is not None else None),
             **prot,
         )
 
     def signer(self, *, mode='fips-186-3', encoding='binary'):
-        """Returns a signer context."""
+        """Create a signer context.
+
+        Args:
+            mode:
+                The signature generation mode. It can be:
+                  - 'fips-186-3' (default)
+                  - 'deterministic-rfc6979'
+            encoding:
+                How the signature is encoded. It can be:
+                  - 'binary'
+                  - 'der'
+
+        Returns:
+            An ECCSignerCtx object for signing messages.
+
+        Raises:
+            KeyError: if the mode or encoding is invalid or not supported.
+        """
         return ECCSignerCtx(self._key, mode=mode, encoding=encoding)
 
     def exchange(self, peer_public_key):
@@ -110,17 +166,47 @@ class ECCPublicKey(_ECCKey, base.BasePublicKey):
         self._key = key
 
     def serialize(self, encoding='PEM', *, compress=False):
-        """Serialize the public key.
+        """Serialize the private key.
 
-        - `encoding` can be PEM or DER (defaults to PEM).
-       """
+        Args:
+            encoding: PEM or DER.
+
+        Kwargs:
+            compress:
+                Whether to export the public key with a more compact
+                representation with only the x-coordinate. Default is
+                False.
+
+        Returns:
+            The serialized public key as bytes object.
+
+        Raises:
+            KeyError: if the encoding is not supported or invalid.
+        """
         return self._key.export_key(
             format=encodings[encoding],
             compress=compress,
         )
 
     def verifier(self, *, mode='fips-186-3', encoding='binary'):
-        """Returns a verifier context using the given 1algorithm`"""
+        """Create a signer context.
+
+        Args:
+            mode:
+                The signature generation mode. It can be:
+                  - 'fips-186-3' (default)
+                  - 'deterministic-rfc6979'
+            encoding:
+                How the signature is encoded. It can be:
+                  - 'binary'
+                  - 'der'
+
+        Returns:
+            A ECCVerifierCtx object for verifying messages.
+
+        Raises:
+            KeyError: if the mode or encoding is invalid or not supported.
+        """
         return ECCVerifierCtx(self._key, mode=mode, encoding=encoding)
 
 
@@ -137,11 +223,20 @@ class ECCSignerCtx(SigVerContext):
     """Signing context for ECC private key."""
     def sign(self, msghash):
         """Return the signature of the message hash.
-        
-        `mhash` must be an instance of `BaseHash` and must be
-        generated with the same backend as of the ECC key.
 
-        Refer to `Hash.new` function's documentation.
+        Args:
+            msghash:
+                `msghash` must be an instance of `BaseHash` and
+                must be instantiated from the same backend as that
+                of the ECC key. Refer to `Hash.new` function's
+                documentation.
+
+        Returns:
+            signature of the message as bytes object.
+
+        Raises:
+            TypeError: if the `msghash` object is not from the same
+                backend.
         """
         if not isinstance(msghash, Hash):
             raise TypeError(
@@ -155,11 +250,23 @@ class ECCVerifierCtx(SigVerContext):
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
-        `mhash` must be an instance of `BaseHash` and must be
-        generated with the same backend as of the ECC key.
-        Refer to `Hash.new` function's documentation.
- 
-        `signature` must be a `bytes` or `bytes-like` object.
+        Args:
+            msghash:
+                `msghash` must be an instance of `BaseHash` and
+                must be instantiated from the same backend as that
+                of the RSA key. Refer to `Hash.new` function's
+                documentation.
+
+            signature:
+                signature must be a `bytes` or `bytes-like` object.
+
+        Returns:
+            None
+
+        Raises:
+            TypeError: if the `msghash` object is not from the same
+                backend.
+            SignatureError: if the `signature` was incorrect.
         """
         if not isinstance(msghash, Hash):
             raise TypeError(

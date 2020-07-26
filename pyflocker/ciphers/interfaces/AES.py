@@ -35,25 +35,46 @@ def _aes_cipher_from_mode(mode, bknd, hasfile):
 
 
 def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
-    """Make a new AES cipher wrapper.
+    """Instantiate a new AES cipher wrapper object.
 
-    locking: True is encryption and False is decryption.
-    key: The key for the cipher.
-    mode: The mode to use. A backend may not support it.
+    Args:
+        locking:
+            True is encryption and False is decryption.
+        key:
+            The key for the cipher.
+        mode:
+            The mode to use for AES cipher. All backends may not support
+            that particular mode.
+        iv_or_nonce:
+            The Initialization Vector or Nonce for the cipher. It must not be
+            repeated with the same key.
 
-    file: The source file to read from.
-    backend: The backend to use.
-             It must be a value from `ciphers.backends.Backends`
+    Kwargs:
+        file:
+            The source file to read from. If `file` is specified
+            and the `mode` is not an AEAD mode, HMAC is always used.
+        backend:
+            The backend to use. It must be a value from `Backends`.
 
-    *args, **kwargs:
-        Additional arguments and values that must be passed
-        during the creation of cipher. Depends upon backend.
+        The following arguments must be passed if the `mode` is not an
+        AEAD mode.
+        hashed:
+            Should the cipher use HMAC as authentication or not,
+            if it does not support AEAD. (Default: False)
+        digestmod:
+            The algorithm to use for HMAC. Defaults to `sha256`.
+            Specifying this value without setting `hashed` to True
+            has no effect.
 
-    Return: AES cipher wrapper from the appropriate backend module.
+    Returns:
+        AES cipher wrapper from the appropriate backend module.
 
-    Raises: `NotImplementedError` if backend does not support that mode.
-            `ModuleNotFoundError` if the backend is not found.
-             Any other error that is raised is from the backend itself.
+    Raises:
+        `ValueError` if the `mode` is not an AEAD mode and still the
+        extra kwargs are provided.
+        `NotImplementedError` if backend does not support that mode.
+        `ModuleNotFoundError` if the backend is not found.
+        Any other error that is raised is from the backend itself.
     """
     cpr = _load_cpr("AES", backend)
     _cpr = _aes_cipher_from_mode(mode, cpr, file is not None)

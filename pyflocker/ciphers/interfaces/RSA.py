@@ -12,7 +12,15 @@ def generate(bits, e=65537, *, backend=None):
     public exponent `e` (default 65537).
     Recommended size of `bits` > 1024.
 
-    `backend` must be an attribute of `Backends`.
+    Args:
+        bits: The bit length of the RSA key.
+        e: The public exponent value. Default is 65537.
+
+    Kwargs:
+        backend: The backend to use. It must be a value from `Backends`.
+
+    Returns:
+        A RSAPrivateKey object.
     """
     return _load_rsa_cpr(backend).RSAPrivateKey(bits, e)
 
@@ -20,17 +28,36 @@ def generate(bits, e=65537, *, backend=None):
 def load_public_key(data, *, backend=None):
     """Loads the public key and returns a Key interface.
 
-    `backend` must be an attribute of `Backends`.
+    Args:
+        data: The public key (a bytes-like object) to deserialize.
+
+    Kwargs:
+        backend: The backend to use. It must be a value from `Backends`.
+
+    Returns:
+        An RSAPublicKey interface.
     """
     return _load_rsa_cpr(backend).RSAPublicKey.load(data)
 
 
 def load_private_key(data, passphrase=None, *, backend=None):
     """Loads the private key and returns a Key interface.
-    
+
     If the private key was not encrypted duting the serialization,
     `passphrase` must be `None`, otherwise it must be a `bytes` object.
 
-    `backend` must be an attribute of `Backends`.
+    Args:
+        data:
+            The private key (a bytes-like object) to deserialize.
+        passphrase:
+            The password (in bytes) that was used to encrypt the
+            private key.`None` if the private key was not encrypted.
+
+    Kwargs:
+        backend:
+            The backend to use. It must be a value from `Backends`.
+
+    Returns:
+        An RSAPrivateKey interface.
     """
     return _load_rsa_cpr(backend).RSAPrivateKey.load(data, passphrase)

@@ -12,7 +12,7 @@ from .._asymmetric import OAEP, PSS, MGF1
 from ._hashes import hashes as _hashes, Hash
 from ._serialization import encodings, formats, protection_schemes
 
-padding = {
+paddings = {
     OAEP: PKCS1_OAEP.new,
     PSS: PKCS1_PSS.new,
     MGF1: PKCS1_OAEP.MGF1,
@@ -33,9 +33,21 @@ class _RSAKey:
         """Loads the public or private key as `bytes` object
         and returns the Key interface.
 
-        `password` must be a `bytes` object if the key was encrypted
-        while serialization, otherwise `None`.
-        `password` has no meaning for public key.
+        Args:
+            data:
+                The key as bytes object.
+            password:
+                The password that deserializes the private key.
+                `password` must be a `bytes` object if the key
+                was encrypted while serialization, otherwise `None`.
+                `password` has no meaning for public key.
+
+        Returns:
+            RSAPrivateKey or RSAPublicKey interface depending upon the
+            key.
+
+        Raises:
+            ValueError if the key could  not be deserialized.
         """
         try:
             return cls(key=RSA.import_key(data, password))
@@ -73,24 +85,36 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         return self._key.u
 
     def decryptor(self, padding=OAEP()):
-        """
-        Returns a decryption context with OAEP padding and MGF1
-        as mask generation function.
+        """Creates a decryption context
+
+        Args:
+            padding: The padding to use. Default is OAEP.
+
+        Returns:
+            RSADecryptionCtx for decrypting ciphertexts.
         """
         return RSADecryptionCtx(self._key, padding)
 
     def signer(self, padding=PSS()):
-        """
-        Returns a signer context.
+        """Create a signer context.
 
-        `padding` is PSS, and the default hash function used
-        by PSS and MGF1 (the default mask generation function)
-        is `sha256`.
+        Args:
+            padding: The padding to use. Default is PSS.
+
+        Returns:
+            A RSASignerCtx object for signing messages.
         """
         return RSASignerCtx(self._key, padding)
 
     def public_key(self):
-        """Returns public key from the private key"""
+        """Creates a public key from the private key
+
+        Args:
+            None
+
+        Returns:
+            RSAPublicKey interface.
+        """
         return RSAPublicKey(self._key.publickey())
 
     def serialize(self,
@@ -101,22 +125,41 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
                   protection=None):
         """Serialize the private key.
 
-        - `encoding` can be PEM or DER (defaults to PEM).
-        - The `format` can be PKCS1 or PKCS8 (defaults to PKCS8).
-        - `passphrase` must be a bytes object.
-          If `passphrase` is None, the private key will be exported
-          in the clear!
-        - Supplying a value for protection has meaning only if
-          the `format` is PKCS8.
-          If None is provided, PBKDF2WithHMAC-SHA1AndAES256-CBC is
-          used as the protection scheme
-        """
+        Args:
+            encoding:
+                PEM or DER (defaults to PEM).
+            format:
+                PKCS1 or PKCS8 (defaults to PKCS8).
+            passphrase:
+                a bytes object to use for encrypting the private key.
+                If `passphrase` is None, the private key will be exported
+                in the clear!
+
+        Kwargs:
+            protection:
+                The protection scheme to use.
+
+                Supplying a value for protection has meaning only if the
+                `format` is PKCS8. If `None` is provided
+                `PBKDF2WithHMAC-SHA1AndAES256-CBC` is used as the protection
+                scheme.
+
+        Returns:
+            Serialized key as a bytes object.
+
+        Raises:
+            ValueError:
+                If the encoding is incorrect or,
+                if DER is used with PKCS1 or protection value
+                is supplied with PKCS1 format.
+            KeyError: if the format is invalid or not supported.
+       """
         if encoding not in encodings.keys() ^ {'OpenSSH'}:
-            raise TypeError('encoding must be PEM or DER')
+            raise ValueError('encoding must be PEM or DER')
 
         if protection is not None:
             if protection not in protection_schemes:
-                raise TypeError('invalid protection scheme')
+                raise ValueError('invalid protection scheme')
 
         if format == 'PKCS1':
             if protection is not None:
@@ -143,35 +186,46 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
         self._key = key
 
     def encryptor(self, padding=OAEP()):
-        """
-        Returns a encryption context with OAEP padding and MGF1
-        as mask generation function.
+        """Creates a encryption context
+
+        Args:
+            padding: The padding to use. Defaults to OAEP.
+
+        Returns:
+            An RSAEncryptionCtx encryption context object.
         """
         return RSAEncryptionCtx(self._key, padding)
 
     def verifier(self, padding=PSS()):
-        """
-        Returns a verifier context.
+        """Creates a verifier context.
 
-        `padding` is PSS, and the default hash function used
-        by PSS and MGF1 (the default mask generation function)
-        is `sha256`.
- 
+        Args:
+            padding: The padding to use. Defaults to ECC.
+
+        Returns:
+            RSAVerifierCtx verification context object.
         """
         return RSAVerifierCtx(self._key, padding)
 
     def serialize(self, encoding='PEM'):
         """Serialize the private key.
 
-        - `encoding` can be PEM, DER or OpenSSH (defaults to PEM).
+        Args:
+            encoding: PEM, DER or OpenSSH (defaults to PEM).
+
+        Returns:
+            The serialized public key as bytes object.
+
+        Raises:
+            KeyError: if the encoding is not supported or invalid.
         """
         return self._key.export_key(format=encodings[encoding])
 
 
 def _get_padding(pad):
-    _pad = padding[pad.__class__]
+    _pad = paddings[pad.__class__]
     mhash = _hashes[pad.mgf.hash]()
-    _mgf = lambda x, y: padding[pad.mgf.__class__](x, y, mhash)
+    _mgf = lambda x, y: paddings[pad.mgf.__class__](x, y, mhash)
     return _pad, _mgf
 
 
@@ -190,7 +244,16 @@ class RSAEncryptionCtx(CipherContext):
     def encrypt(self, plaintext):
         """Encrypts the plaintext and returns the ciphertext.
 
-        `plaintext` must be a `bytes` or `bytes-like` object.
+        Args:
+            plaintext: a `bytes` or `bytes-like` object.
+
+        Returns:
+            encrypted bytes object.
+
+        Raises:
+            ValueError:
+                if the message is too long to encrypt with
+                the given key.
         """
         try:
             return self._cipher.encrypt(plaintext)
@@ -202,7 +265,14 @@ class RSADecryptionCtx(CipherContext):
     def decrypt(self, ciphertext):
         """Decrypts the ciphertext and returns the plaintext.
 
-        `ciphertext` must be a `bytes` or `bytes-like` object.
+        Args:
+            ciphertext: a `bytes` or `bytes-like` object.
+
+        Returns:
+            decrypted plaintext.
+
+        Raises:
+            DecryptionError: if the decryption was not successful.
         """
         try:
             return self._cipher.decrypt(ciphertext)
@@ -225,10 +295,22 @@ class SigVerContext:
 class RSASignerCtx(SigVerContext):
     def sign(self, msghash):
         """Return the signature of the message hash.
-        
-        `msghash` must be an instance of `BaseHash` and must be
-        instantiated from the same backend as that of the RSA key.
-        Refer to `Hash.new` function's documentation.
+
+        Args:
+            msghash:
+                `msghash` must be an instance of `BaseHash` and
+                must be instantiated from the same backend as that
+                of the RSA key. Refer to `Hash.new` function's
+                documentation.
+
+        Returns:
+            signature of the message as bytes object.
+
+        Raises:
+            TypeError: if the `msghash` object is not from the same
+                backend.
+            ValueError: if the key is not long enough to sign the
+                massage.
         """
         if not isinstance(msghash, Hash):
             raise TypeError(
@@ -244,11 +326,23 @@ class RSAVerifierCtx(SigVerContext):
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
-        `msghash` must be an instance of `BaseHash` and must be
-        instantiated from the same backend as of the RSA key.
-        Refer to `Hash.new` function's documentation.
- 
-        `signature` must be a `bytes` or `bytes-like` object.
+        Args:
+            msghash:
+                `msghash` must be an instance of `BaseHash` and
+                must be instantiated from the same backend as that
+                of the RSA key. Refer to `Hash.new` function's
+                documentation.
+
+            signature:
+                signature must be a `bytes` or `bytes-like` object.
+
+        Returns:
+            None
+
+        Raises:
+            TypeError: if the `msghash` object is not from the same
+                backend.
+            SignatureError: if the `signature` was incorrect.
         """
         if not isinstance(msghash, Hash):
             raise TypeError(

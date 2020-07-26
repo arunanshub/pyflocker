@@ -1,7 +1,4 @@
-"""Base classes for pyflocker
-
-# Todo
-"""
+"""Base classes for pyflocker."""
 
 import sys
 
@@ -16,7 +13,14 @@ class Cipher(ABC):
     @abstractmethod
     def update(self, data):
         """Takes bytes-like object and returns
-        encrypted/decrypted bytes object."""
+        encrypted/decrypted bytes object.
+
+        Args:
+            data: The bytes-like object to pass to the cipher.
+
+        Returns:
+            bytes-like encrypted data.
+        """
 
     @abstractmethod
     def update_into(self, data, out):
@@ -24,9 +28,15 @@ class Cipher(ABC):
         for it fills a preallocated buffer with data
         with no intermideate copying of data.
 
-        Returns None
-        Exception raised, if any, is from the backend
-        itself.
+        Args:
+            data:
+                The bytes-like object to pass to the cipher.
+            out:
+                The buffer interface where the encrypted/decrypted
+                data must be written into.
+
+        Returns:
+            None
         """
 
     @abstractmethod
@@ -36,28 +46,48 @@ class Cipher(ABC):
         You can call it to pass additional data that must be
         authenticated, but would be transmitted in the clear.
 
-        If this method is called after calling `update`,
-        TypeError is raised.
+        Args:
+            data: The bytes-like object that must be authenticated.
+
+        Returns:
+            None
+
+        Raises:
+            TypeError is raised if this method is called after
+            calling `update`,
         """
 
     @abstractmethod
     def finalize(self, tag=None):
         """Finalizes and closes the cipher.
-        
-        If `locking` is `False` and the `tag` is not supplied,
-        `ValueError` is raised.
-        If `locking` is False (ie. Decrypting), and the supplied tag is
-        invalid, `exc.DecryptionError` is raised.
-        If `locking` is `True`, the cipher is closed. You must calculate
-        the associated tag using `calculate_tag` method.
+
+        Args:
+            tag:
+                The associated tag that authenticates the decryption.
+                `tag` is required for decryption only. If the mode is
+                not AEAD, tag is not required for verification.
+
+        Returns:
+            None
+
+        Raises:
+            ValueError: If cipher is decrypting and tag is not supplied.
+            DecryptionError: If the decryption was incorrect.
         """
 
     @abstractmethod
     def calculate_tag(self):
         """Calculates and returns the associated `tag`.
-        Returns `None` if decrypting.
-        This must be called after encryption (ie. `locking` is set to
-        `True`).
+        Args:
+            None
+
+        Returns:
+            `None` if decrypting.
+            bytes-like tag if encrypting.
+
+        Raises:
+            NotImplementedError if the mode is non-AEAD or cipher doesn't
+            support AEAD.
         """
 
 
@@ -65,11 +95,23 @@ class BaseHash(ABC):
     @abstractmethod
     def update(self, data):
         """Update the hash function
+
+        Args:
+            data: The bytes-like object to pass to the hash algorithm.
+
+        Returns:
+            None
         """
 
     @abstractmethod
     def digest(self):
         """Finalize and return the hash as bytes object.
+
+        Args:
+            None
+
+        Returns:
+            bytes object representing the digest of the message.
         """
 
 
@@ -106,8 +148,15 @@ class BasePublicKey(BaseAsymmetricKey):
 
 def finalizer(f=None, *, allow=False):
     """Finalizes the cipher.
-    The wrapped function must be called only once in the
-    entire cipher context.
+
+    Args:
+        f: The method to wrap.
+        allow:
+            setting `allow` to True means that this function can
+            be called multiple times even after finalization.
+
+    Returns:
+        The wrapped function.
     """
     if f is None:
         return partial(finalizer, allow=allow)

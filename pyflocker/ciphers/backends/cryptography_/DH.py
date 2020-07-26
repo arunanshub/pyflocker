@@ -114,13 +114,13 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
             raise ValueError('incorrect key format')
 
         # type check
-        if password is not None:
-            password = memoryview(password)
+        if passphrase is not None:
+            passphrase = memoryview(passphrase)
 
         try:
             return cls(key=loader(
                 memoryview(data),
-                password,
+                passphrase,
                 defb(),
             ), )
         except (ValueError, TypeError) as e:

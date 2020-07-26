@@ -53,6 +53,7 @@ class _EAX:
         self._mac_len = 16
         self._omac = [cmac.CMAC(algo.AES(key), defb()) for i in range(3)]
 
+        # update the CMACs
         [
             self._omac[i].update(
                 bytes(1) * (algo.AES.block_size // 8 - 1) +
@@ -85,7 +86,7 @@ class _EAX:
 
     def encryptor(self):
         """Create a pseudo-encryptor context.
-        
+
         Pseudo in the sense that, pyca/cryptography uses a encryption
         or decryption context, but we replace the object variable.
 
@@ -113,7 +114,7 @@ class _EAX:
 
     def decryptor(self):
         """Create a pseudo-encryptor context.
-        
+
         Pseudo in the sense that, pyca/cryptography uses a encryption
         or decryption context, but we replace the object variable.
 

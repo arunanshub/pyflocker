@@ -2,7 +2,7 @@ from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms as algo,
                                                     modes)
 from cryptography.hazmat.backends import default_backend as defb
 
-from .. import base, exc, Modes as _m
+from .. import base, Modes as _m
 from ._symmetric import (
     HMACCipherWrapper,
     FileCipherMixin,

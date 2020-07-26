@@ -6,6 +6,22 @@ def new(hashname, data=b'', *, backend=None):
     Instantiate a new hash instance `hashname` with initial
     data `data` (default is empty `bytes`).
 
-    `backend` must be an attribute of `Backends`.
+    When there is a requirement of a particular hash by a cipher,
+    you must choose the hash algorithm from the correct backend,
+    by passing in the backend keyword.
+
+    Args:
+        hashname: Name of the hashing function to use.
+        data: Initial data to pass to hashing function.
+
+    Kwargs:
+        backend:
+            The backend to use. It must be a value from `Backends`.
+
+    Returns:
+        A Hash interface with the given hashing algorithm.
+
+    Raises:
+        KeyError if the hashing function is not supported.
     """
     return _load_cpr('Hash', backend).Hash(hashname, data)

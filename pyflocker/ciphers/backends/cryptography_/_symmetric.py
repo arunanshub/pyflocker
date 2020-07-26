@@ -1,5 +1,4 @@
 """Symmetric cipher wrapper for this backend only."""
-
 from functools import partial
 
 import cryptography.exceptions as bkx
@@ -107,7 +106,7 @@ class AEADCipherWrapper(CipherWrapper):
             raise TypeError('bytes-like object is required')
         try:
             self._cipher.authenticate_additional_data(data)
-        except bkx.AlreadyUpadated as e:
+        except bkx.AlreadyUpdated as e:
             raise TypeError('cannot authenticate data after '
                             'update has been called') from e
 
@@ -142,7 +141,7 @@ class FileCipherMixin:
     """ciphers that support r/w to file and file-like
     objects. Mix with cipher wrappers"""
 
-    __slots__ = ()
+    __slots__ = ('__update', '__update_into', '__file')
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
@@ -160,6 +159,15 @@ class FileCipherMixin:
 
         You must finalize by yourself after calling
         this method.
+
+        Args:
+            blocksize:
+                The amount of data to read from the source.
+                The amount is denoted by positive `int`.
+                Defaults to 16384 (16 * 1024).
+
+        Returns:
+            encrypted or decrypted `bytes` data.
         """
         data = self.__file.read(blocksize)
         if data:
@@ -168,16 +176,21 @@ class FileCipherMixin:
     @base.before_finalized
     def update_into(self, file, tag=None, blocksize=16384):
         """Writes to `file` and closes the cipher.
-        Data is read from the source in blocks specified by `blocksize`. 
-        The blocks will have length of at most `blocksize`.
 
-        If `locking` is `False`, then the associated `tag` must
-        be supplied, `ValueError` is raised otherwise.
+        Args:
+            tag: The associated tag to validate the decryption.
+            blocksize: The size of the chunk of data to read from
+                the source in each iteration.
 
-        If the `tag` is invalid, `exc.DecryptionError` is raised
-        (see `finalize` method).
+        Returns:
+            None
+
+        Raises:
+            DecryptionError:
+                `tag` is invalid, denoting unsuccessful decryption.
+            TypeError:
+                the tag is not provided for validation after decryption.
         """
-
         if not self._locking and tag is None:
             raise ValueError('tag is required for decryption')
         buf = memoryview(bytearray(blocksize + 15))

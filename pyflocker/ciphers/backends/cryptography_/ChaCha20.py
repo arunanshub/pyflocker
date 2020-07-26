@@ -1,4 +1,3 @@
-from functools import partial
 from cryptography.hazmat.primitives.ciphers import (algorithms as algo, Cipher
                                                     as CrCipher)
 from cryptography import exceptions as bkx
@@ -6,7 +5,7 @@ from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
 from .. import exc, base
-from ._symmetric import (CipherWrapper, FileCipherMixin)
+from ._symmetric import FileCipherMixin
 
 # we don't have any mode to support
 supported = frozenset()
@@ -133,35 +132,5 @@ class ChaCha20Poly1305(base.Cipher):
 
 
 @base.cipher
-class ChaCha20Poly1305File(ChaCha20Poly1305):
-    def __init__(self, *args, file, **kwargs):
-        self.__file = file
-        super().__init__(*args, **kwargs)
-
-        self.__update = super().update
-        self.__update_into = super().update_into
-
-    def update(self, blocksize=16384):
-        data = self.__file.read(blocksize)
-        if data:
-            return self.__update(data)
-
-    def update_into(self, file, tag=None, blocksize=16384):
-        if not self._locking and tag is None:
-            raise ValueError
-
-        wbuf = memoryview(bytearray(blocksize + 15))
-        rbuf = wbuf[:blocksize]
-
-        reads = iter(partial(self.__file.readinto, rbuf), 0)
-        write = file.write
-
-        update_into = self.__update_into
-
-        for i in reads:
-            if i < blocksize:
-                rbuf = rbuf[:i]
-            update_into(rbuf, wbuf)
-            write(rbuf)
-
-        self.finalize(tag)
+class ChaCha20Poly1305File(FileCipherMixin, ChaCha20Poly1305):
+    pass
