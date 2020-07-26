@@ -82,7 +82,7 @@ class CipherWrapper(CipherWrapperBase):
             def update_into(data, out):
                 self._updated = True
                 crpup(data, out)
-                self._len_ct += len(out)
+                self._len_ct += len(data)
                 hashup(out[:-15])
         else:
 
@@ -145,7 +145,7 @@ class FileCipherMixin:
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
-
+        print('fcmixin', args, kwargs, sep='\n')
         super().__init__(*args, **kwargs)
 
         self.__update = super()._get_update()

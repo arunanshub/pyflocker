@@ -182,6 +182,7 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                  hashed=False,
                  digestmod='sha256'):
         self._locking = locking
+        hkey = None
         if hashed:
             # derive the keys (length same as of the original key)
             key, hkey = _derive_key(
@@ -190,8 +191,6 @@ class NonAEAD(HMACCipherWrapper, base.Cipher):
                 hashalgo=digestmod,
                 salt=iv_or_nonce,
             )
-        else:
-            hkey = None
 
         self._cipher = _aes_cipher(key, mode, iv_or_nonce)
         # for HMAC mixin
