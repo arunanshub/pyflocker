@@ -1,13 +1,4 @@
-"""AES Cipher
-
-The AES cipher module eases your creation of AES-XXX mode
-ciphers, where `XXX` is the mode. Its support depends ultimately
-upon the underlying backend.
-
-The modes and the involved intricacies
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-"""
+"""Interface to AES cipher"""
 
 from .. import load_cipher as _load_cpr, Modes as _m
 from .. import aead, special
