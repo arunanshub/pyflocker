@@ -16,8 +16,6 @@ HEADER_FORMAT = struct.Struct('>I 32s 32s 6x 32s 6x 16s')
 
 MAGIC = 0xc8e52e4b
 
-_BUFFER = memoryview(bytearray(HEADER_FORMAT.size))
-
 
 def locker(file,
            password,
@@ -248,16 +246,14 @@ def lockerf(infile,
     crp.authenticate(salt + metadata)
 
     if locking:
-        HEADER_FORMAT.pack_into(
-            _BUFFER,
-            0,
+        header = HEADER_FORMAT.pack(
             MAGIC,
             # these parts are unique
             metadata,
             salt,
             tag,
             rand)
-        outfile.write(_BUFFER)
+        outfile.write(header)
 
     # write
     crp.update_into(outfile, tag, blocksize)
@@ -290,14 +286,18 @@ def _fetch_header(infile, mode, locking, magic, meta):
         salt = os.urandom(32)
         tag = bytes(32)
     else:
-        infile.readinto(_BUFFER)
-        m, c, salt, tag, rand = HEADER_FORMAT.unpack_from(_BUFFER, 0)
-
+        header = infile.read(HEADER_FORMAT.size)
+        try:
+            m, c, salt, tag, rand = HEADER_FORMAT.unpack_from(header, 0)
+        except struct.error:
+            raise TypeError("Invalid file header format. "
+                            "The file is not compatible with "
+                            "PyFlocker.")
         # header check
         if m != magic or meta != c[:-(32 - len(meta))]:
             raise TypeError("invalid file header format. "
-                            "The file is not compatible with"
-                            " PyFLocker")
+                            "The file is not compatible with "
+                            "PyFLocker")
 
         # get the tag and random part
         if mode in aead:
