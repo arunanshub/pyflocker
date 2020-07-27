@@ -20,5 +20,12 @@ setup(
         "Operating System :: OS Independent",
     ],
 
+    install_requires=[
+        "cryptography",     
+        # for best case: we don't want python to
+        # ignore an older Crypto library and later
+        # this library raises errors!
+        "pycryptodomex",
+    ],
     url="https://github.com/arunanshub/pyflocker",
 )
