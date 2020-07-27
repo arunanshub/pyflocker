@@ -10,7 +10,7 @@ setup(
 
     packages=find_packages(),
 
-    description="File Locking library",
+    description="Python Cryptographic (File Locking) Library",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
     license='MIT License',
@@ -18,10 +18,12 @@ setup(
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Intended Audience :: Developers",
+        "Topic :: Security :: Cryptography",
     ],
 
     install_requires=[
-        "cryptography",     
+        "cryptography",
         # for best case: we don't want python to
         # ignore an older Crypto library and later
         # this library raises errors!
