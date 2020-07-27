@@ -1,3 +1,4 @@
+"""Interface to RSA cipher and signature algorithm"""
 from .. import load_cipher as _load_cpr
 
 

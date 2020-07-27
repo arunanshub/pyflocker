@@ -1,3 +1,4 @@
+"""Interface to ChaCha20-Poly1305 cipher"""
 from .. import load_cipher as _load_cpr
 
 

@@ -1,3 +1,5 @@
+"""Interface to ECC signature algorithm and key-exchange."""
+
 from .. import load_cipher as _load_cpr
 
 

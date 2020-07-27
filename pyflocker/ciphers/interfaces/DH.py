@@ -1,3 +1,4 @@
+"""Interface to DH key exchange"""
 from .. import load_cipher as _load_cpr
 from .. import Backends
 
