@@ -1,7 +1,10 @@
+"""Interface to hashing algorithms.
+These are currently limited to SHA-* algorithms."""
+
 from .. import load_cipher as _load_cpr
 
 
-def new(hashname, data=b'', *, backend=None):
+def new(hashname, data=b'', digest_size=None, *, backend=None):
     """
     Instantiate a new hash instance `hashname` with initial
     data `data` (default is empty `bytes`).
@@ -13,6 +16,9 @@ def new(hashname, data=b'', *, backend=None):
     Args:
         hashname: Name of the hashing function to use.
         data: Initial data to pass to hashing function.
+        digest_size:
+            The length of the digest from the hash function.
+            Required for Blake and Shake.
 
     Kwargs:
         backend:
@@ -24,4 +30,8 @@ def new(hashname, data=b'', *, backend=None):
     Raises:
         KeyError if the hashing function is not supported.
     """
-    return _load_cpr('Hash', backend).Hash(hashname, data)
+    return _load_cpr('Hash', backend).Hash(
+        hashname,
+        data,
+        digest_size=digest_size,
+    )

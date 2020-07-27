@@ -17,10 +17,24 @@ hashes = {
     'sha512_256': h.SHA512_256,
 }
 
+_arbitrary_digest_size_hashes = {
+    'shake128': h.SHAKE128,
+    'shake256': h.SHAKE256,
+    'blake2b': h.BLAKE2b,
+    'blake2s': h.BLAKE2s,
+}
+
+hashes.update(_arbitrary_digest_size_hashes)
+
 
 class Hash(base.BaseHash):
-    def __init__(self, name, data=b''):
-        self._hasher = h.Hash(hashes[name](), defb())
+    def __init__(self, name, data=b'', *, digest_size=None):
+        if name in _arbitrary_digest_size_hashes:
+            if digest_size is None:
+                raise ValueError('value of digest-size is required')
+            self._hasher = h.Hash(hashes[name](digest_size), defb())
+        else:
+            self._hasher = h.Hash(hashes[name](), defb())
         self._hasher.update(data)
         self._digest = None
 
