@@ -337,7 +337,7 @@ class ECCSignerCtx(SigVerContext):
 
         return self._sign(
             msghash.digest(),
-            self._algo(utils.Prehashed(hashes[msghash._name]())),
+            self._algo(utils.Prehashed(msghash._hasher.algorithm)),
         )
 
 
@@ -384,7 +384,7 @@ class ECCVerifierCtx(SigVerContext):
             return self._verify(
                 signature,
                 msghash.digest(),
-                self._algo(utils.Prehashed(hashes[msghash._name]())),
+                self._algo(utils.Prehashed(msghash._hasher.algorithm)),
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e

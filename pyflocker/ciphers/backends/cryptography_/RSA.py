@@ -366,7 +366,7 @@ class RSASignerCtx(SigVerContext):
                 'from the same backend as that of the RSA key.', )
         return self._sign(
             msghash.digest(),
-            algorithm=utils.Prehashed(hashes[msghash._name]()),
+            algorithm=utils.Prehashed(msghash._hasher.algorithm),
         )
 
 
@@ -400,7 +400,7 @@ class RSAVerifierCtx(SigVerContext):
             return self._verify(
                 signature,
                 msghash.digest(),
-                algorithm=utils.Prehashed(hashes[msghash._name]()),
+                algorithm=utils.Prehashed(msghash._hasher.algorithm),
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
