@@ -40,6 +40,14 @@ class Hash(base.BaseHash):
 
         self._name = name
 
+    @property
+    def digest_size(self):
+        return self._hasher.algorithm.digest_size
+
+    @property
+    def name(self):
+        return self._name
+
     @base.before_finalized
     def update(self, data):
         self._hasher.update(data)

@@ -9,9 +9,9 @@ from cryptography.hazmat.primitives.asymmetric import (
     utils,
 )
 
-from .. import base, exc
+from .. import base, exc, Backends
 from .._asymmetric import OAEP, MGF1, PSS
-from ._hashes import hashes, Hash
+from ._hashes import Hash
 from ._serialization import encodings, private_format, public_format
 
 paddings = {
@@ -268,8 +268,13 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
 
 def _get_padding(pad):
     _pad = paddings[pad.__class__]
-    _mgf = paddings[pad.mgf.__class__](hashes[pad.mgf.hash]())
-    return _pad, _mgf
+    _mgf = paddings[pad.mgf.__class__]  # backend MGF class
+    mgf = _mgf(
+        Hash(
+            pad.mgf.hash.name,
+            digest_size=pad.mgf.hash.digest_size,
+        )._hasher.algorithm)
+    return _pad, mgf
 
 
 class Context:
@@ -280,7 +285,10 @@ class Context:
                 key.encrypt,
                 padding=pad(
                     mgf,
-                    hashes[padding.hash](),
+                    Hash(
+                        padding.hash.name,
+                        digest_size=padding.hash.digest_size,
+                    )._hasher.algorithm,
                     padding.label,
                 ),
             )
@@ -289,7 +297,10 @@ class Context:
                 key.decrypt,
                 padding=pad(
                     mgf,
-                    hashes[padding.hash](),
+                    Hash(
+                        padding.hash.name,
+                        digest_size=padding.hash.digest_size,
+                    )._hasher.algorithm,
                     padding.label,
                 ),
             )

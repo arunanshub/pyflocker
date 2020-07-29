@@ -44,20 +44,19 @@ hashes = {
     'sha3_512': SHA3_512.new,
 }
 
-_arbitrary_digest_size_hashes = {
+arbitrary_digest_size_hashes = {
     'blake2b': BLAKE2b.new,
     'blake2s': BLAKE2s.new,
     'shake128': SHAKE128.new,
     'shake256': SHAKE256.new,
 }
 
-_xofs = {
+xofs = {
     'shake128': SHAKE128.new,
     'shake256': SHAKE256.new,
 }
 
-hashes.update(_arbitrary_digest_size_hashes)
-hashes.update(_xofs)
+hashes.update(arbitrary_digest_size_hashes)
 
 
 class Hash(base.BaseHash):
@@ -65,7 +64,7 @@ class Hash(base.BaseHash):
         self._digest_size = digest_size
         _hash = hashes[name]
 
-        if name in _arbitrary_digest_size_hashes.keys() ^ _xofs.keys():
+        if name in arbitrary_digest_size_hashes.keys() ^ xofs.keys():
             if digest_size is None:
                 raise ValueError('value of digest-size is required')
             else:
@@ -74,12 +73,23 @@ class Hash(base.BaseHash):
             self._hasher = _hash(data)
         self._name = name
 
+    @property
+    def digest_size(self):
+        try:
+            return self._hasher.digest_size
+        except AttributeError:  # for SHAKE
+            return self._digest_size
+
+    @property
+    def name(self):
+        return self._name
+
     @base.before_finalized
     def update(self, data):
         self._hasher.update(data)
 
     @base.finalizer(allow=True)
     def digest(self):
-        if self._name in _xofs:
+        if self._name in xofs:
             return self._hasher.read(self._digest_size)
         return self._hasher.digest()

@@ -92,6 +92,16 @@ class Cipher(ABC):
 
 
 class BaseHash(ABC):
+    @property
+    @abstractmethod
+    def digest_size(self):
+        """The digest size of the hash algorithm."""
+
+    @property
+    @abstractmethod
+    def name(self):
+        """Name of the hash algorithm."""
+
     @abstractmethod
     def update(self, data):
         """Update the hash function
@@ -113,6 +123,9 @@ class BaseHash(ABC):
         Returns:
             bytes object representing the digest of the message.
         """
+
+    def __repr__(self):
+        return f"Hash(name='{self.name}')"
 
 
 class BaseAsymmetricKey(ABC):

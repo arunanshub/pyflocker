@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import (
 )
 import cryptography.exceptions as bkx
 
-from ._hashes import hashes, Hash
+from ._hashes import Hash
 from .. import base, exc
 from ._serialization import encodings, private_format, public_format
 

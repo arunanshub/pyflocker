@@ -1,5 +1,4 @@
-"""Interface to hashing algorithms.
-These are currently limited to SHA-* algorithms."""
+"""Interface to hashing algorithms."""
 
 from .. import load_cipher as _load_cpr
 

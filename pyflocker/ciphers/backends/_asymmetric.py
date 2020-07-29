@@ -1,15 +1,16 @@
 from collections import namedtuple
+from ..interfaces import Hash
 
 MGF1 = namedtuple(
     'MGF1',
     'hash',
-    defaults=['sha256'],
+    defaults=[Hash.new('sha256')],
 )
 
 OAEP = namedtuple(
     'OAEP',
     'mgf, hash, label',
-    defaults=[MGF1(), 'sha256', None],
+    defaults=[MGF1(), Hash.new('sha256'), None],
 )
 
 PSS = namedtuple(
