@@ -364,7 +364,5 @@ class RSAVerifierCtx(SigVerContext):
             raise TypeError(
                 'the message hashing object must be instantiated '
                 'from the same backend as that of the RSA key.', )
-        try:
-            return self._sig.verify(msghash._hasher, signature)
-        except ValueError as e:
+        if not self._sig.verify(msghash._hasher, signature):
             raise exc.SignatureError from e
