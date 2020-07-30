@@ -332,7 +332,10 @@ class RSADecryptionCtx(Context):
         Raises:
             DecryptionError: if the decryption was not successful.
         """
-        return self._decrypt(ciphertext)
+        try:
+            return self._decrypt(ciphertext)
+        except ValueError as e:
+            raise exc.DecryptionError from e
 
 
 class SigVerContext:
