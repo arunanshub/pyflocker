@@ -125,7 +125,7 @@ class BaseHash(ABC):
         """
 
     def __repr__(self):
-        return f"Hash(name='{self.name}')"
+        return f"<Hash '{self.name}' at {hex(id(self))}>"
 
 
 class BaseAsymmetricKey(ABC):
