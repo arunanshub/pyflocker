@@ -64,11 +64,12 @@ class Hash(base.BaseHash):
         self._digest_size = digest_size
         _hash = hashes[name]
 
-        if name in arbitrary_digest_size_hashes.keys() ^ xofs.keys():
-            if digest_size is None:
+        if digest_size is None:
+            if name in arbitrary_digest_size_hashes:
                 raise ValueError('value of digest-size is required')
-            else:
-                self._hasher = _hash(data=data, digest_bytes=digest_size)
+
+        if name in arbitrary_digest_size_hashes.keys() ^ xofs.keys():
+            self._hasher = _hash(data=data, digest_bytes=digest_size)
         else:
             self._hasher = _hash(data)
         self._name = name
