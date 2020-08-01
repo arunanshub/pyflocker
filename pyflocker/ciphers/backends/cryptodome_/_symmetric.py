@@ -147,8 +147,8 @@ class FileCipherMixin:
 
         super().__init__(*args, **kwargs)
 
-        self.__update = super().update
-        self.__update_into = super().update_into
+        self.__update = super()._get_update()
+        self.__update_into = super()._get_update_into()
 
     @base.before_finalized
     def update(self, blocksize=16384):
