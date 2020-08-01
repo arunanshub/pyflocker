@@ -106,7 +106,7 @@ class _EAX:
 
         def update_into(data, out):
             cipherup2(data, out)
-            hashup(out[:-15])
+            hashup(bytes(out[:-15]))  # bytes obj only
 
         self._update = update
         self._update_into = update_into
@@ -133,7 +133,7 @@ class _EAX:
             return data
 
         def update_into(data, out):
-            hashup(data)
+            hashup(bytes(data))  # bytes obj only
             cipherup2(data, out)
 
         self._update = update
