@@ -23,7 +23,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Security :: Cryptography",
     ],
-
+    python_requires='>=3.7',
     install_requires=[
         "cryptography",
         # for best case: we don't want python to
