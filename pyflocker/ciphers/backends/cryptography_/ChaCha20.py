@@ -60,24 +60,20 @@ class ChaCha20Poly1305(base.Cipher):
         self._auth.update(data)
 
     def _pad_aad(self):
-        if self._len_aad & 0x0F:
-            self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
+        if not self._updated:
+            if self._len_aad & 0x0F:
+                self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
         self._updated = True
 
     def update(self, data):
-        if not self._updated:
-            self._pad_aad()
         return self._update(data)
 
     def update_into(self, data, out):
-        if not self._updated:
-            self._pad_aad()
         self._update_into(data, out)
 
     def finalize(self, tag=None):
         self._cipher.finalize()
-        if not self._updated:
-            self._pad_aad()
+        self._pad_aad()
 
         if self._len_ct & 0x0F:
             self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
@@ -98,9 +94,11 @@ class ChaCha20Poly1305(base.Cipher):
             return self._tag
 
     def _get_update(self):
+        pad = self._pad_aad
         if self._locking:
 
             def update(data):
+                pad()
                 res = self._cipher.update(data)
                 self._len_ct += len(data)
                 self._auth.update(res)
@@ -108,6 +106,7 @@ class ChaCha20Poly1305(base.Cipher):
         else:
 
             def update(data):
+                pad()
                 self._len_ct += len(data)
                 self._auth.update(data)
                 return self._cipher.update(data)
@@ -115,15 +114,18 @@ class ChaCha20Poly1305(base.Cipher):
         return update
 
     def _get_update_into(self):
+        pad = self._pad_aad
         if self._locking:
 
             def update_into(data, out):
+                pad()
                 self._cipher.update_into(data, out)
                 self._len_ct += len(data)
                 self._auth.update(out[:-15])
         else:
 
             def update_into(data, out):
+                pad()
                 self._auth.update(data)
                 self._len_ct += len(data)
                 self._cipher.update_into(data, out)
