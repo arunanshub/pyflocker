@@ -56,28 +56,28 @@ class ChaCha20Poly1305(base.Cipher):
         if self._updated:
             raise TypeError('cannot authenticate data '
                             'after update has been called')
-        self._len_aad += data
+        self._len_aad += len(memoryview(data))
         self._auth.update(data)
 
     def _pad_aad(self):
         if self._len_aad & 0x0F:
             self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
+        self._updated = True
 
     def update(self, data):
         if not self._updated:
             self._pad_aad()
-            self._updated = True
         return self._update(data)
 
     def update_into(self, data, out):
         if not self._updated:
             self._pad_aad()
-            self._updated = True
         self._update_into(data, out)
 
     def finalize(self, tag=None):
         self._cipher.finalize()
-        self._pad_aad()
+        if not self._updated:
+            self._pad_aad()
 
         if self._len_ct & 0x0F:
             self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
@@ -108,8 +108,8 @@ class ChaCha20Poly1305(base.Cipher):
         else:
 
             def update(data):
-                self._auth.update(data)
                 self._len_ct += len(data)
+                self._auth.update(data)
                 return self._cipher.update(data)
 
         return update
