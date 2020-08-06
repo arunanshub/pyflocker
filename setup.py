@@ -4,7 +4,7 @@ from setuptools import setup, find_packages
 setup(
     name='PyFLocker',
 
-    version='0.1.6',
+    version='0.1.7',
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
 
