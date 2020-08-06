@@ -205,6 +205,7 @@ class FileCipherMixin:
         for i in reads:
             if i < blocksize:
                 rbuf = rbuf[:i]
+                buf = buf[:i+self.__block_size-1]
             update(rbuf, buf)
             write(rbuf)
         self.finalize(tag)
