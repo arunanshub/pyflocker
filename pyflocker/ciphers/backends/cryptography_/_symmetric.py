@@ -37,6 +37,7 @@ class CipherWrapper(CipherWrapperBase):
         if not hasattr(self, '_auth'):
             self._auth = None
         locking = self._locking
+
         self._cipher = (self._cipher.encryptor()
                         if locking else self._cipher.decryptor())
         # for ciphers with HMAC enabled
@@ -147,6 +148,8 @@ class FileCipherMixin:
         self.__file = file
         super().__init__(*args, **kwargs)
 
+        self.__block_size = self._cipher._ctx._block_size_bytes
+
         self.__update = super()._get_update()
         self.__update_into = super()._get_update_into()
 
@@ -192,7 +195,7 @@ class FileCipherMixin:
         """
         if not self._locking and tag is None:
             raise ValueError('tag is required for decryption')
-        buf = memoryview(bytearray(blocksize + 15))
+        buf = memoryview(bytearray(blocksize + self.__block_size - 1))
         rbuf = buf[:blocksize]
 
         write = file.write

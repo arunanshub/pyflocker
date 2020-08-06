@@ -79,6 +79,14 @@ class _EAX:
         self._updated = False
         self._tag = None
 
+    @property
+    def _ctx(self):
+        """The Cipher context used by the backend.
+        Maintains compatibility across pyca/cryptography style
+        cipher instances.
+        """
+        return self._cipher._ctx
+
     def authenticate_additional_data(self, data):
         if self._updated:
             raise ValueError

@@ -121,7 +121,7 @@ class ChaCha20Poly1305(base.Cipher):
                 pad()
                 self._cipher.update_into(data, out)
                 self._len_ct += len(data)
-                self._auth.update(out[:-15])
+                self._auth.update(out)
         else:
 
             def update_into(data, out):
