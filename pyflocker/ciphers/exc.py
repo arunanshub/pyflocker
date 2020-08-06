@@ -13,7 +13,7 @@ class FinalizationError(Exception):
     pass
 
 
-class AlrealyFinalized(FinalizationError):
+class AlreadyFinalized(FinalizationError):
     pass
 
 

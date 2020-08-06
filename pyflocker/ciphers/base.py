@@ -177,7 +177,7 @@ def finalizer(f=None, *, allow=False):
     @wraps(f)
     def wrapper(self, *args, **kwargs):
         if hasattr(self, '_done_') and not allow:
-            raise exc.AlrealyFinalized("cipher has already been finalized")
+            raise exc.AlreadyFinalized("cipher has already been finalized")
 
         try:
             return f(self, *args, **kwargs)
@@ -198,7 +198,7 @@ def before_finalized(f):
     def wrapper(self, *args, **kwargs):
         if not hasattr(self, '_done_'):
             return f(self, *args, **kwargs)
-        raise exc.AlrealyFinalized(
+        raise exc.AlreadyFinalized(
             "this method can only be called before finalizing")
 
     return wrapper
