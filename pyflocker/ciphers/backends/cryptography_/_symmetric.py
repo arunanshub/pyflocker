@@ -142,7 +142,7 @@ class FileCipherMixin:
     """ciphers that support r/w to file and file-like
     objects. Mix with cipher wrappers"""
 
-    __slots__ = ('__update', '__update_into', '__file')
+    __slots__ = ('__update', '__update_into', '__file', '__block_size')
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
@@ -205,7 +205,7 @@ class FileCipherMixin:
         for i in reads:
             if i < blocksize:
                 rbuf = rbuf[:i]
-                buf = buf[:i+self.__block_size-1]
+                buf = buf[:i + self.__block_size - 1]
             update(rbuf, buf)
             write(rbuf)
         self.finalize(tag)

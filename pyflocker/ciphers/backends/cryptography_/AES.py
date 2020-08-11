@@ -50,7 +50,7 @@ def strxor(x, y):
 class _EAX:
     """Pseudo pyca/cryptography style cipher for EAX mode."""
     def __init__(self, key, nonce, mac_len=16):
-        self._mac_len = 16
+        self._mac_len = mac_len
         self._omac = [cmac.CMAC(algo.AES(key), defb()) for i in range(3)]
 
         # update the CMACs
