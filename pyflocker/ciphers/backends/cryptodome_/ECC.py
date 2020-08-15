@@ -57,7 +57,7 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
     """Represents ECC private key."""
     def __init__(self, curve=None, **kwargs):
         if kwargs:
-            self._key = kwargs.pop('curve')
+            self._key = kwargs.pop('key')
             return
         self._key = ECC.generate(curve=curves[curve])
 
