@@ -281,29 +281,21 @@ class Context:
     def __init__(self, key, padding):
         pad, mgf = _get_padding(padding)
         try:
-            self._encrypt = partial(
-                key.encrypt,
-                padding=pad(
-                    mgf,
-                    Hash(
-                        padding.hash.name,
-                        digest_size=padding.hash.digest_size,
-                    )._hasher.algorithm,
-                    padding.label,
-                ),
-            )
+            enc_or_dec = key.encrypt
         except AttributeError:
-            self._decrypt = partial(
-                key.decrypt,
-                padding=pad(
-                    mgf,
-                    Hash(
-                        padding.hash.name,
-                        digest_size=padding.hash.digest_size,
-                    )._hasher.algorithm,
-                    padding.label,
-                ),
-            )
+            enc_or_dec = key.decrypt
+
+        self._encrypt_or_decrypt = partial(
+            enc_or_dec,
+            padding=pad(
+                mgf,
+                Hash(
+                    padding.hash.name,
+                    digest_size=padding.hash.digest_size,
+                )._hasher.algorithm,
+                padding.label,
+            ),
+        )
 
 
 class RSAEncryptionCtx(Context):
@@ -316,7 +308,7 @@ class RSAEncryptionCtx(Context):
         Returns:
             encrypted bytes object.
         """
-        return self._encrypt(plaintext)
+        return self._encrypt_or_decrypt(plaintext)
 
 
 class RSADecryptionCtx(Context):
@@ -333,7 +325,7 @@ class RSADecryptionCtx(Context):
             DecryptionError: if the decryption was not successful.
         """
         try:
-            return self._decrypt(ciphertext)
+            return self._encrypt_or_decrypt(ciphertext)
         except ValueError as e:
             raise exc.DecryptionError from e
 
@@ -345,15 +337,17 @@ class SigVerContext:
                     if padding.salt_len is not None else pad.MAX_LENGTH)
 
         try:
-            self._sign = partial(key.sign, padding=pad(
-                mgf,
-                salt_len,
-            ))
+            sig_ver = key.sign
         except AttributeError:
-            self._verify = partial(key.verify, padding=pad(
+            sig_ver = key.verify
+
+        self._sign_or_verify = partial(
+            sig_ver,
+            padding=pad(
                 mgf,
                 salt_len,
-            ))
+            ),
+        )
 
 
 class RSASignerCtx(SigVerContext):
@@ -371,13 +365,17 @@ class RSASignerCtx(SigVerContext):
             TypeError: if the `msghash` object is not from the same
                 backend.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the RSA key.', )
-        return self._sign(
+        if isinstance(msghash, Hash):
+            hashalgo = msghash._hasher.algorithm
+        else:
+            hashalgo = Hash(
+                msghash.name,
+                digest_size=msghash.digest_size,
+           )._hasher.algorithm
+
+        return self._sign_or_verify(
             msghash.digest(),
-            algorithm=utils.Prehashed(msghash._hasher.algorithm),
+            algorithm=utils.Prehashed(hashalgo),
         )
 
 
@@ -407,7 +405,7 @@ class RSAVerifierCtx(SigVerContext):
             )._hasher.algorithm
 
         try:
-            return self._verify(
+            return self._sign_or_verify(
                 signature,
                 msghash.digest(),
                 algorithm=utils.Prehashed(hashalgo),

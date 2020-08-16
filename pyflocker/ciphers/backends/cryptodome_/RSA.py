@@ -350,4 +350,4 @@ class RSAVerifierCtx(SigVerContext):
             SignatureError: if the `signature` was incorrect.
         """
         if not self._sig.verify(msghash, signature):
-            raise exc.SignatureError from e
+            raise exc.SignatureError
