@@ -124,6 +124,27 @@ class BaseHash(ABC):
             bytes object representing the digest of the message.
         """
 
+    @abstractmethod
+    def new(self, data=b'', *, digest_size=None):
+        """Return a new hash object.
+
+        Args:
+            data: The initial data to be passed to the hash object.
+
+        Kwargs:
+            digest_size:
+                The digest size of the hash algorithm.
+                If digest_size is None, it is equal to the current
+                hash object's digest size.
+                Valid only for BLAKE and SHAKE.
+
+        Returns:
+            Hash object.
+
+        Raises:
+            See documentation for Hash.
+        """
+
     def __repr__(self):
         return f"<Hash '{self.name}' at {hex(id(self))}>"
 

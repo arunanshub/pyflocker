@@ -94,3 +94,10 @@ class Hash(base.BaseHash):
         if self._name in xofs:
             return self._hasher.read(self._digest_size)
         return self._hasher.digest()
+
+    def new(self, data=b'', *, digest_size=None):
+        return Hash(
+            self.name,
+            data,
+            digest_size=digest_size or self.digest_size,
+        )

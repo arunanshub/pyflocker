@@ -57,3 +57,10 @@ class Hash(base.BaseHash):
         if self._digest is None:
             self._digest = self._hasher.finalize()
         return self._digest
+
+    def new(self, data=b'', *, digest_size=None):
+        return Hash(
+            self.name,
+            data,
+            digest_size=digest_size or self.digest_size,
+        )
