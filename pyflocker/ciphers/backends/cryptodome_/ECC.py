@@ -246,11 +246,7 @@ class ECCSignerCtx(SigVerContext):
             TypeError: if the `msghash` object is not from the same
                 backend.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the ECC key.', )
-        return self._sig.sign(msghash._hasher)
+        return self._sig.sign(msghash)
 
 
 class ECCVerifierCtx(SigVerContext):
@@ -276,13 +272,7 @@ class ECCVerifierCtx(SigVerContext):
                 backend.
             SignatureError: if the `signature` was incorrect.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the ECC key.', )
-        # confusingly, PyCryptodome returns False;
-        # better raise errors than returning
         try:
-            self._sig.verify(msghash._hasher, signature)
+            self._sig.verify(msghash, signature)
         except ValueError as e:
             raise exc.SignatureError from e

@@ -327,17 +327,21 @@ class ECCSignerCtx(SigVerContext):
             TypeError: if the `msghash` object is not from the same
                 backend.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the ECC key.', )
+        if isinstance(msghash, Hash):
+            hashalgo = msghash._hasher.algorithm
+        else:
+            hashalgo = Hash(
+                msghash.name,
+                digest_size=msghash.digest_size,
+            )._hasher.algorithm
+
         # special case 1: x* only key
         if self._algo is None:
             return self._sign(msghash.digest())
 
         return self._sign(
             msghash.digest(),
-            self._algo(utils.Prehashed(msghash._hasher.algorithm)),
+            self._algo(utils.Prehashed(hashalgo)),
         )
 
 
@@ -364,10 +368,13 @@ class ECCVerifierCtx(SigVerContext):
                 backend.
             SignatureError: if the `signature` was incorrect.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the ECC key.', )
+        if isinstance(msghash, Hash):
+            hashalgo = msghash._hasher.algorithm
+        else:
+            hashalgo = Hash(
+                msghash.name,
+                digest_size=msghash.digest_size,
+            )._hasher.algorithm
 
         # special case 1: ed* only key
         if self._algo is None:
@@ -384,7 +391,7 @@ class ECCVerifierCtx(SigVerContext):
             return self._verify(
                 signature,
                 msghash.digest(),
-                self._algo(utils.Prehashed(msghash._hasher.algorithm)),
+                self._algo(utils.Prehashed(hashalgo)),
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
