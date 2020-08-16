@@ -85,9 +85,23 @@ class Hash(base.BaseHash):
     def name(self):
         return self._name
 
+    @property
+    def oid(self):
+        """ASN.1 Object ID of the hash algorithm."""
+        try:
+            return self._hasher.oid
+        except AttributeError:
+            raise AttributeError('oid is avaliable for digest sizes 20, 32, 48, 64')
+
     @base.before_finalized
     def update(self, data):
         self._hasher.update(data)
+
+    @base.before_finalized
+    def copy(self):
+        hashobj = Hash(self.name, digest_size=self.digest_size)
+        hashobj._hasher = self._hasher.copy()
+        return hashobj
 
     @base.finalizer(allow=True)
     def digest(self):

@@ -114,6 +114,18 @@ class BaseHash(ABC):
         """
 
     @abstractmethod
+    def copy(self):
+        """Return a copy of the hash function.
+        This cannot be called after digest has been called.
+
+        Args:
+            None
+
+        Returns:
+            Hash object.
+        """
+
+    @abstractmethod
     def digest(self):
         """Finalize and return the hash as bytes object.
 

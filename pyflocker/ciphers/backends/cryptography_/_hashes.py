@@ -26,6 +26,22 @@ _arbitrary_digest_size_hashes = {
 
 hashes.update(_arbitrary_digest_size_hashes)
 
+# the ASN.1 Object IDs
+_oids = {
+    'sha224': '2.16.840.1.101.3.4.2.4',
+    'sha256': '2.16.840.1.101.3.4.2.1',
+    'sha384': '2.16.840.1.101.3.4.2.2',
+    'sha512': '2.16.840.1.101.3.4.2.3',
+    'sha512_224': '2.16.840.1.101.3.4.2.5',
+    'sha512_256': '2.16.840.1.101.3.4.2.6',
+    'sha3_224': '2.16.840.1.101.3.4.2.7',
+    'sha3_256': '2.16.840.1.101.3.4.2.8',
+    'sha3_384': '2.16.840.1.101.3.4.2.9',
+    'sha3_512': '2.16.840.1.101.3.4.2.10',
+    'shake128': '2.16.840.1.101.3.4.2.11',
+    'shake256': '2.16.840.1.101.3.4.2.12',
+}
+
 
 class Hash(base.BaseHash):
     def __init__(self, name, data=b'', *, digest_size=None):
@@ -48,9 +64,29 @@ class Hash(base.BaseHash):
     def name(self):
         return self._name
 
+    @property
+    def oid(self):
+        """ASN.1 Object ID of the hash algorithm."""
+        if self.name in _oids:
+            return _oids[self.name]
+
+        # for BLAKE
+        if not self.digest_size in (20, 32, 48, 64):
+            raise AttributeError('oid is avaliable for digest sizes 20, 32, 48, 64')
+
+        if self.name == 'blake2b':
+            return '1.3.6.1.4.1.1722.12.2.1.' + str(self.digest_size)
+        return '1.3.6.1.4.1.1722.12.2.2.' + str(self.digest_size)
+
     @base.before_finalized
     def update(self, data):
         self._hasher.update(data)
+
+    @base.before_finalized
+    def copy(self):
+        hashobj = Hash(self.name, digest_size=self.digest_size)
+        hashobj._hasher = self._hasher.copy()
+        return hashobj
 
     @base.finalizer(allow=True)
     def digest(self):
