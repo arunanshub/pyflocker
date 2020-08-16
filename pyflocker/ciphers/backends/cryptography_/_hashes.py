@@ -61,6 +61,14 @@ class Hash(base.BaseHash):
         return self._hasher.algorithm.digest_size
 
     @property
+    def block_size(self):
+        """Block size of the underlying hash algorithm."""
+        try:
+            return self._hasher.algorithm.block_size
+        except AttributeError:
+            raise AttributeError
+
+    @property
     def name(self):
         return self._name
 
