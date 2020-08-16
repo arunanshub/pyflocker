@@ -371,7 +371,7 @@ class RSASignerCtx(SigVerContext):
             hashalgo = Hash(
                 msghash.name,
                 digest_size=msghash.digest_size,
-           )._hasher.algorithm
+            )._hasher.algorithm
 
         return self._sign_or_verify(
             msghash.digest(),
