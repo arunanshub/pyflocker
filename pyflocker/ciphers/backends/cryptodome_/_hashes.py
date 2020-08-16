@@ -87,7 +87,11 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.block_size
         except AttributeError:
-            raise AttributeError
+            raise AttributeError(
+                f'Hash algorithm {self.name} does not '
+                'have block_size parameter.'
+            ) from None
+
     @property
     def name(self):
         return self._name
@@ -98,7 +102,9 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.oid
         except AttributeError:
-            raise AttributeError('oid is avaliable for digest sizes 20, 32, 48, 64')
+            # for BLAKE-2b/2s
+            raise AttributeError(
+                'oid is avaliable only for digest sizes 20, 32, 48 and 64')
 
     @base.before_finalized
     def update(self, data):
@@ -107,7 +113,12 @@ class Hash(base.BaseHash):
     @base.before_finalized
     def copy(self):
         hashobj = Hash(self.name, digest_size=self.digest_size)
-        hashobj._hasher = self._hasher.copy()
+        try:
+            hashobj._hasher = self._hasher.copy()
+        except AttributeError:
+            raise AttributeError(
+                f'Hash {self.name} does not support copying.'
+            ) from None
         return hashobj
 
     @base.finalizer(allow=True)
@@ -117,7 +128,7 @@ class Hash(base.BaseHash):
         return self._hasher.digest()
 
     def new(self, data=b'', *, digest_size=None):
-        return Hash(
+        return type(self)(
             self.name,
             data,
             digest_size=digest_size or self.digest_size,

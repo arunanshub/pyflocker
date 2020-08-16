@@ -66,7 +66,10 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.algorithm.block_size
         except AttributeError:
-            raise AttributeError
+            raise AttributeError(
+                f'Hash algorithm {self.name} does not have '
+                'block_size parameter.'
+            ) from None
 
     @property
     def name(self):
@@ -80,7 +83,9 @@ class Hash(base.BaseHash):
 
         # for BLAKE
         if not self.digest_size in (20, 32, 48, 64):
-            raise AttributeError('oid is avaliable for digest sizes 20, 32, 48, 64')
+            raise AttributeError(
+                'oid is avaliable only for digest sizes 20, 32, 48 and 64'
+            ) from None
 
         if self.name == 'blake2b':
             return '1.3.6.1.4.1.1722.12.2.1.' + str(self.digest_size)
@@ -103,7 +108,7 @@ class Hash(base.BaseHash):
         return self._digest
 
     def new(self, data=b'', *, digest_size=None):
-        return Hash(
+        return type(self)(
             self.name,
             data,
             digest_size=digest_size or self.digest_size,
