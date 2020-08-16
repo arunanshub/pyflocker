@@ -315,10 +315,7 @@ class RSASignerCtx(SigVerContext):
 
         Args:
             msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the RSA key. Refer to `Hash.new` function's
-                documentation.
+                It must be a `Hash` object, used to digest the message to sign.
 
         Returns:
             signature of the message as bytes object.
@@ -329,12 +326,8 @@ class RSASignerCtx(SigVerContext):
             ValueError: if the key is not long enough to sign the
                 massage.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the RSA key.', )
         try:
-            return self._sig.sign(msghash._hasher)
+            return self._sig.sign(msghash)
         except ValueError as e:
             raise ValueError('RSA key is not long enough') from e
 
@@ -345,10 +338,7 @@ class RSAVerifierCtx(SigVerContext):
 
         Args:
             msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the RSA key. Refer to `Hash.new` function's
-                documentation.
+                It must be a `Hash` object, used to digest the message to sign.
 
             signature:
                 signature must be a `bytes` or `bytes-like` object.
@@ -357,13 +347,7 @@ class RSAVerifierCtx(SigVerContext):
             None
 
         Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
             SignatureError: if the `signature` was incorrect.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the RSA key.', )
-        if not self._sig.verify(msghash._hasher, signature):
+        if not self._sig.verify(msghash, signature):
             raise exc.SignatureError from e

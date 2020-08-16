@@ -362,10 +362,7 @@ class RSASignerCtx(SigVerContext):
 
         Args:
             msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the RSA key. Refer to `Hash.new` function's
-                documentation.
+                It must be a `Hash` object, used to digest the message to sign.
 
         Returns:
             signature of the message as bytes object.
@@ -390,10 +387,7 @@ class RSAVerifierCtx(SigVerContext):
 
         Args:
             msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the RSA key. Refer to `Hash.new` function's
-                documentation.
+                It must be a `Hash` object, used to digest the message to sign.
 
             signature:
                 signature must be a `bytes` or `bytes-like` object.
@@ -402,19 +396,21 @@ class RSAVerifierCtx(SigVerContext):
             None
 
         Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
             SignatureError: if the `signature` was incorrect.
         """
-        if not isinstance(msghash, Hash):
-            raise TypeError(
-                'the message hashing object must be instantiated '
-                'from the same backend as that of the RSA key.', )
+        if isinstance(msghash, Hash):
+            hashalgo = msghash._hasher.algorithm
+        else:
+            hashalgo = Hash(
+                msghash.name,
+                digest_size=msghash.digest_size,
+            )._hasher.algorithm
+
         try:
             return self._verify(
                 signature,
                 msghash.digest(),
-                algorithm=utils.Prehashed(msghash._hasher.algorithm),
+                algorithm=utils.Prehashed(hashalgo),
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
