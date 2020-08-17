@@ -102,9 +102,15 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.oid
         except AttributeError:
+            base_msg = 'oid is avaliable only for digest sizes '
             # for BLAKE-2b/2s
-            raise AttributeError(
-                'oid is avaliable only for digest sizes 20, 32, 48 and 64')
+            if self.name == 'blake2b':
+                msg = base_msg + '20, 32, 48 and 64'
+            elif self.msg == 'blake2s':
+                msg = base_msg + '16, 20, 28 and 32'
+            else:
+                msg = f'oid attribute is not available for hash {self.name}'
+            raise AttributeError(msg) from None
 
     @base.before_finalized
     def update(self, data):
