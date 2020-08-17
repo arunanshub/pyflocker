@@ -112,27 +112,32 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
 
         prot = {}
 
-        if format == 'PKCS1':
-            if protection is not None:
+        if protection is not None:
+            if format == 'PKCS1':
                 raise TypeError('protection is meaningful only for PKCS8')
-
-        if protection not in protection_schemes:
-            raise ValueError('invalid protection scheme')
+            if protection not in protection_schemes:
+                raise ValueError('invalid protection scheme')
+            # use a curated encryption choice and not DES-EDE3-CBC
+            prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
+        else:
+            prot = dict(protection=protection)
 
         if passphrase is not None:
-            if protection is not None:
-                prot = dict(protection=protection)
-            else:
-                # use a curated encryption choice and not DES-EDE3-CBC
-                prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
+            # type checking of key
+            passphrase = memoryview(passphrase).tobytes()
+            # check length afterwards
+            if not passphrase:
+                raise ValueError('passphrase cannot be empty bytes')
 
-        return self._key.export_key(
+        key = self._key.export_key(
             format=encodings[encoding],
             use_pkcs8=(format == 'PKCS8'),
-            passphrase=(memoryview(passphrase).tobytes()
-                        if passphrase is not None else None),
+            passphrase=passphrase,
             **prot,
         )
+        if isinstance(key, bytes):
+            return key
+        return key.encode('utf-8')
 
     def signer(self, *, mode='fips-186-3', encoding='binary'):
         """Create a signer context.
@@ -183,10 +188,13 @@ class ECCPublicKey(_ECCKey, base.BasePublicKey):
         Raises:
             KeyError: if the encoding is not supported or invalid.
         """
-        return self._key.export_key(
+        key = self._key.export_key(
             format=encodings[encoding],
             compress=compress,
         )
+        if isinstance(key, bytes):
+            return key
+        return key.encode()
 
     def verifier(self, *, mode='fips-186-3', encoding='binary'):
         """Create a signer context.
