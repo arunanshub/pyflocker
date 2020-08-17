@@ -82,14 +82,21 @@ class Hash(base.BaseHash):
             return _oids[self.name]
 
         # for BLAKE
-        if not self.digest_size in (20, 32, 48, 64):
-            raise AttributeError(
-                'oid is avaliable only for digest sizes 20, 32, 48 and 64'
-            ) from None
-
         if self.name == 'blake2b':
+            if self.digest_size not in (20, 32, 48, 64):
+                raise AttributeError(
+                    'oid is avaliable only for '
+                    'digest sizes 20, 32, 48 and 64'
+                )
             return '1.3.6.1.4.1.1722.12.2.1.' + str(self.digest_size)
-        return '1.3.6.1.4.1.1722.12.2.2.' + str(self.digest_size)
+
+        if self.name == 'blake2s':
+            if self.digest_size not in (16, 20, 28, 32):
+                raise AttributeError(
+                    'oid is avaliable only for '
+                    'digest sizes 16, 20, 28 and 32'
+                )
+            return '1.3.6.1.4.1.1722.12.2.2.' + str(self.digest_size)
 
     @base.before_finalized
     def update(self, data):
