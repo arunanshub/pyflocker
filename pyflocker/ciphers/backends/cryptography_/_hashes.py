@@ -24,6 +24,15 @@ _arbitrary_digest_size_hashes = {
     'blake2s': h.BLAKE2s,
 }
 
+_block_sizes = {
+    'sha3_224': 114,
+    'sha3_256': 136,
+    'sha3_384': 104,
+    'sha3_512': 72,
+    'shake128': 168,
+    'shake256': 136,
+}
+
 hashes.update(_arbitrary_digest_size_hashes)
 
 # the ASN.1 Object IDs
@@ -66,10 +75,12 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.algorithm.block_size
         except AttributeError:
-            raise AttributeError(
-                f'Hash algorithm {self.name} does not have '
-                'block_size parameter.'
-            ) from None
+            try:
+                return _block_sizes[self.name]
+            except KeyError:
+                pass  # raise below
+            raise AttributeError(f'Hash algorithm {self.name} does not have '
+                                 'block_size parameter.') from None
 
     @property
     def name(self):
@@ -84,18 +95,14 @@ class Hash(base.BaseHash):
         # for BLAKE
         if self.name == 'blake2b':
             if self.digest_size not in (20, 32, 48, 64):
-                raise AttributeError(
-                    'oid is avaliable only for '
-                    'digest sizes 20, 32, 48 and 64'
-                )
+                raise AttributeError('oid is avaliable only for '
+                                     'digest sizes 20, 32, 48 and 64')
             return '1.3.6.1.4.1.1722.12.2.1.' + str(self.digest_size)
 
         if self.name == 'blake2s':
             if self.digest_size not in (16, 20, 28, 32):
-                raise AttributeError(
-                    'oid is avaliable only for '
-                    'digest sizes 16, 20, 28 and 32'
-                )
+                raise AttributeError('oid is avaliable only for '
+                                     'digest sizes 16, 20, 28 and 32')
             return '1.3.6.1.4.1.1722.12.2.2.' + str(self.digest_size)
 
     @base.before_finalized

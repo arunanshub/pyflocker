@@ -56,6 +56,15 @@ xofs = {
     'shake256': SHAKE256.new,
 }
 
+_block_sizes = {
+    'sha3_224': 114,
+    'sha3_256': 136,
+    'sha3_384': 104,
+    'sha3_512': 72,
+    'shake128': 168,
+    'shake256': 136,
+}
+
 hashes.update(arbitrary_digest_size_hashes)
 
 
@@ -87,10 +96,12 @@ class Hash(base.BaseHash):
         try:
             return self._hasher.block_size
         except AttributeError:
-            raise AttributeError(
-                f'Hash algorithm {self.name} does not '
-                'have block_size parameter.'
-            ) from None
+            try:
+                return _block_sizes[self.name]
+            except KeyError:
+                pass  # raise below
+            raise AttributeError(f'Hash algorithm {self.name} does not '
+                                 'have block_size parameter.') from None
 
     @property
     def name(self):
@@ -123,8 +134,7 @@ class Hash(base.BaseHash):
             hashobj._hasher = self._hasher.copy()
         except AttributeError:
             raise AttributeError(
-                f'Hash {self.name} does not support copying.'
-            ) from None
+                f'Hash {self.name} does not support copying.') from None
         return hashobj
 
     @base.finalizer(allow=True)
