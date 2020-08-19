@@ -285,20 +285,33 @@ def _get_signer(key, pad):
     _pad, _mgf = _get_padding(pad)
     if pad.salt_len is None:
 
-        # create a custom sign/verify wrapper to preserve consistency:
-        # pyca/cryptography follows the OpenSSL quirk where the default
-        # salt length is maximized and doesn't match with the size of the
-        # digest applied to the message.
+        @staticmethod
         def sign_or_verify(msghash, signature=None):
+            """
+            Custom sign/verify wrapper over PSS to preserve consistency:
+            pyca/cryptography follows the OpenSSL quirk where the default
+            salt length is maximized and doesn't match with the size of the
+            digest applied to the message.
+
+            Args:
+                msghash: The Hash object used to digest the message to sign.
+                signature: The signature as bytes object.
+                    If signature is None, signing is performed, otherwise
+                    verification is performed.
+
+            Returns:
+                signature as bytes object if signature argument is None.
+                None if signature argument is provided.
+            """
             salt_len = key.size_in_bytes() - msghash.digest_size - 2
             sigver = _pad(key, mgfunc=_mgf, saltLen=salt_len)
             if signature is None:
                 return sigver.sign(msghash)
             return sigver.verify(msghash, signature)
 
-        # create an object placeholder object to shadow the signer/verifier.
+        # create an object placeholder object to hold the signer/verifier.
         funcs = dict(sign=sign_or_verify, verify=sign_or_verify)
-        svobj = type('_SigVerCtx', (), funcs)
+        svobj = type('_OpenSSLStyleSigVer', (), funcs)()
         return svobj
 
     return _pad(key, mgfunc=_mgf, saltLen=pad.salt_len)
