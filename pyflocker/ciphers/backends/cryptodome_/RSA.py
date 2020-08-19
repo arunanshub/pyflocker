@@ -225,14 +225,14 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
 def _get_padding(pad):
     _pad = paddings[pad.__class__]
     mhash = Hash(pad.mgf.hash.name,
-                 digest_size=pad.mgf.hash.digest_size)._hasher
+                 digest_size=pad.mgf.hash.digest_size)  #._hasher
     _mgf = lambda x, y: paddings[pad.mgf.__class__](x, y, mhash)
     return _pad, _mgf
 
 
 def _get_cipher(key, pad):
     _pad, _mgf = _get_padding(pad)
-    phash = Hash(pad.hash.name, digest_size=pad.hash.digest_size)._hasher
+    phash = Hash(pad.hash.name, digest_size=pad.hash.digest_size)  #._hasher
     return _pad(key, hashAlgo=phash, mgfunc=_mgf)
 
 
