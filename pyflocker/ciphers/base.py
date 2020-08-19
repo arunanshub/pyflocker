@@ -53,8 +53,8 @@ class Cipher(ABC):
             None
 
         Raises:
-            TypeError is raised if this method is called after
-            calling `update`,
+            TypeError is raised if this method is called after calling
+            `update`.
         """
 
     @abstractmethod
