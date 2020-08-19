@@ -115,7 +115,7 @@ class AEADCipherWrapper(CipherWrapper):
         try:
             if not self._locking:
                 if tag is None:
-                    raise TypeError('tag is required for decryption')
+                    raise ValueError('tag is required for decryption')
                 # finalize: decryption
                 return self._cipher.finalize_with_tag(tag)
             # finalize: encryption
@@ -190,7 +190,7 @@ class FileCipherMixin:
         Raises:
             DecryptionError:
                 `tag` is invalid, denoting unsuccessful decryption.
-            TypeError:
+            ValueError:
                 the tag is not provided for validation after decryption.
         """
         if not self._locking and tag is None:

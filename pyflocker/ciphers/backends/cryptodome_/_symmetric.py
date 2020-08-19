@@ -117,7 +117,7 @@ class AEADCipherWrapper(CipherWrapper):
         try:
             if not self._locking:
                 if tag is None:
-                    raise TypeError('tag is required for decryption')
+                    raise ValueError('tag is required for decryption')
                 self._cipher.verify(tag)
         except ValueError as e:
             raise exc.DecryptionError from e
@@ -191,7 +191,7 @@ class FileCipherMixin:
                 the tag is not provided for validation after decryption.
         """
         if not self._locking and tag is None:
-            raise TypeError('tag is required for decryption')
+            raise ValueError('tag is required for decryption')
         buf = memoryview(bytearray(blocksize))
 
         write = file.write
