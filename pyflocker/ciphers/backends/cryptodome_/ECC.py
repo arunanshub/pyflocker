@@ -142,7 +142,7 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
     def signer(self, *, mode='fips-186-3', encoding='binary'):
         """Create a signer context.
 
-        Args:
+        Kwargs:
             mode:
                 The signature generation mode. It can be:
                   - 'fips-186-3' (default)
