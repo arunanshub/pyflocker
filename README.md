@@ -60,7 +60,7 @@ set_default_backend(Backends.CRYPTODOME)
 
 * * *
 
-# Ease of Use
+## Ease of Use
 
 PyFLocker provides reasonable defaults wherever possible:
 
@@ -78,7 +78,7 @@ In short, the interface is very fluid and easy on developer's mind.
 
 * * *
 
-# Writing into file or file like objects
+## Writing into file or file like objects
 
 This is often a related problem when it comes to encryption, but think no more!
 
@@ -95,7 +95,7 @@ tag = enc.calculate_tag()
 
 You can also use `BytesIO` in place of file objects.
 
-## Directly encrypting files
+### Directly encrypting files
 
 Just want to encrypt your file with AES, and even with various available modes?
 
@@ -110,7 +110,7 @@ locker('./MySuperSecretFile.txt', passwd, aes_mode=AES.MODE_CFB)  # default is A
 
 * * *
 
-# Base classes and tools for wrapping more backends
+## Base classes and tools for wrapping more backends
 
 You can even wrap other tools and ciphers, if you are so inclined...
 
