@@ -7,10 +7,8 @@ def new(hashname, data=b'', digest_size=None, *, backend=None):
     """
     Instantiate a new hash instance `hashname` with initial
     data `data` (default is empty `bytes`).
-
-    When there is a requirement of a particular hash by a cipher,
-    you must choose the hash algorithm from the correct backend,
-    by passing in the backend keyword.
+    The Hash object created by this function can be used as
+    the `hash` argument to OAEP and MGF1.
 
     Args:
         hashname: Name of the hashing function to use.
