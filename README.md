@@ -1,5 +1,5 @@
 # PyFLocker
-
+![Upload Python Package](https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg)
 #### Python Cryptographic (File Locking) Library
 
 # Installation
