@@ -121,6 +121,5 @@ class AEADOneShot(AEAD):
             pass
         self.finalize(tag)
 
-
     def update(self, data, tag=None):
         return self.update_into(data, out=None, tag=tag)

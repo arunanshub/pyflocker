@@ -45,8 +45,6 @@ def _test_AES_base(*, key_lengths, iv, mode, authdata=None, **kwargs):
 
 
 def _test_AES_nospecial_base(*, aead, hmac=False, authdata=None):
-    data = bytes(16)
-
     if aead:
         modes = AES.aead ^ AES.special
         kwargs = dict()
