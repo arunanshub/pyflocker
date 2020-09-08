@@ -1,12 +1,17 @@
-import struct, hmac
-from cryptography.hazmat.primitives.ciphers import (Cipher as CrCipher, modes,
-                                                    algorithms as algo)
-from cryptography.hazmat.primitives import cmac
+import struct
+import hmac
+
 import cryptography.exceptions as bkx
+
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher as CrCipher,
+    modes,
+    algorithms as algo
+)
+from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, Modes as _m
-
 from ._symmetric import (
     AEADCipherWrapper,
     HMACCipherWrapper,
@@ -56,7 +61,7 @@ class _EAX:
         # update the CMACs
         [
             self._omac[i].update(
-                bytes(1) * (algo.AES.block_size // 8 - 1) +
+                bytes(1) * (algo.AES.block_size // 8 - 1) +  # noqa: W504
                 struct.pack('B', i)) for i in range(3)
         ]
 
