@@ -98,7 +98,14 @@ class AEADOneShot(AEAD):
     """
     def update_into(self, data, out, tag=None):
         if self._locking:
-            dat = self._cipher.encrypt_and_digest(data, out)[0]
+            try:
+                dat = self._cipher.encrypt_and_digest(data, out)[0]
+            except TypeError:
+                # some modes do not support writing into buffer
+                # eg. MODE_OCB.
+                if out is not None:
+                    raise  # reraise the error
+                dat = self._cipher.encrypt_and_digest(data)[0]
             self.finalize()
             return dat
 
@@ -106,11 +113,14 @@ class AEADOneShot(AEAD):
             raise ValueError('tag is required for decryption')
         crpup = self._cipher.decrypt_and_verify
         try:
-            dat = crpup(data, tag, out)
+            try:
+                dat = crpup(data, tag, out)
+            except TypeError:
+                dat = crpup(data, tag)
         except ValueError:
-            dat = None
+            pass
         self.finalize(tag)
-        return dat
+
 
     def update(self, data, tag=None):
         return self.update_into(data, out=None, tag=tag)
