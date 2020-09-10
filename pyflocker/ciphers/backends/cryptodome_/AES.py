@@ -98,28 +98,25 @@ class AEADOneShot(AEAD):
     """
     def update_into(self, data, out, tag=None):
         if self._locking:
-            try:
-                dat = self._cipher.encrypt_and_digest(data, out)[0]
-            except TypeError:
-                # some modes do not support writing into buffer
-                # eg. MODE_OCB.
-                if out is not None:
-                    raise  # reraise the error
-                dat = self._cipher.encrypt_and_digest(data)[0]
-            self.finalize()
-            return dat
+            crp = lambda data, *args: self._cipher.encrypt_and_digest(  # noqa
+                data, *args)[0]
+        else:
+            if tag is None:
+                raise ValueError("tag is required for decryption.")
+            crp = lambda data, *args: self._cipher.decrypt_and_verify(  # noqa
+                data, tag, *args)
 
-        if tag is None:
-            raise ValueError('tag is required for decryption')
-        crpup = self._cipher.decrypt_and_verify
         try:
             try:
-                dat = crpup(data, tag, out)
+                dat = crp(data, out)
             except TypeError:
-                dat = crpup(data, tag)
+                # writing to buffer not supported
+                dat = crp(data)
         except ValueError:
+            # don't raise decryption failure here
             pass
         self.finalize(tag)
+        return dat
 
     def update(self, data, tag=None):
         return self.update_into(data, out=None, tag=tag)
