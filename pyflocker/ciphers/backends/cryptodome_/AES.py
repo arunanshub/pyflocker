@@ -111,6 +111,8 @@ class AEADOneShot(AEAD):
                 dat = crp(data, out)
             except TypeError:
                 # writing to buffer not supported
+                if out is not None:
+                    raise
                 dat = crp(data)
         except ValueError:
             # don't raise decryption failure here
