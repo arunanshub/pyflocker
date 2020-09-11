@@ -8,10 +8,10 @@ from .base import SymBase
 
 
 @pytest.fixture
-def cipher(mode, key):
+def cipher(mode, key_length):
     return partial(
         Camellia.new,
-        key=key,
+        key=os.urandom(key_length),
         mode=mode,
         iv_or_nonce=os.urandom(16),
     )
@@ -26,8 +26,8 @@ def cipher(mode, key):
     [Modes.MODE_CFB, Modes.MODE_CTR, Modes.MODE_OFB],
 )
 @pytest.mark.parametrize(
-    'key',
-    map(os.urandom, (16, 24, 32)),
+    'key_length',
+    (16, 24, 32),
 )
 class TestCamellia(SymBase):
     pass

@@ -28,7 +28,7 @@ class SymBase:
             dec.update_into(wbuf, test)
             assert rbuf.tobytes() == test.tobytes()
 
-    def test_update(self, key, cipher, backend):
+    def test_update(self, cipher, backend):
         try:
             enc = cipher(True, backend=backend)
             dec = cipher(False, backend=backend)
