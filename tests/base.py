@@ -33,7 +33,31 @@ class SymBase:
             enc = cipher(True, backend=backend)
             dec = cipher(False, backend=backend)
         except NotImplementedError:
-            pytest.skip(f"Unsupported by backend {backend}")
+            pytest.skip(f"Cipher unsupported by backend {backend}")
 
         data = bytes(32)
         assert dec.update(enc.update(data)) == data
+
+    def test_write_into_file_buffer(self, cipher, backend):
+        import io
+        f1 = io.BytesIO(bytes(16384))
+        f2 = io.BytesIO()
+        f3 = io.BytesIO()
+        try:
+            enc = cipher(True, file=f1, backend=backend)
+            dec = cipher(False, file=f2, backend=backend)
+        except NotImplementedError:
+            pytest.skip(f"Cipher unsupported by backend {backend}")
+        except TypeError:
+            pytest.skip(
+            "Cipher does not support writing into file-like objects")
+
+        enc.update_into(f2, blocksize=1024)
+        f2.seek(0)
+
+        try:
+            dec.update_into(f3, blocksize=2048, tag=enc.calculate_tag())
+        except exc.DecryptionError:
+            pytest.fail("Authentication check failed")
+
+        assert f3.getvalue() == f1.getvalue()

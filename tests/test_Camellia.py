@@ -7,6 +7,15 @@ from pyflocker.ciphers import Camellia, Modes, Backends
 from .base import SymBase
 
 
+_SUPPORTED_MODES = set((
+    Modes.MODE_CFB,
+    Modes.MODE_CTR,
+    Modes.MODE_OFB,
+))
+
+_KEY_LENGTHS = (16, 24, 32)
+
+
 @pytest.fixture
 def cipher(mode, key_length):
     return partial(
@@ -23,11 +32,11 @@ def cipher(mode, key_length):
 )
 @pytest.mark.parametrize(
     'mode',
-    [Modes.MODE_CFB, Modes.MODE_CTR, Modes.MODE_OFB],
+    _SUPPORTED_MODES,
 )
 @pytest.mark.parametrize(
     'key_length',
-    (16, 24, 32),
+    _KEY_LENGTHS,
 )
 class TestCamellia(SymBase):
     pass
