@@ -1,6 +1,6 @@
 try:
     from Cryptodome.Cipher import AES
-except ModuleNotFoundError:
+except ModuleNotFoundError:  # pragma: no cover
     from Crypto.Cipher import AES
 
 from .. import base, Modes as _m
