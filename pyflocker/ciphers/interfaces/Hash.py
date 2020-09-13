@@ -1,6 +1,6 @@
 """Interface to hashing algorithms."""
 
-from .. import load_cipher as _load_cpr
+from ..backends import load_algorithm as _load_algo
 
 
 def new(hashname, data=b'', digest_size=None, *, backend=None):
@@ -27,7 +27,7 @@ def new(hashname, data=b'', digest_size=None, *, backend=None):
     Raises:
         KeyError if the hashing function is not supported.
     """
-    return _load_cpr('Hash', backend).Hash(
+    return _load_algo('Hash', backend).Hash(
         hashname,
         data,
         digest_size=digest_size,

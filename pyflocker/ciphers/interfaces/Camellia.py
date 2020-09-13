@@ -1,15 +1,30 @@
 """Interface to Camellia cipher"""
 
-from .. import load_cipher as _load_cpr
+from ..backends import load_algorithm as _load_algo
 from .. import Backends
 
 
 def _cml_cipher_from_mode(mode, bknd, hasfile):
-    if mode not in bknd.supported.keys():
+    if mode not in supported_modes(bknd):
         raise NotImplementedError("backend does not support this mode.")
+    cpr = _load_algo('Camellia', bknd)
     if not hasfile:
-        return bknd.Camellia
-    return bknd.CamelliaFile
+        return cpr.Camellia
+    return cpr.CamelliaFile
+
+
+def supported_modes(backend):
+    """Lists all modes supported by the cipher. It is
+    limited to backend's implementation and capability,
+    and hence, varies from backend to backend.
+
+    Args:
+        backend: An attribute from Backends enum.
+
+    Returns:
+        list of Modes object supported by backend.
+    """
+    return list(_load_algo('Camellia', backend).supported)
 
 
 def new(locking,
@@ -53,11 +68,10 @@ def new(locking,
 
     Raises:
         `NotImplementedError` if backend does not support that mode.
-        `ModuleNotFoundError` if the backend is not found.
+        `UnsupportedAlgorithm` if the backend does not support Camellia.
         Any other error that is raised is from the backend itself.
     """
-    cpr = _load_cpr("Camellia", backend)
-    _cpr = _cml_cipher_from_mode(mode, cpr, file is not None)
+    _cpr = _cml_cipher_from_mode(mode, backend, file is not None)
     if file:
         kwargs.update(dict(hashed=True))  # Always use HMAC
         return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)

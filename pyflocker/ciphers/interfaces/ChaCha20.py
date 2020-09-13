@@ -1,5 +1,5 @@
 """Interface to ChaCha20-Poly1305 cipher"""
-from .. import load_cipher as _load_cpr
+from ..backends import load_algorithm as _load_algo
 
 
 def new(locking, key, nonce, *, file=None, backend=None):
@@ -28,7 +28,7 @@ def new(locking, key, nonce, *, file=None, backend=None):
         `ModuleNotFoundError` if the backend is not found.
         Any other error that is raised is from the backend itself.
     """
-    cpr = _load_cpr("ChaCha20", backend)
+    cpr = _load_algo("ChaCha20", backend)
     if file:
         _cpr = cpr.ChaCha20Poly1305File
         return _cpr(locking, key, nonce, file=file)

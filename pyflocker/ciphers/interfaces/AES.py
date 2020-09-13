@@ -1,6 +1,6 @@
 """Interface to AES cipher"""
 
-from .. import load_cipher as _load_cpr, Modes as _m
+from ..backends import load_algorithm as _load_algo, Modes as _m
 from .. import aead, special
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
@@ -8,21 +8,36 @@ globals().update({val.name: val for val in list(_m)})
 
 
 def _aes_cipher_from_mode(mode, bknd, hasfile):
-    if mode not in bknd.supported.keys():
+    if mode not in supported_modes(bknd):
         raise NotImplementedError("backend does not support this mode.")
 
+    cpr = _load_algo('AES', bknd)
     if mode in aead:
         if mode in special:
             if hasfile:
                 raise TypeError('this mode does not support R/W to file')
-            return bknd.AEADOneShot
+            return cpr.AEADOneShot
         if hasfile:
-            return bknd.AEADFile
-        return bknd.AEAD
+            return cpr.AEADFile
+        return cpr.AEAD
     else:
         if hasfile:
-            return bknd.NonAEADFile
-        return bknd.NonAEAD
+            return cpr.NonAEADFile
+        return cpr.NonAEAD
+
+
+def supported_modes(backend):
+    """Lists all modes supported by the cipher. It is
+    limited to backend's implementation and capability,
+    and hence, varies from backend to backend.
+
+    Args:
+        backend: An attribute from Backends enum.
+
+    Returns:
+        list of Modes object supported by backend.
+    """
+    return list(_load_algo('AES', backend).supported)
 
 
 def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
@@ -64,11 +79,10 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
         `ValueError` if the `mode` is an AEAD mode and still the
         extra kwargs are provided.
         `NotImplementedError` if backend does not support that mode.
-        `ModuleNotFoundError` if the backend is not found.
+        `UnsupportedAlgorithm` if the backend does not support AES.
         Any other error that is raised is from the backend itself.
     """
-    cpr = _load_cpr("AES", backend)
-    _cpr = _aes_cipher_from_mode(mode, cpr, file is not None)
+    _cpr = _aes_cipher_from_mode(mode, backend, file is not None)
 
     if file:
         if mode not in aead:

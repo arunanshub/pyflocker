@@ -1,11 +1,11 @@
 """Interface to DH key exchange"""
-from .. import load_cipher as _load_cpr
+from ..backends import load_algorithm as _load_algo
 from .. import Backends
 
 
 def _load_dhe(backend):
     """Load the cipher module from the backend."""
-    return _load_cpr('DH', backend)
+    return _load_algo('DH', backend)
 
 
 def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):

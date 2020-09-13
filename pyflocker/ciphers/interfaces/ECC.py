@@ -1,11 +1,11 @@
 """Interface to ECC signature algorithm and key-exchange."""
 
-from .. import load_cipher as _load_cpr
+from ..backends import load_algorithm as _load_algo
 
 
 def _load_ecc_cpr(backend):
     """Load the cipher module from the backend."""
-    return _load_cpr('ECC', backend)
+    return _load_algo('ECC', backend)
 
 
 def generate(curve, *, backend=None):
