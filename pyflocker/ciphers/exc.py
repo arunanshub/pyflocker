@@ -13,6 +13,10 @@ class FinalizationError(Exception):
     pass
 
 
+class UnsupportedAlgorithm(Exception):
+    pass
+
+
 class AlreadyFinalized(FinalizationError):
     pass
 

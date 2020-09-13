@@ -40,7 +40,7 @@ def set_default_backend(backend):
     _default_backend = backend
 
 
-def load_cipher(name, bknd=None):
+def load_cipher(name, backend=None):
     """Loads the cipher module from backend.
     Generally used by interfaces to load the implemented cipher's
     counterpart.
@@ -56,13 +56,15 @@ def load_cipher(name, bknd=None):
         The cipher module from the backend.
 
     Raises:
-        NotImplementedError: If the cipher is not supported by backend.
+        UnsupportedAlgorithm: If the algorithm is not supported by backend.
     """
-    bknd = load_backend(bknd)
+    bknd = load_backend(backend)
     try:
         return import_module(f".{name}", bknd.__package__)
-    except ModuleNotFoundError:
-        raise NotImplementedError(f"cipher {name} unsupported by this backend")
+    except ModuleNotFoundError as e:
+        raise exc.UnsupportedAlgorithm(
+            f"{name} unsupported by backend "
+            f"{bknd.BACKEND_NAME.name.title()}.") from e
 
 
 def load_backend(bknd=None):
@@ -80,7 +82,7 @@ def load_backend(bknd=None):
 
     Raises:
         NotImplementedError:
-            If the backend is invalid.
+            If the backend is invalid or unsupported.
         ModuleNotFoundError:
             if no backends are available if bknd is None or the given
             backend is not supported.
