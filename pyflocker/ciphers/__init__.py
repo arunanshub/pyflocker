@@ -22,7 +22,7 @@ Parts of the package
 from .modes import Modes, aead, special
 
 # import loader and backend class
-from .backends import load_cipher, Backends
+from .backends import Backends
 
 # import interfaces
 from .interfaces import AES, Camellia, ChaCha20, RSA

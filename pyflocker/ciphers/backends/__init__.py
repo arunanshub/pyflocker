@@ -40,10 +40,9 @@ def set_default_backend(backend):
     _default_backend = backend
 
 
-def load_cipher(name, backend=None):
-    """Loads the cipher module from backend.
-    Generally used by interfaces to load the implemented cipher's
-    counterpart.
+def load_algorithm(name, backend=None):
+    """Loads the algorithm module from backend.
+    Generally used by interfaces to load the implemented counterpart.
 
     Args:
         name:
@@ -53,7 +52,7 @@ def load_cipher(name, backend=None):
             any available backend will be used.
 
     Returns:
-        The cipher module from the backend.
+        The algorithm module from the backend.
 
     Raises:
         UnsupportedAlgorithm: If the algorithm is not supported by backend.
