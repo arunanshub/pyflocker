@@ -3,7 +3,7 @@ import pytest
 from pyflocker import Backends
 
 
-class SymBase:
+class BaseSymmetric:
     def test_update_into(self, cipher, backend):
         rbuf = memoryview(bytearray(16384))
 
@@ -14,11 +14,8 @@ class SymBase:
             wbuf = memoryview(bytearray(16384))
             test = memoryview(bytearray(16384))
 
-        try:
-            enc = cipher(True, backend=backend)
-            dec = cipher(False, backend=backend)
-        except NotImplementedError:
-            pytest.skip(f"Unsupported by backend {backend}")
+        enc = cipher(True, backend=backend)
+        dec = cipher(False, backend=backend)
 
         enc.update_into(rbuf, wbuf)
         if backend == Backends.CRYPTOGRAPHY:
@@ -29,11 +26,8 @@ class SymBase:
             assert rbuf.tobytes() == test.tobytes()
 
     def test_update(self, cipher, backend):
-        try:
-            enc = cipher(True, backend=backend)
-            dec = cipher(False, backend=backend)
-        except NotImplementedError:
-            pytest.skip(f"Cipher unsupported by backend {backend}")
+        enc = cipher(True, backend=backend)
+        dec = cipher(False, backend=backend)
 
         data = bytes(32)
         assert dec.update(enc.update(data)) == data
@@ -46,11 +40,9 @@ class SymBase:
         try:
             enc = cipher(True, file=f1, backend=backend)
             dec = cipher(False, file=f2, backend=backend)
-        except NotImplementedError:
-            pytest.skip(f"Cipher unsupported by backend {backend}")
         except TypeError:
             pytest.skip(
-            "Cipher does not support writing into file-like objects")
+                "Cipher does not support writing into file-like objects")
 
         enc.update_into(f2, blocksize=1024)
         f2.seek(0)

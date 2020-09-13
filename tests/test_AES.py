@@ -9,173 +9,158 @@ import os
 import io
 
 import pytest
-from pyflocker.ciphers import AES, Modes, exc, Backends
+from functools import partial
+from pyflocker.ciphers import AES, Modes, Backends, exc
+
+from .base import BaseSymmetric
 
 _LENGTH_NORMAL = (16, 24, 32)
 _LENGTH_SPECIAL_SIV = (32, 48, 64)
 
 
-@pytest.fixture(params=list(Backends))
-def backend(request):
-    return request.param
+@pytest.fixture
+def cipher(key_length, mode, iv_length):
+    return partial(
+        AES.new,
+        key=os.urandom(key_length),
+        mode=mode,
+        iv_or_nonce=os.urandom(iv_length),
+    )
 
 
-def _test_AES_base(*, key, iv, mode, backend, authdata=None, **kwargs):
-    # we need different IV sizes if we want to test all modes
+@pytest.mark.parametrize(
+    'iv_length',
+    [16],
+)
+@pytest.mark.parametrize(
+    'backend',
+    list(Backends),
+)
+@pytest.mark.parametrize(
+    'key_length',
+    _LENGTH_NORMAL,
+)
+@pytest.mark.parametrize(
+    'mode',
+    set(Modes) ^ AES.special,
+)
+class TestAES(BaseSymmetric):
+    def test_update(self, cipher, backend, mode):
+        try:
+            super().test_update(cipher, backend)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
 
-    data = bytes(16)
-    try:
-        enc = AES.new(True, key, mode, iv, backend=backend, **kwargs)
-        dec = AES.new(False, key, mode, iv, backend=backend, **kwargs)
-    except NotImplementedError:
-        pytest.skip(f"unsupported mode: {mode} for {backend}.")
-    if authdata is not None:
+    def test_update_into(self, cipher, backend, mode):
+        try:
+            super().test_update_into(cipher, backend)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
+
+    def test_write_into_file_buffer(self, cipher, backend, mode):
+        try:
+            super().test_write_into_file_buffer(cipher, backend)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
+
+    def test_auth(self, cipher, backend, mode):
+        """Check authentication for both HMAC and AEAD."""
+        kwargs = {}
+        if mode not in AES.aead:
+            kwargs = dict(hashed=True)
+        
+        try:
+            enc = cipher(True, backend=backend, **kwargs)
+            dec = cipher(False, backend=backend, **kwargs)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
+            return
+
+        authdata, data = os.urandom(32).hex().encode(), bytes(32)
         enc.authenticate(authdata)
         dec.authenticate(authdata)
 
-    try:
-        # check encryption-decryption
-        if mode not in AES.special:
-            assert dec.update(enc.update(data)) == data
-        else:
-            dec.update(enc.update(data), enc.calculate_tag()) == data
-    except exc.DecryptionError:
-        pytest.fail('Authentication check failed')
-
-    finally:
-        if mode not in AES.special:
-            enc.finalize()
-            if kwargs.get('hashed') or mode in AES.aead:
-                try:
-                    dec.finalize(enc.calculate_tag())
-                except exc.DecryptionError:
-                    pytest.fail('Authentication check failed')
+        assert dec.update(enc.update(data)) == data
+        enc.finalize()
+        try:
+            dec.finalize(enc.calculate_tag())
+        except exc.DecryptionError:
+            pytest.fail('Authentication check failed')
 
 
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', set(Modes) ^ AES.aead)
-def test_AES_normal(key, mode, backend, **kwargs):
-    _test_AES_base(
-        key=key,
-        mode=mode,
-        iv=os.urandom(16),
-        backend=backend,
-        **kwargs,
-    )
+@pytest.mark.parametrize(
+    'backend',
+    list(Backends),
+)
+@pytest.mark.parametrize(
+    'key_length',
+    set(_LENGTH_NORMAL) | set(_LENGTH_SPECIAL_SIV),
+)
+@pytest.mark.parametrize(
+    'mode',
+    AES.special,
+)
+@pytest.mark.parametrize(
+    'iv_length',
+    [13],
+)
+class TestAESAEADSpecial(BaseSymmetric):
+    def test_update_into(self, cipher, mode, backend, key_length):
+        try:
+            enc = cipher(True, backend=backend)
+            dec = cipher(False, backend=backend)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
+            return
+        except ValueError as e:
+            # error raised by backend: probably key errors
+            #pytest.skip(str(e))
+            assert mode == AES.MODE_SIV or \
+                len(cipher.keywords['key']) in _LENGTH_SPECIAL_SIV
+            return
 
-
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', set(Modes) ^ AES.aead)
-def test_AES_hmac_no_authdata(key, mode, backend):
-    test_AES_normal(
-        key=key,
-        mode=mode,
-        backend=backend,
-        hashed=True,
-    )
-
-
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', set(Modes) ^ AES.aead)
-def test_AES_hmac_authdata(key, mode, backend):
-    test_AES_normal(
-        key=key,
-        mode=mode,
-        hashed=True,
-        authdata=os.urandom(32),
-        backend=backend,
-    )
-
-
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', AES.aead ^ AES.special)
-def test_AES_aead_no_authdata(key, mode, backend, iv=None, **kwargs):
-    _test_AES_base(
-        key=key,
-        mode=mode,
-        iv=iv or os.urandom(16),
-        backend=backend,
-        **kwargs,
-    )
-
-
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', AES.aead ^ AES.special)
-def test_AES_aead_authdata(key, mode, backend):
-    test_AES_aead_no_authdata(key, mode, backend, authdata=os.urandom(32))
-
-
-@pytest.mark.parametrize('mode', AES.special)
-def test_AES_aead_special(mode, backend, authdata=None):
-    if mode == AES.MODE_SIV:
-        klen = _LENGTH_SPECIAL_SIV
-    else:
-        klen = _LENGTH_NORMAL
-    for key in map(os.urandom, klen):
-        test_AES_aead_no_authdata(key, mode, backend, iv=os.urandom(13))
-
-
-@pytest.mark.parametrize('mode', AES.special)
-def test_AES_aead_special_authdata(mode, backend):
-    test_AES_aead_special(mode, backend, os.urandom(32))
-
-
-def test_AES_file_buffer():
-    modes = set(Modes) ^ AES.special
-
-    for key in map(os.urandom, _LENGTH_NORMAL):
-        for mode in modes:
-            f1 = io.BytesIO(bytes(16384))
-            f2 = io.BytesIO()
-            f3 = io.BytesIO()
-
-            iv = os.urandom(16)
-            enc = AES.new(True, key, mode, iv, file=f1)
-            dec = AES.new(False, key, mode, iv, file=f2)
-            enc.update_into(f2, blocksize=1024)
-
-            f1.seek(0)
-            f2.seek(0)
-            try:
-                dec.update_into(f3, enc.calculate_tag(), blocksize=1024)
-            except exc.DecryptionError:
-                pytest.fail('Authentication check failed')
-            f3.seek(0)
-            assert f1.getvalue() == f3.getvalue()
-
-
-@pytest.mark.parametrize('key', map(os.urandom, _LENGTH_NORMAL))
-@pytest.mark.parametrize('mode', set(Modes) ^ AES.special)
-def test_AES_databuffer(key, mode, backend):
-    iv = os.urandom(16)
-
-    rbuf = memoryview(bytearray(16384))
-    if backend == Backends.CRYPTOGRAPHY:
-        wbuf = memoryview(bytearray(16384 + 15))
-        test = memoryview(bytearray(16384 + 15))
-    else:
+        rbuf = memoryview(bytearray(16384))
         wbuf = memoryview(bytearray(16384))
         test = memoryview(bytearray(16384))
 
-    kwargs = {}
-    if mode not in AES.aead:
-        kwargs = dict(hashed=True)
-    enc = AES.new(True, key, mode, iv, backend=backend, **kwargs)
-    dec = AES.new(False, key, mode, iv, backend=backend, **kwargs)
-    enc.update_into(rbuf, wbuf)
+        try:
+            enc.update_into(rbuf, wbuf)
+        except TypeError:
+            pytest.skip("Writing into buffer not supported " f"by mode {mode}")
+        with pytest.raises(ValueError):
+            dec.update_into(wbuf, test)
 
-    if backend == Backends.CRYPTOGRAPHY:
-        dec.update_into(wbuf[:-15], test)
-    else:
-        dec.update_into(wbuf, test)
-    enc.finalize()
+        try:
+            dec.update_into(wbuf, test, enc.calculate_tag())
+        except exc.DecryptionError:
+            pytest.fail("Authentication check failed")
 
-    if backend == Backends.CRYPTOGRAPHY:
-        assert rbuf.tobytes() == test[:-15].tobytes()
-    else:
         assert rbuf.tobytes() == test.tobytes()
 
-    try:
-        dec.finalize(enc.calculate_tag())
-    except exc.DecryptionError:
-        pytest.fail('Authentication check failed')
+    def test_update(self, cipher, mode, backend, key_length):
+        try:
+            enc = cipher(True, backend=backend)
+            enc1 = cipher(True, backend=backend)
+            dec = cipher(False, backend=backend)
+        except NotImplementedError as e:
+            pytest.skip(f'{backend} does not support {mode}')
+        except ValueError as e:
+            assert mode == AES.MODE_SIV or \
+                key_length in _LENGTH_SPECIAL_SIV
+            return
+
+        data = bytes(32)
+        with pytest.raises(ValueError):
+            # test tag requirement case
+            assert dec.update(enc1.update(data)) == data
+
+        try:
+            assert dec.update(enc.update(data), enc.calculate_tag()) == data
+        except exc.DecryptionError:
+            pytest.fail('Authentication check failed')
+
+    def test_write_into_file_buffer(self, cipher, backend, mode):
+        try:
+            super().test_write_into_file_buffer(cipher, backend)
+        except NotImplementedError:
+            assert mode not in AES.supported_modes(backend)
