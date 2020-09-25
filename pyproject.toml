@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "pyflocker"
+version = "0.2.3"
+description = "Python Cryptographic (File Locking) Library"
+authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
+license = "MIT"
+
+[tool.poetry.dependencies]
+python = "^3.7"
+pycryptodomex = "^3.8.0"
+cryptography = "^2.8"
+
+[tool.poetry.dev-dependencies]
+pytest = "^6.0.2"
+
+[build-system]
+requires = ["poetry-core>=1.0.0a5"]
+build-backend = "poetry.core.masonry.api"
