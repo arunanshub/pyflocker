@@ -7,8 +7,8 @@ license = "MIT"
 
 [tool.poetry.dependencies]
 python = "^3.7"
-pycryptodomex = "^3.8.0"
-cryptography = "^2.8"
+pycryptodomex = "*"
+cryptography = "*"
 
 [tool.poetry.dev-dependencies]
 pytest = "^6.0.2"
