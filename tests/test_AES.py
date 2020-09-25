@@ -68,7 +68,7 @@ class TestAES(BaseSymmetric):
         kwargs = {}
         if mode not in AES.aead:
             kwargs = dict(hashed=True)
-        
+
         try:
             enc = cipher(True, backend=backend, **kwargs)
             dec = cipher(False, backend=backend, **kwargs)
@@ -112,9 +112,8 @@ class TestAESAEADSpecial(BaseSymmetric):
         except NotImplementedError:
             assert mode not in AES.supported_modes(backend)
             return
-        except ValueError as e:
+        except ValueError:
             # error raised by backend: probably key errors
-            #pytest.skip(str(e))
             assert mode == AES.MODE_SIV or \
                 len(cipher.keywords['key']) in _LENGTH_SPECIAL_SIV
             return
@@ -142,9 +141,9 @@ class TestAESAEADSpecial(BaseSymmetric):
             enc = cipher(True, backend=backend)
             enc1 = cipher(True, backend=backend)
             dec = cipher(False, backend=backend)
-        except NotImplementedError as e:
+        except NotImplementedError:
             pytest.skip(f'{backend} does not support {mode}')
-        except ValueError as e:
+        except ValueError:
             assert mode == AES.MODE_SIV or \
                 key_length in _LENGTH_SPECIAL_SIV
             return

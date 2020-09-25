@@ -71,7 +71,7 @@ class TestCamellia(BaseSymmetric):
         enc.authenticate(authdata)
         dec.authenticate(authdata)
 
-        assert dec.update(enc.update(data)) == data                             
+        assert dec.update(enc.update(data)) == data
         enc.finalize()
         try:
             dec.finalize(enc.calculate_tag())

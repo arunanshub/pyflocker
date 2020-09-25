@@ -9,11 +9,9 @@ from .base import BaseSymmetric
 
 @pytest.fixture
 def cipher(nonce_length):
-    return partial(
-        ChaCha20.new,
-        key=os.urandom(32),
-        nonce=os.urandom(nonce_length)
-    )
+    return partial(ChaCha20.new,
+                   key=os.urandom(32),
+                   nonce=os.urandom(nonce_length))
 
 
 @pytest.mark.parametrize(
