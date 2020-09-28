@@ -6,7 +6,7 @@ import cryptography.exceptions as bkx
 from cryptography.hazmat.primitives.ciphers import (
     Cipher as CrCipher,
     modes,
-    algorithms as algo
+    algorithms as algo,
 )
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.backends import default_backend as defb
@@ -54,16 +54,16 @@ def strxor(x, y):
 
 class _EAX:
     """Pseudo pyca/cryptography style cipher for EAX mode."""
+
     def __init__(self, key, nonce, mac_len=16):
         self._mac_len = mac_len
         self._omac = [cmac.CMAC(algo.AES(key), defb()) for i in range(3)]
 
-        # update the CMACs
-        [
+        for i in range(3):
             self._omac[i].update(
-                bytes(1) * (algo.AES.block_size // 8 - 1) +  # noqa: W504
-                struct.pack('B', i)) for i in range(3)
-        ]
+                bytes(1) * (algo.AES.block_size // 8 - 1)
+                + struct.pack("B", i)  # noqa: W503
+            )
 
         self._omac[0].update(nonce)
         self._auth = self._omac[1]
@@ -172,7 +172,7 @@ class _EAX:
                 except IndexError:
                     self._omac_cache.append(self._omac[i].finalize())
                     tag = strxor(tag, self._omac_cache[i])
-            self._tag = tag[:self._mac_len]
+            self._tag = tag[: self._mac_len]
 
     def finalize_with_tag(self, tag):
         self.finalize()
@@ -186,14 +186,16 @@ class _EAX:
 
 @base.cipher
 class NonAEAD(HMACCipherWrapper, base.Cipher):
-    def __init__(self,
-                 locking,
-                 key,
-                 mode,
-                 iv_or_nonce,
-                 *,
-                 hashed=False,
-                 digestmod='sha256'):
+    def __init__(
+        self,
+        locking,
+        key,
+        mode,
+        iv_or_nonce,
+        *,
+        hashed=False,
+        digestmod="sha256",
+    ):
         self._locking = locking
         hkey = None
         if hashed:

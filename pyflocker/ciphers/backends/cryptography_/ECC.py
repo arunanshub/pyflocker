@@ -14,55 +14,55 @@ from .. import base, exc
 from ._serialization import encodings, private_format, public_format
 
 curves = {
-    'secp256r1': ec.SECP256R1,
-    'secp384r1': ec.SECP384R1,
-    'secp521r1': ec.SECP521R1,
-    'secp224r1': ec.SECP224R1,
-    'secp192r1': ec.SECP192R1,
-    'secp256k1': ec.SECP256K1,
-
+    "secp256r1": ec.SECP256R1,
+    "secp384r1": ec.SECP384R1,
+    "secp521r1": ec.SECP521R1,
+    "secp224r1": ec.SECP224R1,
+    "secp192r1": ec.SECP192R1,
+    "secp256k1": ec.SECP256K1,
     # aliases for PyCryptodome
     # note that only those curves are aliased which are
     # currently supported by the same.
-    'NIST P-256': ec.SECP256R1,
-    'p256': ec.SECP256R1,
-    'P-256': ec.SECP256R1,
-    'prime256v1': ec.SECP256R1,
-    'NIST P-384': ec.SECP384R1,
-    'p384': ec.SECP384R1,
-    'P-384': ec.SECP384R1,
-    'prime384v1': ec.SECP384R1,
-    'NIST P-521': ec.SECP521R1,
-    'p521': ec.SECP521R1,
-    'P-521': ec.SECP521R1,
-    'prime521v1': ec.SECP521R1,
+    "NIST P-256": ec.SECP256R1,
+    "p256": ec.SECP256R1,
+    "P-256": ec.SECP256R1,
+    "prime256v1": ec.SECP256R1,
+    "NIST P-384": ec.SECP384R1,
+    "p384": ec.SECP384R1,
+    "P-384": ec.SECP384R1,
+    "prime384v1": ec.SECP384R1,
+    "NIST P-521": ec.SECP521R1,
+    "p521": ec.SECP521R1,
+    "P-521": ec.SECP521R1,
+    "prime521v1": ec.SECP521R1,
 }
 
 # some special cases which require extra handling...
 special_curves = {
-    'x448': x448.X448PrivateKey,
-    'x25519': x25519.X25519PrivateKey,
-    'ed448': ed448.Ed448PrivateKey,
-    'ed25519': ed25519.Ed25519PrivateKey,
+    "x448": x448.X448PrivateKey,
+    "x25519": x25519.X25519PrivateKey,
+    "ed448": ed448.Ed448PrivateKey,
+    "ed25519": ed25519.Ed25519PrivateKey,
 }
 
 # ...but they are still curves
 curves.update(special_curves)
 
 exchange_algorithms = {
-    'ECDH': ec.ECDH,
+    "ECDH": ec.ECDH,
 }
 
 signature_algorithms = {
-    'ECDSA': ec.ECDSA,
+    "ECDSA": ec.ECDSA,
 }
 
 
 class ECCPrivateKey(base.BasePrivateKey):
     """Represents ECC private key."""
+
     def __init__(self, curve=None, **kwargs):
         if kwargs:
-            self._key = kwargs.pop('key')
+            self._key = kwargs.pop("key")
         else:
             if curve not in special_curves:
                 self._key = ec.generate_private_key(
@@ -83,7 +83,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         """
         return ECCPublicKey(self._key.public_key())
 
-    def serialize(self, encoding='PEM', format='PKCS8', passphrase=None):
+    def serialize(self, encoding="PEM", format="PKCS8", passphrase=None):
         """Serialize the private key.
 
         Args:
@@ -112,10 +112,11 @@ class ECCPrivateKey(base.BasePrivateKey):
             prot = ser.NoEncryption()
         else:
             prot = ser.BestAvailableEncryption(
-                memoryview(passphrase).tobytes())
+                memoryview(passphrase).tobytes()
+            )
         return self._key.private_bytes(encd, fmt, prot)
 
-    def exchange(self, peer_public_key, algorithm='ECDH'):
+    def exchange(self, peer_public_key, algorithm="ECDH"):
         """Perform a key exchange.
 
         Args:
@@ -131,13 +132,13 @@ class ECCPrivateKey(base.BasePrivateKey):
         Raises:
             NotImplementedError: the key does not support key exchange.
         """
-        if not hasattr(self._key, 'exchange'):
+        if not hasattr(self._key, "exchange"):
             raise NotImplementedError
 
         if isinstance(peer_public_key, (bytes, bytearray, memoryview)):
             peer_public_key = ECCPublicKey.load(peer_public_key)
 
-        if not hasattr(self._key, 'sign'):
+        if not hasattr(self._key, "sign"):
             return self._key.exchange(peer_public_key._key)
 
         return self._key.exchange(
@@ -145,7 +146,7 @@ class ECCPrivateKey(base.BasePrivateKey):
             peer_public_key._key,
         )
 
-    def signer(self, algorithm='ECDSA'):
+    def signer(self, algorithm="ECDSA"):
         """Create a signer context.
 
         Args:
@@ -159,10 +160,10 @@ class ECCPrivateKey(base.BasePrivateKey):
             NotImplementedError: if the key doesn't support signing.
         """
         # special case 1: x* key
-        if not hasattr(self._key, 'sign'):
+        if not hasattr(self._key, "sign"):
             raise NotImplementedError
         # special case 2: ed* key
-        if not hasattr(self._key, 'exchange'):
+        if not hasattr(self._key, "exchange"):
             return ECCSignerCtx(self._key, None)
 
         return ECCSignerCtx(self._key, signature_algorithms[algorithm])
@@ -186,41 +187,45 @@ class ECCPrivateKey(base.BasePrivateKey):
         Raises:
             ValueError if the key could  not be deserialized.
         """
-        if data.startswith(b'-----BEGIN OPENSSH PRIVATE KEY'):
+        if data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY"):
             loader = ser.load_ssh_private_key
 
-        elif data.startswith(b'-----'):
+        elif data.startswith(b"-----"):
             loader = ser.load_pem_private_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_private_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         # type check
         if password is not None:
             password = memoryview(password)
 
         try:
-            return cls(key=loader(
-                memoryview(data),
-                password,
-                defb(),
-            ), )
+            return cls(
+                key=loader(
+                    memoryview(data),
+                    password,
+                    defb(),
+                ),
+            )
         except (ValueError, TypeError) as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Either Key format is invalid or '
-                'password is missing or incorrect.', ) from e
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class ECCPublicKey(base.BasePublicKey):
     """Represents ECC public key."""
+
     def __init__(self, key):
         self._key = key
 
-    def verifier(self, algorithm='ECDSA'):
+    def verifier(self, algorithm="ECDSA"):
         """Create a verifier context.
 
         Args:
@@ -234,15 +239,15 @@ class ECCPublicKey(base.BasePublicKey):
             NotImplementedError: if the key doesn't support verification.
         """
         # Special case 1: x* only key
-        if not hasattr(self._key, 'verify'):
+        if not hasattr(self._key, "verify"):
             raise NotImplementedError
 
         # Special case 2: ed* only key
-        if not hasattr(self._key, 'curve'):
+        if not hasattr(self._key, "curve"):
             return ECCVerifierCtx(self._key, None)
         return ECCVerifierCtx(self._key, signature_algorithms[algorithm])
 
-    def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
+    def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
         """Serialize the public key.
 
         Args:
@@ -279,24 +284,24 @@ class ECCPublicKey(base.BasePublicKey):
         Raises:
             ValueError if the key could not be deserialized.
         """
-        if data.startswith(b'ecdsa-'):
+        if data.startswith(b"ecdsa-"):
             loader = ser.load_ssh_public_key
 
-        elif data.startswith(b'-----'):
+        elif data.startswith(b"-----"):
             loader = ser.load_pem_public_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_public_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         try:
             return cls(key=loader(memoryview(data), defb()))
         except ValueError as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Incorrect key format.', ) from e
+                "Cannot deserialize key. Incorrect key format.",
+            ) from e
 
 
 class SigVerContext:
@@ -310,6 +315,7 @@ class SigVerContext:
 
 class ECCSignerCtx(SigVerContext):
     """Signing context for ECC private key."""
+
     def sign(self, msghash):
         """Return the signature of the message hash.
 
@@ -347,6 +353,7 @@ class ECCSignerCtx(SigVerContext):
 
 class ECCVerifierCtx(SigVerContext):
     """Verification context for ECC public key."""
+
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 

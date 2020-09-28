@@ -10,6 +10,7 @@ from . import exc
 
 class Cipher(ABC):
     """Base cipher for all other ciphers."""
+
     @abstractmethod
     def update(self, data):
         """Takes bytes-like object and returns
@@ -137,7 +138,7 @@ class BaseHash(ABC):
         """
 
     @abstractmethod
-    def new(self, data=b'', *, digest_size=None):
+    def new(self, data=b"", *, digest_size=None):
         """Return a new hash object.
 
         Args:
@@ -163,6 +164,7 @@ class BaseHash(ABC):
 
 class BaseAsymmetricKey(ABC):
     """Represents the base key interface."""
+
     @abstractmethod
     def serialize(self):
         """Serialize the key into a storable format."""
@@ -175,11 +177,13 @@ class BaseAsymmetricKey(ABC):
 
 class BasePrivateKey(BaseAsymmetricKey):
     """Represents the base interface for private key."""
+
     pass
 
 
 class BasePublicKey(BaseAsymmetricKey):
     """Represents the base interface for public key."""
+
     pass
 
 
@@ -204,7 +208,7 @@ def finalizer(f=None, *, allow=False):
 
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        if hasattr(self, '_done_') and not allow:
+        if hasattr(self, "_done_") and not allow:
             raise exc.AlreadyFinalized("cipher has already been finalized")
 
         try:
@@ -222,12 +226,14 @@ def before_finalized(f):
 
     see: `finalizer`
     """
+
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        if not hasattr(self, '_done_'):
+        if not hasattr(self, "_done_"):
             return f(self, *args, **kwargs)
         raise exc.AlreadyFinalized(
-            "this method can only be called before finalizing")
+            "this method can only be called before finalizing"
+        )
 
     return wrapper
 
@@ -238,12 +244,14 @@ def after_finalized(f):
 
     see: `finalizer`
     """
+
     @wraps(f)
     def wrapper(self, *args, **kwargs):
-        if hasattr(self, '_done_'):
+        if hasattr(self, "_done_"):
             return f(self, *args, **kwargs)
         raise exc.NotFinalized(
-            "Ciphers must be finalized before calling this method.")
+            "Ciphers must be finalized before calling this method."
+        )
 
     return wrapper
 

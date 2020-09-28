@@ -20,11 +20,13 @@ paddings = {
     PSS: pads.PSS,
 }
 
-_supported_encodings = frozenset((
-    'PEM',
-    'DER',
-    'OpenSSH',
-))
+_supported_encodings = frozenset(
+    (
+        "PEM",
+        "DER",
+        "OpenSSH",
+    )
+)
 
 
 class _RSANumbers:
@@ -49,10 +51,10 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         if kwargs:
             # we have the key made beforehand
             # or from some classmethod
-            self._key = kwargs.pop('key')
+            self._key = kwargs.pop("key")
         else:
             if n is None:
-                raise ValueError('modulus not provided')
+                raise ValueError("modulus not provided")
             self._key = rsa.generate_private_key(e, n, defb())
 
         # numbers
@@ -101,7 +103,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         """
         return RSASignerCtx(self._key, padding)
 
-    def serialize(self, encoding='PEM', format='PKCS8', passphrase=None):
+    def serialize(self, encoding="PEM", format="PKCS8", passphrase=None):
         """Serialize the private key.
 
         Args:
@@ -124,8 +126,8 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
            KeyError:
                 if the format or encoding is invalid or not supported.
         """
-        if encoding not in _supported_encodings ^ {'OpenSSH'}:
-            raise TypeError('Encoding must be PEM or DER')
+        if encoding not in _supported_encodings ^ {"OpenSSH"}:
+            raise TypeError("Encoding must be PEM or DER")
 
         encd = encodings[encoding]
         fmt = private_format[format]
@@ -133,7 +135,8 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             prot = ser.NoEncryption()
         else:
             prot = ser.BestAvailableEncryption(
-                memoryview(passphrase).tobytes())
+                memoryview(passphrase).tobytes()
+            )
         return self._key.private_bytes(encd, fmt, prot)
 
     @classmethod
@@ -155,37 +158,41 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         Raises:
             ValueError if the key could  not be deserialized.
         """
-        if data.startswith(b'-----BEGIN OPENSSH PRIVATE KEY'):
+        if data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY"):
             loader = ser.load_ssh_private_key
 
-        elif data.startswith(b'-----'):
+        elif data.startswith(b"-----"):
             loader = ser.load_pem_private_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_private_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         # type check
         if password is not None:
             password = memoryview(password)
 
         try:
-            return cls(key=loader(
-                memoryview(data),
-                password,
-                defb(),
-            ), )
+            return cls(
+                key=loader(
+                    memoryview(data),
+                    password,
+                    defb(),
+                ),
+            )
         except (ValueError, TypeError) as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Either Key format is invalid or '
-                'password is missing or incorrect.', ) from e
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class RSAPublicKey(_RSANumbers, base.BasePublicKey):
     """RSA Public Key wrapper class."""
+
     def __init__(self, key):
         self._key = key
 
@@ -211,7 +218,7 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         """
         return RSAVerifierCtx(self._key, padding)
 
-    def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
+    def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
         """Serialize the public key.
 
         Args:
@@ -246,24 +253,24 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         Raises:
             ValueError if the key could not be deserialized.
         """
-        if data.startswith(b'ssh-rsa '):
+        if data.startswith(b"ssh-rsa "):
             loader = ser.load_ssh_public_key
 
-        elif data.startswith(b'-----'):
+        elif data.startswith(b"-----"):
             loader = ser.load_pem_public_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_public_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         try:
             return cls(key=loader(memoryview(data), defb()))
         except ValueError as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Incorrect key format.', ) from e
+                "Cannot deserialize key. Incorrect key format.",
+            ) from e
 
 
 def _get_padding(pad):
@@ -273,7 +280,8 @@ def _get_padding(pad):
         Hash(
             pad.mgf.hash.name,
             digest_size=pad.mgf.hash.digest_size,
-        )._hasher.algorithm)
+        )._hasher.algorithm
+    )
     return _pad, mgf
 
 
@@ -333,8 +341,11 @@ class RSADecryptionCtx(Context):
 class SigVerContext:
     def __init__(self, key, padding):
         pad, mgf = _get_padding(padding)
-        salt_len = (padding.salt_len
-                    if padding.salt_len is not None else pad.MAX_LENGTH)
+        salt_len = (
+            padding.salt_len
+            if padding.salt_len is not None
+            else pad.MAX_LENGTH
+        )
 
         try:
             sig_ver = key.sign

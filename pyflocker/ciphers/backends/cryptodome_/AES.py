@@ -17,7 +17,6 @@ supported = {
     _m.MODE_CFB: AES.MODE_CFB,
     _m.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
     _m.MODE_OFB: AES.MODE_OFB,
-
     # AEAD modes
     _m.MODE_GCM: AES.MODE_GCM,
     _m.MODE_EAX: AES.MODE_EAX,
@@ -28,7 +27,7 @@ supported = {
 
 
 def _aes_cipher(key, mode, iv_or_nonce):
-    args = (iv_or_nonce, )
+    args = (iv_or_nonce,)
     kwargs = dict()
 
     if mode == _m.MODE_CFB:
@@ -37,8 +36,8 @@ def _aes_cipher(key, mode, iv_or_nonce):
     elif mode == _m.MODE_CTR:
         kwargs = dict(
             # initial value of Cryptodome is nonce for pyca/cryptography
-            initial_value=int.from_bytes(iv_or_nonce, 'big'),
-            nonce=b'',
+            initial_value=int.from_bytes(iv_or_nonce, "big"),
+            nonce=b"",
         )
         args = ()
 
@@ -48,6 +47,7 @@ def _aes_cipher(key, mode, iv_or_nonce):
 @base.cipher
 class AEAD(AEADCipherWrapper, base.Cipher):
     """Cipher wrapper for AEAD supported modes"""
+
     def __init__(self, locking, key, mode, *args, **kwargs):
         self._cipher = _aes_cipher(key, mode, *args, **kwargs)
         self._locking = locking
@@ -61,14 +61,17 @@ class AEADFile(FileCipherMixin, AEAD):
 @base.cipher
 class NonAEAD(HMACCipherWrapper, base.Cipher):
     """Cipher wrapper for classic modes of AES"""
-    def __init__(self,
-                 locking,
-                 key,
-                 mode,
-                 iv_or_nonce,
-                 *,
-                 hashed=False,
-                 digestmod='sha256'):
+
+    def __init__(
+        self,
+        locking,
+        key,
+        mode,
+        iv_or_nonce,
+        *,
+        hashed=False,
+        digestmod="sha256"
+    ):
         self._locking = locking
         hkey = None
 
@@ -96,15 +99,18 @@ class AEADOneShot(AEAD):
     gradual encryption and decryption, which means,
     everything has to be done in one go (one shot)
     """
+
     def update_into(self, data, out, tag=None):
         if self._locking:
             crp = lambda data, *args: self._cipher.encrypt_and_digest(  # noqa
-                data, *args)[0]
+                data, *args
+            )[0]
         else:
             if tag is None:
                 raise ValueError("tag is required for decryption.")
             crp = lambda data, *args: self._cipher.decrypt_and_verify(  # noqa
-                data, tag, *args)
+                data, tag, *args
+            )
 
         try:
             try:

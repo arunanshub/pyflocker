@@ -20,15 +20,15 @@ def cipher(mode, key_length):
 
 
 @pytest.mark.parametrize(
-    'backend',
+    "backend",
     list(Backends),
 )
 @pytest.mark.parametrize(
-    'mode',
+    "mode",
     list(Modes),
 )
 @pytest.mark.parametrize(
-    'key_length',
+    "key_length",
     _KEY_LENGTHS,
 )
 class TestCamellia(BaseSymmetric):
@@ -76,4 +76,4 @@ class TestCamellia(BaseSymmetric):
         try:
             dec.finalize(enc.calculate_tag())
         except exc.DecryptionError:
-            pytest.fail('Authentication check failed')
+            pytest.fail("Authentication check failed")

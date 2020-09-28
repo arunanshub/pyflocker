@@ -14,10 +14,10 @@ from ._serialization import (
 class DHParameters:
     def __init__(self, key_size=None, generator=2, **kwargs):
         if kwargs:
-            self._params = kwargs.pop('parameter')
+            self._params = kwargs.pop("parameter")
         else:
             if key_size is None:
-                raise ValueError('key_size is not provided')
+                raise ValueError("key_size is not provided")
             self._params = dh.generate_parameters(
                 generator,
                 key_size,
@@ -27,7 +27,7 @@ class DHParameters:
     def private_key(self):
         return DHPrivateKey(self._params.generate_private_key())
 
-    def serialize(self, encoding='PEM', format='PKCS3'):
+    def serialize(self, encoding="PEM", format="PKCS3"):
         return self._params.parameter_bytes(
             encodings[encoding],
             parameter_format[format],
@@ -47,14 +47,14 @@ class DHParameters:
 
     @classmethod
     def load(cls, data):
-        if data.startswith(b'-----BEGIN DH PARAMETERS'):
+        if data.startswith(b"-----BEGIN DH PARAMETERS"):
             param = ser.load_pem_parameters(memoryview(data), defb())
 
         elif data[0] == 0x30:
             param = ser.load_der_parameters(memoryview(data), defb())
 
         else:
-            raise ValueError('incorrect parameter format')
+            raise ValueError("incorrect parameter format")
         return cls(parameter=param)
 
     @classmethod
@@ -85,13 +85,14 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
         return self._key.exchange(peer_public_key._key)
 
-    def serialize(self, encoding='PEM', format='PKCS8', passphrase=None):
+    def serialize(self, encoding="PEM", format="PKCS8", passphrase=None):
         if passphrase is None:
             prot = ser.NoEncryption()
 
         else:
             prot = ser.BestAvailableEncryption(
-                memoryview(passphrase).tobytes(), )
+                memoryview(passphrase).tobytes(),
+            )
         return self._key.private_bytes(
             encodings[encoding],
             private_format[format],
@@ -104,37 +105,40 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
     @classmethod
     def load(cls, data, passphrase=None):
-        if data.startswith(b'-----'):
+        if data.startswith(b"-----"):
             loader = ser.load_pem_private_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_private_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         # type check
         if passphrase is not None:
             passphrase = memoryview(passphrase)
 
         try:
-            return cls(key=loader(
-                memoryview(data),
-                passphrase,
-                defb(),
-            ), )
+            return cls(
+                key=loader(
+                    memoryview(data),
+                    passphrase,
+                    defb(),
+                ),
+            )
         except (ValueError, TypeError) as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Either Key format is invalid or '
-                'password is missing or incorrect.', ) from e
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class DHPublicKey(_DHKey, base.BasePublicKey):
     def __init__(self, key):
         self._key = key
 
-    def serialize(self, encoding='PEM', format='SubjectPublicKeyInfo'):
+    def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
         return self._key.public_bytes(
             encodings[encoding],
             public_format[format],
@@ -146,18 +150,18 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
 
     @classmethod
     def load(cls, data):
-        if data.startswith(b'-----'):
+        if data.startswith(b"-----"):
             loader = ser.load_pem_public_key
 
         elif data[0] == 0x30:
             loader = ser.load_der_public_key
 
         else:
-            raise ValueError('incorrect key format')
+            raise ValueError("incorrect key format")
 
         try:
             return cls(key=loader(data, defb()))
         except ValueError as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Incorrect key format.', ) from e
+                "Cannot deserialize key. Incorrect key format.",
+            ) from e

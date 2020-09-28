@@ -7,7 +7,7 @@ from .. import Backends
 def _cml_cipher_from_mode(mode, bknd, hasfile):
     if mode not in supported_modes(bknd):
         raise NotImplementedError("backend does not support this mode.")
-    cpr = _load_algo('Camellia', bknd)
+    cpr = _load_algo("Camellia", bknd)
     if not hasfile:
         return cpr.Camellia
     return cpr.CamelliaFile
@@ -24,17 +24,19 @@ def supported_modes(backend):
     Returns:
         list of Modes object supported by backend.
     """
-    return list(_load_algo('Camellia', backend).supported)
+    return list(_load_algo("Camellia", backend).supported)
 
 
-def new(locking,
-        key,
-        mode,
-        iv_or_nonce,
-        *,
-        file=None,
-        backend=Backends.CRYPTOGRAPHY,
-        **kwargs):
+def new(
+    locking,
+    key,
+    mode,
+    iv_or_nonce,
+    *,
+    file=None,
+    backend=Backends.CRYPTOGRAPHY,
+    **kwargs
+):
     """Instantiate a new Camellia cipher wrapper object.
 
     Args:

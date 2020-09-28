@@ -1,5 +1,8 @@
-from cryptography.hazmat.primitives.ciphers import (Cipher, algorithms as algo,
-                                                    modes)
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher,
+    algorithms as algo,
+    modes,
+)
 from cryptography.hazmat.backends import default_backend as defb
 
 from .. import base, Modes as _m
@@ -18,14 +21,16 @@ supported = {
 
 @base.cipher
 class Camellia(HMACCipherWrapper, base.Cipher):
-    def __init__(self,
-                 locking,
-                 key,
-                 mode,
-                 iv_or_nonce,
-                 *,
-                 hashed=False,
-                 digestmod='sha256'):
+    def __init__(
+        self,
+        locking,
+        key,
+        mode,
+        iv_or_nonce,
+        *,
+        hashed=False,
+        digestmod="sha256"
+    ):
         if hashed:
             # derive the keys (length same as of the original key)
             key, hkey = _derive_key(

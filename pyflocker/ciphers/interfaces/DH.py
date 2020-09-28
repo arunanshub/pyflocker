@@ -5,7 +5,7 @@ from .. import Backends
 
 def _load_dhe(backend):
     """Load the cipher module from the backend."""
-    return _load_algo('DH', backend)
+    return _load_algo("DH", backend)
 
 
 def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):

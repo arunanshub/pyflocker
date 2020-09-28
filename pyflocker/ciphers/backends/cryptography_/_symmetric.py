@@ -34,19 +34,20 @@ def derive_key(master_key, dklen, hashalgo, salt):
 class CipherWrapper(CipherWrapperBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        if not hasattr(self, '_auth'):
+        if not hasattr(self, "_auth"):
             self._auth = None
         locking = self._locking
 
-        self._cipher = (self._cipher.encryptor()
-                        if locking else self._cipher.decryptor())
+        self._cipher = (
+            self._cipher.encryptor() if locking else self._cipher.decryptor()
+        )
         # for ciphers with HMAC enabled
         self._updated = False
         self._len_ct = 0
 
     def _get_update(self):
         crpup = self._cipher.update
-        hashup = (None if self._auth is None else self._auth.update)
+        hashup = None if self._auth is None else self._auth.update
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -60,6 +61,7 @@ class CipherWrapper(CipherWrapperBase):
                 self._len_ct += len(ctxt)
                 hashup(ctxt)
                 return ctxt
+
         else:
 
             def update(ctxt):
@@ -72,7 +74,7 @@ class CipherWrapper(CipherWrapperBase):
 
     def _get_update_into(self):
         crpup = self._cipher.update_into
-        hashup = (None if self._auth is None else self._auth.update)
+        hashup = None if self._auth is None else self._auth.update
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -85,6 +87,7 @@ class CipherWrapper(CipherWrapperBase):
                 crpup(data, out)
                 self._len_ct += len(data)
                 hashup(out[:-15])
+
         else:
 
             def update_into(data, out):
@@ -104,18 +107,19 @@ class AEADCipherWrapper(CipherWrapper):
 
     def authenticate(self, data):
         if not isinstance(data, (bytes, bytearray, memoryview)):
-            raise TypeError('bytes-like object is required')
+            raise TypeError("bytes-like object is required")
         try:
             self._cipher.authenticate_additional_data(data)
         except bkx.AlreadyUpdated as e:
-            raise TypeError('cannot authenticate data after '
-                            'update has been called') from e
+            raise TypeError(
+                "cannot authenticate data after update has been called"
+            ) from e
 
     def finalize(self, tag=None):
         try:
             if not self._locking:
                 if tag is None:
-                    raise ValueError('tag is required for decryption')
+                    raise ValueError("tag is required for decryption")
                 # finalize: decryption
                 return self._cipher.finalize_with_tag(tag)
             # finalize: encryption
@@ -142,7 +146,7 @@ class FileCipherMixin:
     """ciphers that support r/w to file and file-like
     objects. Mix with cipher wrappers"""
 
-    __slots__ = ('__update', '__update_into', '__file', '__block_size')
+    __slots__ = ("__update", "__update_into", "__file", "__block_size")
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
@@ -194,7 +198,7 @@ class FileCipherMixin:
                 the tag is not provided for validation after decryption.
         """
         if not self._locking and tag is None:
-            raise ValueError('tag is required for decryption')
+            raise ValueError("tag is required for decryption")
         buf = memoryview(bytearray(blocksize + self.__block_size - 1))
         rbuf = buf[:blocksize]
 
@@ -205,7 +209,7 @@ class FileCipherMixin:
         for i in reads:
             if i < blocksize:
                 rbuf = rbuf[:i]
-                buf = buf[:i + self.__block_size - 1]
+                buf = buf[: i + self.__block_size - 1]
             update(rbuf, buf)
             write(rbuf)
         self.finalize(tag)

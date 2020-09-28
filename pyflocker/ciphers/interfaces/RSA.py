@@ -4,7 +4,7 @@ from ..backends import load_algorithm as _load_algo
 
 def _load_rsa_cpr(backend):
     """Load the cipher module from the backend."""
-    return _load_algo('RSA', backend)
+    return _load_algo("RSA", backend)
 
 
 def generate(bits, e=65537, *, backend=None):

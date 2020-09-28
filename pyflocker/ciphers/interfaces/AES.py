@@ -11,11 +11,11 @@ def _aes_cipher_from_mode(mode, bknd, hasfile):
     if mode not in supported_modes(bknd):
         raise NotImplementedError("backend does not support this mode.")
 
-    cpr = _load_algo('AES', bknd)
+    cpr = _load_algo("AES", bknd)
     if mode in aead:
         if mode in special:
             if hasfile:
-                raise TypeError('this mode does not support R/W to file')
+                raise TypeError("this mode does not support R/W to file")
             return cpr.AEADOneShot
         if hasfile:
             return cpr.AEADFile
@@ -37,7 +37,7 @@ def supported_modes(backend):
     Returns:
         list of Modes object supported by backend.
     """
-    return list(_load_algo('AES', backend).supported)
+    return list(_load_algo("AES", backend).supported)
 
 
 def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):

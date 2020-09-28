@@ -1,5 +1,7 @@
-from cryptography.hazmat.primitives.ciphers import (algorithms as algo, Cipher
-                                                    as CrCipher)
+from cryptography.hazmat.primitives.ciphers import (
+    algorithms as algo,
+    Cipher as CrCipher,
+)
 from cryptography import exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.poly1305 import Poly1305
@@ -15,7 +17,7 @@ supported = frozenset()
 class ChaCha20Poly1305(base.Cipher):
     def __init__(self, locking, key, nonce):
         if not len(nonce) in (8, 12):
-            raise ValueError('A 8 or 12 byte nonce is required')
+            raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 
@@ -23,7 +25,7 @@ class ChaCha20Poly1305(base.Cipher):
         cipher = CrCipher(
             algo.ChaCha20(
                 key,
-                (1).to_bytes(4, 'little') + nonce,
+                (1).to_bytes(4, "little") + nonce,
             ),
             None,
             defb(),
@@ -35,8 +37,7 @@ class ChaCha20Poly1305(base.Cipher):
 
         # generate Poly1305 key (r, s) and instantiate
         cpr = CrCipher(
-            algo.ChaCha20(key,
-                          bytes(4) + nonce),
+            algo.ChaCha20(key, bytes(4) + nonce),
             None,
             defb(),
         ).encryptor()
@@ -54,8 +55,9 @@ class ChaCha20Poly1305(base.Cipher):
 
     def authenticate(self, data):
         if self._updated:
-            raise TypeError('cannot authenticate data '
-                            'after update has been called')
+            raise TypeError(
+                "cannot authenticate data after update has been called"
+            )
         self._len_aad += len(memoryview(data))
         self._auth.update(data)
 
@@ -78,8 +80,8 @@ class ChaCha20Poly1305(base.Cipher):
         if self._len_ct & 0x0F:
             self._auth.update(bytes(16 - (self._len_ct & 0x0F)))
 
-        self._auth.update(self._len_aad.to_bytes(8, 'little'))
-        self._auth.update(self._len_ct.to_bytes(8, 'little'))
+        self._auth.update(self._len_aad.to_bytes(8, "little"))
+        self._auth.update(self._len_ct.to_bytes(8, "little"))
 
         if not self._locking:
             try:
@@ -103,6 +105,7 @@ class ChaCha20Poly1305(base.Cipher):
                 self._len_ct += len(data)
                 self._auth.update(res)
                 return res
+
         else:
 
             def update(data):
@@ -122,6 +125,7 @@ class ChaCha20Poly1305(base.Cipher):
                 self._cipher.update_into(data, out)
                 self._len_ct += len(data)
                 self._auth.update(out)
+
         else:
 
             def update_into(data, out):

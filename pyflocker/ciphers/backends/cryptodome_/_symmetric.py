@@ -1,5 +1,6 @@
-"Symmetric cipher wrapper for this backend only." ""
+"""Symmetric cipher wrapper for this backend only."""
 from functools import partial
+
 try:
     from Cryptodome.Protocol import KDF
 except ModuleNotFoundError:
@@ -37,7 +38,7 @@ class CipherWrapper(CipherWrapperBase):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
         # no hasher defined
-        if not hasattr(self, '_auth'):
+        if not hasattr(self, "_auth"):
             self._auth = None
 
         # for non-aead ciphers only
@@ -45,9 +46,8 @@ class CipherWrapper(CipherWrapperBase):
         self._len_ct = 0  # will be needed by HMACMixin
 
     def _get_update(self):
-        crpup = (self._cipher.encrypt
-                 if self._locking else self._cipher.decrypt)
-        hashup = (None if self._auth is None else self._auth.update)
+        crpup = self._cipher.encrypt if self._locking else self._cipher.decrypt
+        hashup = None if self._auth is None else self._auth.update
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -61,6 +61,7 @@ class CipherWrapper(CipherWrapperBase):
                 self._len_ct += len(ctxt)
                 hashup(ctxt)
                 return ctxt
+
         else:
 
             def update(ctxt):
@@ -72,9 +73,8 @@ class CipherWrapper(CipherWrapperBase):
         return update
 
     def _get_update_into(self):
-        crpup = (self._cipher.encrypt
-                 if self._locking else self._cipher.decrypt)
-        hashup = (None if self._auth is None else self._auth.update)
+        crpup = self._cipher.encrypt if self._locking else self._cipher.decrypt
+        hashup = None if self._auth is None else self._auth.update
 
         # AEAD ciphers or HMAC disabled
         if hashup is None:
@@ -87,6 +87,7 @@ class CipherWrapper(CipherWrapperBase):
                 crpup(data, out)
                 self._len_ct += len(out)
                 hashup(out)
+
         else:
 
             def update_into(data, out):
@@ -106,18 +107,19 @@ class AEADCipherWrapper(CipherWrapper):
 
     def authenticate(self, data):
         if not isinstance(data, (bytes, bytearray, memoryview)):
-            raise TypeError('bytes-like object is required')
+            raise TypeError("bytes-like object is required")
         try:
             self._cipher.update(data)
         except TypeError as e:
-            raise TypeError('cannot authenticate data after '
-                            'update has been called') from e
+            raise TypeError(
+                "cannot authenticate data after update has been called"
+            ) from e
 
     def finalize(self, tag=None):
         try:
             if not self._locking:
                 if tag is None:
-                    raise ValueError('tag is required for decryption')
+                    raise ValueError("tag is required for decryption")
                 self._cipher.verify(tag)
         except ValueError as e:
             raise exc.DecryptionError from e
@@ -140,7 +142,7 @@ class FileCipherMixin:
     """ciphers that support r/w to file and file-like
     objects. Mix with cipher wrappers"""
 
-    __slots__ = ('__file', '__update', '__update_into')
+    __slots__ = ("__file", "__update", "__update_into")
 
     def __init__(self, *args, file, **kwargs):
         self.__file = file
@@ -191,7 +193,7 @@ class FileCipherMixin:
                 the tag is not provided for validation after decryption.
         """
         if not self._locking and tag is None:
-            raise ValueError('tag is required for decryption')
+            raise ValueError("tag is required for decryption")
         buf = memoryview(bytearray(blocksize))
 
         write = file.write

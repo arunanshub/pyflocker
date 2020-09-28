@@ -12,19 +12,21 @@ from functools import partial
 
 from .ciphers import AES, exc, Modes, aead, special
 
-HEADER_FORMAT = struct.Struct('>I 32s 32s 6x 32s 6x 16s')
+HEADER_FORMAT = struct.Struct(">I 32s 32s 6x 32s 6x 16s")
 
-MAGIC = 0xc8e52e4b
+MAGIC = 0xC8E52E4B
 
 
-def locker(file,
-           password,
-           locking=None,
-           remove=True,
-           *,
-           ext=None,
-           newfile=None,
-           **kwargs):
+def locker(
+    file,
+    password,
+    locking=None,
+    remove=True,
+    *,
+    ext=None,
+    newfile=None,
+    **kwargs
+):
     """Encrypts or decrypts files with AES algorithm.
 
     See `lockerf` function for more details.
@@ -63,10 +65,10 @@ def locker(file,
     """
     # checks
     if newfile and ext:
-        raise ValueError('newfile and ext are mutually exclusive')
+        raise ValueError("newfile and ext are mutually exclusive")
 
     # default extension if not provided
-    ext = ext or '.pyflk'
+    ext = ext or ".pyflk"
 
     # guess locking if not provided
     if locking is None:
@@ -80,7 +82,7 @@ def locker(file,
             newfile = os.path.splitext(file)[0]
 
     try:
-        with open(file, 'rb') as infile, open(newfile, 'xb') as outfile:
+        with open(file, "rb") as infile, open(newfile, "xb") as outfile:
             lockerf(infile, outfile, password, locking, **kwargs)
     except exc.DecryptionError:
         # remove invalid file
@@ -92,18 +94,20 @@ def locker(file,
             os.remove(file)
 
 
-def lockerf(infile,
-            outfile,
-            password,
-            locking,
-            *,
-            kdf=None,
-            aes_mode=None,
-            blocksize=16364,
-            metadata=None,
-            dklen=32,
-            backend=None,
-            **kwargs):
+def lockerf(
+    infile,
+    outfile,
+    password,
+    locking,
+    *,
+    kdf=None,
+    aes_mode=None,
+    blocksize=16364,
+    metadata=None,
+    dklen=32,
+    backend=None,
+    **kwargs
+):
     """Utility tool for encrypting files.
 
     This function reads from `infile` in blocks, specified by `blocksize`,
@@ -218,9 +222,9 @@ def lockerf(infile,
         # defaults to PBKDF2-HMAC
 
         # set defaults here.
-        _kdf_args = dict(iterations=50000,
-                         hash_name='sha256',
-                         dklen=_key_length(dklen))
+        _kdf_args = dict(
+            iterations=50000, hash_name="sha256", dklen=_key_length(dklen)
+        )
 
         # update the values with kwargs
         # (could have some user supplied values)
@@ -235,12 +239,14 @@ def lockerf(infile,
     key = kdf(password=password, salt=salt, **kwargs)
 
     # init. cipher
-    crp = AES.new(locking,
-                  key,
-                  aes_mode or Modes.MODE_GCM,
-                  rand,
-                  file=infile,
-                  backend=backend)
+    crp = AES.new(
+        locking,
+        key,
+        aes_mode or Modes.MODE_GCM,
+        rand,
+        file=infile,
+        backend=backend,
+    )
 
     # authenticate header portion
     crp.authenticate(salt + metadata)
@@ -252,7 +258,8 @@ def lockerf(infile,
             metadata,
             salt,
             tag,
-            rand)
+            rand,
+        )
         outfile.write(header)
 
     # write
@@ -290,14 +297,18 @@ def _fetch_header(infile, mode, locking, magic, meta):
         try:
             m, c, salt, tag, rand = HEADER_FORMAT.unpack_from(header, 0)
         except struct.error:
-            raise TypeError("Invalid file header format. "
-                            "The file is not compatible with "
-                            "PyFlocker.")
+            raise TypeError(
+                "Invalid file header format. "
+                "The file is not compatible with "
+                "PyFlocker."
+            )
         # header check
-        if m != magic or meta != c[:-(32 - len(meta))]:
-            raise TypeError("invalid file header format. "
-                            "The file is not compatible with "
-                            "PyFLocker")
+        if m != magic or meta != c[: -(32 - len(meta))]:
+            raise TypeError(
+                "invalid file header format. "
+                "The file is not compatible with "
+                "PyFLocker"
+            )
 
         # get the tag and random part
         if mode in aead:

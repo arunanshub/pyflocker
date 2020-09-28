@@ -10,13 +10,13 @@ from ._serialization import encodings, formats, protection_schemes
 from ._hashes import Hash
 
 _sig_encodings = {
-    'binary': 'binary',
-    'der': 'der',
+    "binary": "binary",
+    "der": "der",
 }
 
 _sig_modes = {
-    'fips-186-3': 'fips-186-3',
-    'deterministic-rfc6979': 'deterministic-rfc6979',
+    "fips-186-3": "fips-186-3",
+    "deterministic-rfc6979": "deterministic-rfc6979",
 }
 
 curves = {k: k for k in ECC._curves}
@@ -48,16 +48,18 @@ class _ECCKey:
             return cls(key=ECC.import_key(data, passphrase))
         except ValueError as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Either Key format is invalid or '
-                'password is missing or incorrect.', ) from e
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
     """Represents ECC private key."""
+
     def __init__(self, curve=None, **kwargs):
         if kwargs:
-            self._key = kwargs.pop('key')
+            self._key = kwargs.pop("key")
             return
         self._key = ECC.generate(curve=curves[curve])
 
@@ -72,12 +74,14 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
         """
         return ECCPublicKey(self._key.public_key())
 
-    def serialize(self,
-                  encoding='PEM',
-                  format='PKCS8',
-                  passphrase=None,
-                  *,
-                  protection=None):
+    def serialize(
+        self,
+        encoding="PEM",
+        format="PKCS8",
+        passphrase=None,
+        *,
+        protection=None
+    ):
         """Serialize the private key.
 
         Args:
@@ -104,21 +108,21 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
                 is supplied with PKCS1 format.
             KeyError: if the format is invalid or not supported.
         """
-        if encoding not in encodings.keys() ^ {'OpenSSH'}:
-            raise TypeError('encoding must be PEM or DER')
+        if encoding not in encodings.keys() ^ {"OpenSSH"}:
+            raise TypeError("encoding must be PEM or DER")
 
         if format not in formats:
-            raise KeyError('invalid format')
+            raise KeyError("invalid format")
 
         prot = {}
 
         if protection is not None:
-            if format == 'PKCS1':
-                raise TypeError('protection is meaningful only for PKCS8')
+            if format == "PKCS1":
+                raise TypeError("protection is meaningful only for PKCS8")
             if protection not in protection_schemes:
-                raise ValueError('invalid protection scheme')
+                raise ValueError("invalid protection scheme")
             # use a curated encryption choice and not DES-EDE3-CBC
-            prot = dict(protection='PBKDF2WithHMAC-SHA1AndAES256-CBC')
+            prot = dict(protection="PBKDF2WithHMAC-SHA1AndAES256-CBC")
         else:
             prot = dict(protection=protection)
 
@@ -127,19 +131,19 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
             passphrase = memoryview(passphrase).tobytes()
             # check length afterwards
             if not passphrase:
-                raise ValueError('passphrase cannot be empty bytes')
+                raise ValueError("passphrase cannot be empty bytes")
 
         key = self._key.export_key(
             format=encodings[encoding],
-            use_pkcs8=(format == 'PKCS8'),
+            use_pkcs8=(format == "PKCS8"),
             passphrase=passphrase,
             **prot,
         )
         if isinstance(key, bytes):
             return key
-        return key.encode('utf-8')
+        return key.encode("utf-8")
 
-    def signer(self, *, mode='fips-186-3', encoding='binary'):
+    def signer(self, *, mode="fips-186-3", encoding="binary"):
         """Create a signer context.
 
         Kwargs:
@@ -162,15 +166,17 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
 
     def exchange(self, peer_public_key):
         raise NotImplementedError(
-            'key exchange is currently not supported by the backend.')
+            "key exchange is currently not supported by the backend."
+        )
 
 
 class ECCPublicKey(_ECCKey, base.BasePublicKey):
     """Represents ECC public key."""
+
     def __init__(self, key):
         self._key = key
 
-    def serialize(self, encoding='PEM', *, compress=False):
+    def serialize(self, encoding="PEM", *, compress=False):
         """Serialize the private key.
 
         Args:
@@ -196,7 +202,7 @@ class ECCPublicKey(_ECCKey, base.BasePublicKey):
             return key
         return key.encode()
 
-    def verifier(self, *, mode='fips-186-3', encoding='binary'):
+    def verifier(self, *, mode="fips-186-3", encoding="binary"):
         """Create a signer context.
 
         Args:
@@ -219,7 +225,7 @@ class ECCPublicKey(_ECCKey, base.BasePublicKey):
 
 
 class SigVerContext:
-    def __init__(self, key, *, mode='fips-186-3', encoding='der'):
+    def __init__(self, key, *, mode="fips-186-3", encoding="der"):
         self._sig = DSS.new(
             key,
             mode=_sig_modes[mode],
@@ -229,6 +235,7 @@ class SigVerContext:
 
 class ECCSignerCtx(SigVerContext):
     """Signing context for ECC private key."""
+
     def sign(self, msghash):
         """Return the signature of the message hash.
 
@@ -251,6 +258,7 @@ class ECCSignerCtx(SigVerContext):
 
 class ECCVerifierCtx(SigVerContext):
     """Verification context for ECC public key."""
+
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 

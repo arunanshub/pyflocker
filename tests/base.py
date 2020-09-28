@@ -35,6 +35,7 @@ class BaseSymmetric:
 
     def test_write_into_file_buffer(self, cipher, backend):
         import io
+
         f1 = io.BytesIO(bytes(16384))
         f2 = io.BytesIO()
         f3 = io.BytesIO()
@@ -43,7 +44,8 @@ class BaseSymmetric:
             dec = cipher(False, file=f2, backend=backend)
         except TypeError:
             pytest.skip(
-                "Cipher does not support writing into file-like objects")
+                "Cipher does not support writing into file-like objects"
+            )
 
         enc.update_into(f2, blocksize=1024)
         f2.seek(0)

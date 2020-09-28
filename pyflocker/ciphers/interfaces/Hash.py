@@ -3,7 +3,7 @@
 from ..backends import load_algorithm as _load_algo
 
 
-def new(hashname, data=b'', digest_size=None, *, backend=None):
+def new(hashname, data=b"", digest_size=None, *, backend=None):
     """
     Instantiate a new hash instance `hashname` with initial
     data `data` (default is empty `bytes`).
@@ -27,7 +27,7 @@ def new(hashname, data=b'', digest_size=None, *, backend=None):
     Raises:
         KeyError if the hashing function is not supported.
     """
-    return _load_algo('Hash', backend).Hash(
+    return _load_algo("Hash", backend).Hash(
         hashname,
         data,
         digest_size=digest_size,

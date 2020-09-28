@@ -2,18 +2,15 @@ from setuptools import setup, find_packages
 
 
 setup(
-    name='PyFLocker',
-
-    version='0.2.3',
+    name="PyFLocker",
+    version="0.2.3",
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
-
     packages=find_packages(),
-
     description="Python Cryptographic (File Locking) Library",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
-    license='MIT License',
+    license="MIT License",
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
@@ -23,7 +20,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Security :: Cryptography",
     ],
-    python_requires='>=3.7',
+    python_requires=">=3.7",
     install_requires=[
         "cryptography",
         # for best case: we don't want python to

@@ -12,6 +12,7 @@ supported = frozenset()
 @base.cipher
 class ChaCha20Poly1305(AEADCipherWrapper, base.Cipher):
     """The ChaCha20_Poly1305 cipher."""
+
     def __init__(self, locking, key, nonce):
         self._cipher = ChaCha20_Poly1305.new(key=key, nonce=nonce)
         self._locking = locking

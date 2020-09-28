@@ -10,6 +10,7 @@ _default_backend = None
 
 class Backends(Enum):
     """Contains all the backend names supported by `pyflocker`."""
+
     CRYPTODOME = ".cryptodome_"
     CRYPTOGRAPHY = ".cryptography_"
     # Crypto is Cryptodome (for ver. >= 3)
@@ -63,7 +64,8 @@ def load_algorithm(name, backend=None):
     except ModuleNotFoundError as e:
         raise exc.UnsupportedAlgorithm(
             f"{name} unsupported by backend "
-            f"{bknd.BACKEND_NAME.name.title()}.") from e
+            f"{bknd.BACKEND_NAME.name.title()}."
+        ) from e
 
 
 def load_backend(bknd=None):
@@ -107,6 +109,7 @@ def load_backend(bknd=None):
             failed.append(each)
     if failed == list(Backends):
         raise ModuleNotFoundError(
-            "Pyflocker needs atleast one backend among " +  # noqa: W504
-            ", ".join(each.name.capitalize()
-                      for each in failed) + " but none were found")
+            "Pyflocker needs atleast one backend among "
+            ", ".join(each.name.capitalize() for each in failed)
+            + " but none were found",  # noqa: W503
+        )

@@ -53,19 +53,21 @@ class _RSAKey:
             return cls(key=RSA.import_key(data, password))
         except ValueError as e:
             raise ValueError(
-                'Cannot deserialize key. '
-                'Either Key format is invalid or '
-                'password is missing or incorrect.', ) from e
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     """RSA private key wrapper class."""
+
     def __init__(self, n=None, e=65537, **kwargs):
         if kwargs:
-            self._key = kwargs.pop('key')
+            self._key = kwargs.pop("key")
         else:
             if n is None:
-                raise ValueError('RSA modulus not provided')
+                raise ValueError("RSA modulus not provided")
             self._key = RSA.generate(n, e=e)
 
     @property
@@ -117,12 +119,14 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         """
         return RSAPublicKey(self._key.publickey())
 
-    def serialize(self,
-                  encoding='PEM',
-                  format='PKCS8',
-                  passphrase=None,
-                  *,
-                  protection=None):
+    def serialize(
+        self,
+        encoding="PEM",
+        format="PKCS8",
+        passphrase=None,
+        *,
+        protection=None
+    ):
         """Serialize the private key.
 
         Args:
@@ -153,35 +157,39 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
                 if DER is used with PKCS1 or protection value
                 is supplied with PKCS1 format.
             KeyError: if the format is invalid or not supported.
-       """
-        if encoding not in encodings.keys() ^ {'OpenSSH'}:
-            raise ValueError('encoding must be PEM or DER')
+        """
+        if encoding not in encodings.keys() ^ {"OpenSSH"}:
+            raise ValueError("encoding must be PEM or DER")
 
         if protection is not None:
             if protection not in protection_schemes:
-                raise ValueError('invalid protection scheme')
+                raise ValueError("invalid protection scheme")
 
-        if format == 'PKCS1':
+        if format == "PKCS1":
             if protection is not None:
-                raise ValueError('protection is meaningful only for PKCS8')
-            if encoding == 'DER':
-                raise ValueError('cannot use DER with PKCS1 format')
+                raise ValueError("protection is meaningful only for PKCS8")
+            if encoding == "DER":
+                raise ValueError("cannot use DER with PKCS1 format")
 
         if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
-            protection = 'PBKDF2WithHMAC-SHA1AndAES256-CBC'
+            protection = "PBKDF2WithHMAC-SHA1AndAES256-CBC"
 
         return self._key.export_key(
             format=encodings[encoding],
             pkcs=formats[format],
-            passphrase=(memoryview(passphrase).tobytes()
-                        if passphrase is not None else None),
+            passphrase=(
+                memoryview(passphrase).tobytes()
+                if passphrase is not None
+                else None
+            ),
             protection=protection,
         )
 
 
 class RSAPublicKey(_RSAKey, base.BasePublicKey):
     """RSA Public Key wrapper class."""
+
     def __init__(self, key):
         self._key = key
 
@@ -207,7 +215,7 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
         """
         return RSAVerifierCtx(self._key, padding)
 
-    def serialize(self, encoding='PEM'):
+    def serialize(self, encoding="PEM"):
         """Serialize the private key.
 
         Args:
@@ -224,8 +232,9 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
 
 def _get_padding(pad):
     _pad = paddings[pad.__class__]
-    mhash = Hash(pad.mgf.hash.name,
-                 digest_size=pad.mgf.hash.digest_size)  # ._hasher
+    mhash = Hash(
+        pad.mgf.hash.name, digest_size=pad.mgf.hash.digest_size
+    )  # ._hasher
     _mgf = lambda x, y: paddings[pad.mgf.__class__](x, y, mhash)  # noqa: E731
     return _pad, _mgf
 
@@ -259,7 +268,7 @@ class RSAEncryptionCtx(CipherContext):
         try:
             return self._cipher.encrypt(plaintext)
         except ValueError as e:
-            raise ValueError('the message is too long') from e
+            raise ValueError("the message is too long") from e
 
 
 class RSADecryptionCtx(CipherContext):
@@ -311,7 +320,7 @@ def _get_signer(key, pad):
 
         # create an object placeholder object to hold the signer/verifier.
         funcs = dict(sign=sign_or_verify, verify=sign_or_verify)
-        svobj = type('_OpenSSLStyleSigVer', (), funcs)()
+        svobj = type("_OpenSSLStyleSigVer", (), funcs)()
         return svobj
 
     return _pad(key, mgfunc=_mgf, saltLen=pad.salt_len)
@@ -342,7 +351,7 @@ class RSASignerCtx(SigVerContext):
         try:
             return self._sig.sign(msghash)
         except ValueError as e:
-            raise ValueError('RSA key is not long enough') from e
+            raise ValueError("RSA key is not long enough") from e
 
 
 class RSAVerifierCtx(SigVerContext):

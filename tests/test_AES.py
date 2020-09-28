@@ -29,19 +29,19 @@ def cipher(key_length, mode, iv_length):
 
 
 @pytest.mark.parametrize(
-    'iv_length',
+    "iv_length",
     [16],
 )
 @pytest.mark.parametrize(
-    'backend',
+    "backend",
     list(Backends),
 )
 @pytest.mark.parametrize(
-    'key_length',
+    "key_length",
     _LENGTH_NORMAL,
 )
 @pytest.mark.parametrize(
-    'mode',
+    "mode",
     set(Modes) ^ AES.special,
 )
 class TestAES(BaseSymmetric):
@@ -85,23 +85,23 @@ class TestAES(BaseSymmetric):
         try:
             dec.finalize(enc.calculate_tag())
         except exc.DecryptionError:
-            pytest.fail('Authentication check failed')
+            pytest.fail("Authentication check failed")
 
 
 @pytest.mark.parametrize(
-    'backend',
+    "backend",
     list(Backends),
 )
 @pytest.mark.parametrize(
-    'key_length',
+    "key_length",
     set(_LENGTH_NORMAL) | set(_LENGTH_SPECIAL_SIV),
 )
 @pytest.mark.parametrize(
-    'mode',
+    "mode",
     AES.special,
 )
 @pytest.mark.parametrize(
-    'iv_length',
+    "iv_length",
     [13],
 )
 class TestAESAEADSpecial(BaseSymmetric):
@@ -114,8 +114,11 @@ class TestAESAEADSpecial(BaseSymmetric):
             return
         except ValueError:
             # error raised by backend: probably key errors
-            assert mode == AES.MODE_SIV or \
-                len(cipher.keywords['key']) in _LENGTH_SPECIAL_SIV
+            assert (
+                mode == AES.MODE_SIV
+                or len(cipher.keywords["key"])  # noqa: W503
+                in _LENGTH_SPECIAL_SIV
+            )
             return
 
         rbuf = memoryview(bytearray(16384))
@@ -142,10 +145,9 @@ class TestAESAEADSpecial(BaseSymmetric):
             enc1 = cipher(True, backend=backend)
             dec = cipher(False, backend=backend)
         except NotImplementedError:
-            pytest.skip(f'{backend} does not support {mode}')
+            pytest.skip(f"{backend} does not support {mode}")
         except ValueError:
-            assert mode == AES.MODE_SIV or \
-                key_length in _LENGTH_SPECIAL_SIV
+            assert mode == AES.MODE_SIV or key_length in _LENGTH_SPECIAL_SIV
             return
 
         data = bytes(32)
@@ -156,7 +158,7 @@ class TestAESAEADSpecial(BaseSymmetric):
         try:
             assert dec.update(enc.update(data), enc.calculate_tag()) == data
         except exc.DecryptionError:
-            pytest.fail('Authentication check failed')
+            pytest.fail("Authentication check failed")
 
     def test_write_into_file_buffer(self, cipher, backend, mode):
         try:
