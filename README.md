@@ -16,7 +16,7 @@ or
 
 # Introduction
 
-PyFLocker aims to be your last cryptographic library you will need for both portability and ease of use.
+PyFLocker aims to be a highly portable and easy of use cryptographic library.
 Before you read on, check if you agree to at least one of these points:
 
 -   [PyCryptodome(x)][pycrypto] and [pyca/cryptography][pyca] have **very different** public interfaces,
@@ -43,6 +43,21 @@ Look no more, you have arrived at the right destination!
 PS: At least, those were my points which irritated me when I first used those libraries :)
 
 # Usage Overview
+
+## How is it different?
+
+`PyFLocker` takes a very different approach. Instead of writing the cryptographic
+primitives from scratch, `PyFLocker` uses well established libraries as its
+backends and expands upon them.
+
+This gives you the ultimate ability to cherry-pick the primitives from a specific
+backend without having to worry about backend's interface, as `PyFLocker` handles
+it for you. And you, as a developer, have to focus on a single API, and the rest
+is handled internally.
+
+Read on to know more!
+
+* * *
 
 ## Not a "Yet Another Cryptographic Library"
 
