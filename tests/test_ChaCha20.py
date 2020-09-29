@@ -2,7 +2,7 @@ import os
 import pytest
 
 from functools import partial
-from pyflocker.ciphers import ChaCha20, Backends
+from pyflocker.ciphers import ChaCha20, Backends, exc
 
 from .base import BaseSymmetric
 
@@ -23,4 +23,18 @@ def cipher(nonce_length):
     list(Backends),
 )
 class TestChaCha20Poly1305(BaseSymmetric):
-    pass
+    def test_auth(self, cipher, backend):
+        """Check authentication for both HMAC and AEAD."""
+        enc = cipher(True, backend=backend)
+        dec = cipher(False, backend=backend)
+
+        authdata, data = os.urandom(32).hex().encode(), bytes(32)
+        enc.authenticate(authdata)
+        dec.authenticate(authdata)
+
+        assert dec.update(enc.update(data)) == data
+        enc.finalize()
+        try:
+            dec.finalize(enc.calculate_tag())
+        except exc.DecryptionError:
+            pytest.fail("Authentication check failed")
