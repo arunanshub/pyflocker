@@ -6,7 +6,7 @@ setup(
     version="0.2.3",
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
-    packages=find_packages(),
+    packages=find_packages(exclude=["tests"]),
     description="Python Cryptographic (File Locking) Library",
     long_description=open("README.md").read(),
     long_description_content_type="text/markdown",
