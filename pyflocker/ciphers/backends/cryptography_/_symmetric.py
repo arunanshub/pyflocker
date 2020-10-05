@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend as defb
 
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .. import base, exc
-from ._hashes import hashes as _hashes
+from .Hash import hashes as _hashes
 
 
 def derive_key(master_key, dklen, hashalgo, salt):

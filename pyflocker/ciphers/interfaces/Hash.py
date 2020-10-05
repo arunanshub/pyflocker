@@ -3,6 +3,19 @@
 from ..backends import load_algorithm as _load_algo
 
 
+def get_available_hashes(backend=None):
+    """Returns all available hashes supported by backend."""
+    if backend is not None:
+        return set(_load_algo("Hash", backend).hashes.keys())
+
+    from ..backends import Backends
+
+    algos = set()
+    for bknd in list(Backends):
+        algos.update(set(_load_algo("Hash", bknd).hashes.keys()))
+    return algos
+
+
 def new(hashname, data=b"", digest_size=None, *, backend=None):
     """
     Instantiate a new hash instance `hashname` with initial

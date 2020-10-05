@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.asymmetric import (
 
 from .. import base, exc, Backends
 from .._asymmetric import OAEP, MGF1, PSS
-from ._hashes import Hash
+from .Hash import Hash
 from ._serialization import encodings, private_format, public_format
 
 paddings = {

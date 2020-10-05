@@ -6,7 +6,7 @@ try:
 except ModuleNotFoundError:
     from Crypto.Protocol import KDF
 
-from ._hashes import hashes as _hashes
+from .Hash import hashes as _hashes
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .. import base, exc
 

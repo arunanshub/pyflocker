@@ -7,7 +7,7 @@ except ModuleNotFoundError:
 
 from .. import base, exc
 from ._serialization import encodings, formats, protection_schemes
-from ._hashes import Hash
+from .Hash import Hash
 
 _sig_encodings = {
     "binary": "binary",

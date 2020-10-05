@@ -9,7 +9,7 @@ except ModuleNotFoundError:
 
 from .. import base, exc
 from .._asymmetric import OAEP, PSS, MGF1
-from ._hashes import Hash
+from .Hash import Hash
 from ._serialization import encodings, formats, protection_schemes
 
 paddings = {
