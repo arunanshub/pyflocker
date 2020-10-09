@@ -8,6 +8,6 @@ def __getattr__(name):
         import Cryptodome as Crypto
     except ModuleNotFoundError:
         import Crypto
-        if Crypto.version_info[0] >= 3:
+        if not Crypto.version_info[0] >= 3:
             raise
     return getattr(Crypto, name)
