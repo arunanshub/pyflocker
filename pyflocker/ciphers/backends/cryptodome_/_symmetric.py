@@ -1,11 +1,7 @@
 """Symmetric cipher wrapper for this backend only."""
 from functools import partial
 
-try:
-    from Cryptodome.Protocol import KDF
-except ModuleNotFoundError:
-    from Crypto.Protocol import KDF
-
+from ._cryptosupport.Protocol import KDF
 from .Hash import hashes as _hashes
 from .._symmetric import CipherWrapperBase, HMACMixin
 from .. import base, exc

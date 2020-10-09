@@ -1,34 +1,17 @@
-try:
-    from Cryptodome.Hash import (
-        SHA224,
-        SHA256,
-        SHA384,
-        SHA512,
-        SHA3_224,
-        SHA3_256,
-        SHA3_384,
-        SHA3_512,
-        BLAKE2b,
-        BLAKE2s,
-        SHAKE128,
-        SHAKE256,
-    )
-except ModuleNotFoundError:
-    from Crypto.Hash import (
-        SHA224,
-        SHA256,
-        SHA384,
-        SHA512,
-        SHA3_224,
-        SHA3_256,
-        SHA3_384,
-        SHA3_512,
-        BLAKE2b,
-        BLAKE2s,
-        SHAKE128,
-        SHAKE256,
-    )
-
+from ._cryptosupport.Hash import (
+    SHA224,
+    SHA256,
+    SHA384,
+    SHA512,
+    SHA3_224,
+    SHA3_256,
+    SHA3_384,
+    SHA3_512,
+    BLAKE2b,
+    BLAKE2s,
+    SHAKE128,
+    SHAKE256,
+)
 from .. import base
 
 hashes = {

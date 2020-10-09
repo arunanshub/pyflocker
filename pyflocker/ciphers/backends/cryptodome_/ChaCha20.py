@@ -1,8 +1,4 @@
-try:
-    from Cryptodome.Cipher import ChaCha20_Poly1305
-except ModuleNotFoundError:
-    from Crypto.Cipher import ChaCha20_Poly1305
-
+from ._cryptosupport.Cipher import ChaCha20_Poly1305
 from ._symmetric import AEADCipherWrapper, FileCipherMixin
 from .. import base
 
