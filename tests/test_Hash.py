@@ -26,6 +26,9 @@ class TestHash:
         h1 = create_hash(algo, data, backend=backend)
         h2 = create_hash(algo, data, backend=backend)
 
+        h1.update(data)
+        h2.update(data)
+
         assert h1.digest() == h2.digest()
 
         with pytest.raises(exc.AlreadyFinalized):
@@ -41,6 +44,9 @@ class TestHash:
         data = bytes(64)
         h1 = create_hash(algo, data, backend=b1)
         h2 = create_hash(algo, data, backend=b2)
+
+        h1.update(data)
+        h2.update(data)
 
         assert h1.digest() == h2.digest()
 
