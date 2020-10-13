@@ -1,4 +1,4 @@
-from itertools import permutations
+from itertools import product
 import pytest
 
 from pyflocker.ciphers import Hash, Backends
@@ -17,14 +17,14 @@ def create_hash(algo, data, *, backend, **kwargs):
     ^ set(("blake2b", "blake2s", "shake128", "shake256")),  # noqa: W503
 )
 @pytest.mark.parametrize(
-    "backend",
-    list(Backends),
+    "backend1, backend2",  # all possible backend values -- both same and crossed
+    product(list(Backends), repeat=2),
 )
 class TestHash:
-    def test_same_hash(self, algo, backend):
+    def test_same_hash(self, algo, backend1, backend2):
         data = bytes(64)
-        h1 = create_hash(algo, data, backend=backend)
-        h2 = create_hash(algo, data, backend=backend)
+        h1 = create_hash(algo, data, backend=backend1)
+        h2 = create_hash(algo, data, backend=backend2)
 
         h1.update(data)
         h2.update(data)
@@ -33,23 +33,5 @@ class TestHash:
 
         with pytest.raises(exc.AlreadyFinalized):
             h1.update(data)
-
-    @pytest.mark.parametrize(
-        "backends",
-        permutations(list(Backends), 2),
-    )
-    def test_same_hash_crossed(self, algo, backends, *, backend):
-        # 'backend' is not used since we are cross checking backends
-        b1, b2 = backends
-        data = bytes(64)
-        h1 = create_hash(algo, data, backend=b1)
-        h2 = create_hash(algo, data, backend=b2)
-
-        h1.update(data)
-        h2.update(data)
-
-        assert h1.digest() == h2.digest()
-
-        for h in [h1, h2]:
-            with pytest.raises(exc.AlreadyFinalized):
-                h.update(data)
+        with pytest.raises(exc.AlreadyFinalized):
+            h2.update(data)
