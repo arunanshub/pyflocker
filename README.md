@@ -1,6 +1,7 @@
 # PyFLocker
 ![Upload Python Package](https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg)
 ![Build](https://github.com/arunanshub/pyflocker/workflows/Build/badge.svg)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 
 #### Python Cryptographic (File Locking) Library
 
