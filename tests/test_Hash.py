@@ -17,7 +17,8 @@ def create_hash(algo, data, *, backend, **kwargs):
     ^ set(("blake2b", "blake2s", "shake128", "shake256")),  # noqa: W503
 )
 @pytest.mark.parametrize(
-    "backend1, backend2",  # all possible backend values -- both same and crossed
+    # all possible backend values -- both same and crossed
+    "backend1, backend2",
     product(list(Backends), repeat=2),
 )
 class TestHash:
