@@ -2,6 +2,7 @@ import pytest
 import os
 
 from functools import partial
+from itertools import product
 from pyflocker.ciphers import Camellia, Modes, Backends, exc
 
 from .base import BaseSymmetric
@@ -10,7 +11,14 @@ _KEY_LENGTHS = (16, 24, 32)
 
 
 @pytest.fixture
-def cipher(mode, key_length):
+def cipher(mode, key_length, backend1, backend2):
+    for b in [backend1, backend2]:
+        try:
+            if mode not in Camellia.supported_modes(b):
+                pytest.skip(f"{mode} not supported by Camellia")
+        except exc.UnsupportedAlgorithm:
+            pytest.skip(f"Camellia not supported by {b}")
+
     return partial(
         Camellia.new,
         key=os.urandom(key_length),
@@ -20,8 +28,8 @@ def cipher(mode, key_length):
 
 
 @pytest.mark.parametrize(
-    "backend",
-    list(Backends),
+    "backend1, backend2",
+    list(product(list(Backends), repeat=2)),
 )
 @pytest.mark.parametrize(
     "mode",
@@ -32,40 +40,10 @@ def cipher(mode, key_length):
     _KEY_LENGTHS,
 )
 class TestCamellia(BaseSymmetric):
-    def test_update(self, cipher, backend, mode):
-        try:
-            super().test_update(cipher, backend)
-        except exc.UnsupportedAlgorithm:
-            pytest.skip(f"Backend {backend} does not support Camellia")
-        except NotImplementedError:
-            assert mode not in Camellia.supported_modes(backend)
-
-    def test_update_into(self, cipher, backend, mode):
-        try:
-            super().test_update_into(cipher, backend)
-        except exc.UnsupportedAlgorithm:
-            pytest.skip(f"Backend {backend} does not support Camellia")
-        except NotImplementedError:
-            assert mode not in Camellia.supported_modes(backend)
-
-    def test_write_into_file_buffer(self, cipher, backend, mode):
-        try:
-            super().test_write_into_file_buffer(cipher, backend)
-        except exc.UnsupportedAlgorithm:
-            pytest.skip(f"Backend {backend} does not support Camellia")
-        except NotImplementedError:
-            assert mode not in Camellia.supported_modes(backend)
-
-    def test_auth(self, cipher, backend, mode):
+    def test_auth(self, cipher, backend1, backend2, mode):
         """Check authentication for HMAC."""
-        try:
-            enc = cipher(True, backend=backend, hashed=True)
-            dec = cipher(False, backend=backend, hashed=True)
-        except exc.UnsupportedAlgorithm:
-            pytest.skip(f"Backend {backend} does not support Camellia")
-        except NotImplementedError:
-            assert mode not in Camellia.supported_modes(backend)
-            return
+        enc = cipher(True, backend=backend1, hashed=True)
+        dec = cipher(False, backend=backend2, hashed=True)
 
         authdata, data = os.urandom(32).hex().encode(), bytes(32)
         enc.authenticate(authdata)

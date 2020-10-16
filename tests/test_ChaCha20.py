@@ -2,6 +2,7 @@ import os
 import pytest
 
 from functools import partial
+from itertools import product
 from pyflocker.ciphers import ChaCha20, Backends, exc
 
 from .base import BaseSymmetric
@@ -19,14 +20,19 @@ def cipher(nonce_length):
     [8, 12],
 )
 @pytest.mark.parametrize(
-    "backend",
-    list(Backends),
+    "backend1, backend2",
+    list(product(list(Backends), repeat=2)),
 )
 class TestChaCha20Poly1305(BaseSymmetric):
-    def test_auth(self, cipher, backend):
+    def test_update_into(self, cipher, backend1, backend2):
+        return super().test_update_into(
+            cipher, backend1, backend2, extend=None
+        )
+
+    def test_auth(self, cipher, backend1, backend2):
         """Check authentication for both HMAC and AEAD."""
-        enc = cipher(True, backend=backend)
-        dec = cipher(False, backend=backend)
+        enc = cipher(True, backend=backend1)
+        dec = cipher(False, backend=backend2)
 
         authdata, data = os.urandom(32).hex().encode(), bytes(32)
         enc.authenticate(authdata)

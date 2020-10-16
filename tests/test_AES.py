@@ -10,6 +10,7 @@ import io
 
 import pytest
 from functools import partial
+from itertools import product
 from pyflocker.ciphers import AES, Modes, Backends, exc
 
 from .base import BaseSymmetric
@@ -19,7 +20,12 @@ _LENGTH_SPECIAL_SIV = (32, 48, 64)
 
 
 @pytest.fixture
-def cipher(key_length, mode, iv_length):
+def cipher(key_length, mode, iv_length, backend1, backend2):
+    if mode not in AES.supported_modes(backend1):
+        pytest.skip(f"{backend1} doesn't support {mode}")
+    elif mode not in AES.supported_modes(backend2):
+        pytest.skip(f"{backend2} doesn't support {mode}")
+
     return partial(
         AES.new,
         key=os.urandom(key_length),
@@ -33,8 +39,8 @@ def cipher(key_length, mode, iv_length):
     [16],
 )
 @pytest.mark.parametrize(
-    "backend",
-    list(Backends),
+    ["backend1", "backend2"],
+    list(product(list(Backends), repeat=2)),
 )
 @pytest.mark.parametrize(
     "key_length",
@@ -45,36 +51,14 @@ def cipher(key_length, mode, iv_length):
     set(Modes) ^ AES.special,
 )
 class TestAES(BaseSymmetric):
-    def test_update(self, cipher, backend, mode):
-        try:
-            super().test_update(cipher, backend)
-        except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
-
-    def test_update_into(self, cipher, backend, mode):
-        try:
-            super().test_update_into(cipher, backend)
-        except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
-
-    def test_write_into_file_buffer(self, cipher, backend, mode):
-        try:
-            super().test_write_into_file_buffer(cipher, backend)
-        except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
-
-    def test_auth(self, cipher, backend, mode):
+    def test_auth(self, cipher, backend1, backend2, mode):
         """Check authentication for both HMAC and AEAD."""
         kwargs = {}
         if mode not in AES.aead:
             kwargs = dict(hashed=True)
 
-        try:
-            enc = cipher(True, backend=backend, **kwargs)
-            dec = cipher(False, backend=backend, **kwargs)
-        except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
-            return
+        enc = cipher(True, backend=backend1, **kwargs)
+        dec = cipher(False, backend=backend2, **kwargs)
 
         authdata, data = os.urandom(32).hex().encode(), bytes(32)
         enc.authenticate(authdata)
@@ -89,8 +73,8 @@ class TestAES(BaseSymmetric):
 
 
 @pytest.mark.parametrize(
-    "backend",
-    list(Backends),
+    "backend1, backend2",
+    list(product(list(Backends), repeat=2)),
 )
 @pytest.mark.parametrize(
     "key_length",
@@ -105,13 +89,13 @@ class TestAES(BaseSymmetric):
     [13],
 )
 class TestAESAEADSpecial(BaseSymmetric):
-    def test_update_into(self, cipher, mode, backend, key_length):
+    def test_update_into(self, cipher, mode, backend1, backend2):
         try:
-            enc = cipher(True, backend=backend)
-            dec = cipher(False, backend=backend)
+            enc = cipher(True, backend=backend1)
+            dec = cipher(False, backend=backend2)
         except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
             return
+            assert mode not in AES.supported_modes(backend1)
         except ValueError:
             # error raised by backend: probably key errors
             assert (
@@ -139,11 +123,11 @@ class TestAESAEADSpecial(BaseSymmetric):
 
         assert rbuf.tobytes() == test.tobytes()
 
-    def test_update(self, cipher, mode, backend, key_length):
+    def test_update(self, cipher, mode, backend1, backend2, key_length):
         try:
-            enc = cipher(True, backend=backend)
-            enc1 = cipher(True, backend=backend)
-            dec = cipher(False, backend=backend)
+            enc = cipher(True, backend=backend1)
+            enc1 = cipher(True, backend=backend1)
+            dec = cipher(False, backend=backend2)
         except NotImplementedError:
             pytest.skip(f"{backend} does not support {mode}")
         except ValueError:
@@ -159,9 +143,3 @@ class TestAESAEADSpecial(BaseSymmetric):
             assert dec.update(enc.update(data), enc.calculate_tag()) == data
         except exc.DecryptionError:
             pytest.fail("Authentication check failed")
-
-    def test_write_into_file_buffer(self, cipher, backend, mode):
-        try:
-            super().test_write_into_file_buffer(cipher, backend)
-        except NotImplementedError:
-            assert mode not in AES.supported_modes(backend)
