@@ -11,8 +11,11 @@ def _create_buffer(length, extend, backend):
     return memoryview(bytearray(length))
 
 
+@pytest.mark.parametrize("authlen", [0, 64])
 class BaseSymmetric:
-    def test_update_into(self, cipher, backend1, backend2, *, extend=15):
+    def test_update_into(
+        self, cipher, backend1, backend2, authlen, *, extend=15
+    ):
         rbuf = memoryview(bytearray(16384))
 
         enc = cipher(True, backend=backend1)
@@ -21,6 +24,11 @@ class BaseSymmetric:
         wbuf = _create_buffer(len(rbuf), extend, backend1)
         test = _create_buffer(len(rbuf), extend, backend2)
 
+        try:
+            enc.authenticate(bytes(authlen))
+        except NotImplementedError:
+            assert enc._auth is None
+
         enc.update_into(rbuf, wbuf)
         enc.finalize()
 
@@ -28,6 +36,11 @@ class BaseSymmetric:
             wbuf = wbuf[
                 : (-extend if backend1 == Backends.CRYPTOGRAPHY else None)
             ]
+
+        try:
+            dec.authenticate(bytes(authlen))
+        except NotImplementedError:
+            assert dec._auth is None
 
         dec.update_into(wbuf, test)
         try:
@@ -42,14 +55,26 @@ class BaseSymmetric:
 
         assert test.tobytes() == rbuf.tobytes()
 
-    def test_update(self, cipher, backend1, backend2):
+    def test_update(self, cipher, backend1, backend2, authlen):
         enc = cipher(True, backend=backend1)
         dec = cipher(False, backend=backend2)
+
+        for crp in [enc, dec]:
+            try:
+                crp.authenticate(bytes(authlen))
+            except NotImplementedError:
+                assert crp._auth is None
 
         data = bytes(32)
         assert dec.update(enc.update(data)) == data
 
-    def test_write_into_file_buffer(self, cipher, backend1, backend2):
+        enc.finalize()
+        try:
+            dec.finalize(enc.calculate_tag())
+        except NotImplementedError:
+            assert enc._auth is None
+
+    def test_write_into_file_buffer(self, cipher, backend1, backend2, authlen):
         import io
 
         f1 = io.BytesIO(bytes(16384))
@@ -64,6 +89,9 @@ class BaseSymmetric:
             pytest.skip(
                 f"{mode} does not support writing into file-like objects"
             )
+
+        enc.authenticate(bytes(authlen))
+        dec.authenticate(bytes(authlen))
 
         enc.update_into(f2, blocksize=1024)
         f2.seek(0)

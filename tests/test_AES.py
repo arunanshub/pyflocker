@@ -20,20 +20,29 @@ _LENGTH_SPECIAL_SIV = (32, 48, 64)
 
 
 @pytest.fixture
-def cipher(key_length, mode, iv_length, backend1, backend2):
+def cipher(key_length, mode, use_hmac, iv_length, backend1, backend2):
     if mode not in AES.supported_modes(backend1):
         pytest.skip(f"{backend1} doesn't support {mode}")
     elif mode not in AES.supported_modes(backend2):
         pytest.skip(f"{backend2} doesn't support {mode}")
+
+    kw = {}
+    if mode not in AES.aead:
+        kw = dict(hashed=use_hmac)
 
     return partial(
         AES.new,
         key=os.urandom(key_length),
         mode=mode,
         iv_or_nonce=os.urandom(iv_length),
+        **kw,
     )
 
 
+@pytest.mark.parametrize(
+    "use_hmac",
+    [False, True],
+)
 @pytest.mark.parametrize(
     "iv_length",
     [16],
@@ -51,25 +60,7 @@ def cipher(key_length, mode, iv_length, backend1, backend2):
     set(Modes) ^ AES.special,
 )
 class TestAES(BaseSymmetric):
-    def test_auth(self, cipher, backend1, backend2, mode):
-        """Check authentication for both HMAC and AEAD."""
-        kwargs = {}
-        if mode not in AES.aead:
-            kwargs = dict(hashed=True)
-
-        enc = cipher(True, backend=backend1, **kwargs)
-        dec = cipher(False, backend=backend2, **kwargs)
-
-        authdata, data = os.urandom(32).hex().encode(), bytes(32)
-        enc.authenticate(authdata)
-        dec.authenticate(authdata)
-
-        assert dec.update(enc.update(data)) == data
-        enc.finalize()
-        try:
-            dec.finalize(enc.calculate_tag())
-        except exc.DecryptionError:
-            pytest.fail("Authentication check failed")
+    pass
 
 
 @pytest.mark.parametrize(
@@ -88,8 +79,12 @@ class TestAES(BaseSymmetric):
     "iv_length",
     [13],
 )
+@pytest.mark.parametrize(
+    "use_hmac",
+    [False],
+)
 class TestAESAEADSpecial(BaseSymmetric):
-    def test_update_into(self, cipher, mode, backend1, backend2):
+    def test_update_into(self, cipher, mode, backend1, backend2, authlen):
         try:
             enc = cipher(True, backend=backend1)
             dec = cipher(False, backend=backend2)
@@ -109,6 +104,8 @@ class TestAESAEADSpecial(BaseSymmetric):
         wbuf = memoryview(bytearray(16384))
         test = memoryview(bytearray(16384))
 
+        enc.authenticate(bytes(authlen))
+        dec.authenticate(bytes(authlen))
         try:
             enc.update_into(rbuf, wbuf)
         except TypeError:
@@ -123,7 +120,9 @@ class TestAESAEADSpecial(BaseSymmetric):
 
         assert rbuf.tobytes() == test.tobytes()
 
-    def test_update(self, cipher, mode, backend1, backend2, key_length):
+    def test_update(
+        self, cipher, mode, backend1, backend2, key_length, authlen
+    ):
         try:
             enc = cipher(True, backend=backend1)
             enc1 = cipher(True, backend=backend1)
@@ -137,6 +136,8 @@ class TestAESAEADSpecial(BaseSymmetric):
             # test tag requirement case
             assert dec.update(enc1.update(data)) == data
 
+        enc.authenticate(bytes(authlen))
+        dec.authenticate(bytes(authlen))
         try:
             assert dec.update(enc.update(data), enc.calculate_tag()) == data
         except exc.DecryptionError:

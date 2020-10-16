@@ -11,7 +11,7 @@ _KEY_LENGTHS = (16, 24, 32)
 
 
 @pytest.fixture
-def cipher(mode, key_length, backend1, backend2):
+def cipher(mode, key_length, use_hmac, backend1, backend2):
     for b in [backend1, backend2]:
         try:
             if mode not in Camellia.supported_modes(b):
@@ -24,9 +24,14 @@ def cipher(mode, key_length, backend1, backend2):
         key=os.urandom(key_length),
         mode=mode,
         iv_or_nonce=os.urandom(16),
+        hashed=use_hmac,
     )
 
 
+@pytest.mark.parametrize(
+    "use_hmac",
+    [False, True],
+)
 @pytest.mark.parametrize(
     "backend1, backend2",
     list(product(list(Backends), repeat=2)),
@@ -40,18 +45,4 @@ def cipher(mode, key_length, backend1, backend2):
     _KEY_LENGTHS,
 )
 class TestCamellia(BaseSymmetric):
-    def test_auth(self, cipher, backend1, backend2, mode):
-        """Check authentication for HMAC."""
-        enc = cipher(True, backend=backend1, hashed=True)
-        dec = cipher(False, backend=backend2, hashed=True)
-
-        authdata, data = os.urandom(32).hex().encode(), bytes(32)
-        enc.authenticate(authdata)
-        dec.authenticate(authdata)
-
-        assert dec.update(enc.update(data)) == data
-        enc.finalize()
-        try:
-            dec.finalize(enc.calculate_tag())
-        except exc.DecryptionError:
-            pytest.fail("Authentication check failed")
+    pass
