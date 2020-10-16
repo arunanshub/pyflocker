@@ -128,8 +128,6 @@ class TestAESAEADSpecial(BaseSymmetric):
             enc = cipher(True, backend=backend1)
             enc1 = cipher(True, backend=backend1)
             dec = cipher(False, backend=backend2)
-        except NotImplementedError:
-            pytest.skip(f"{backend} does not support {mode}")
         except ValueError:
             assert mode == AES.MODE_SIV or key_length in _LENGTH_SPECIAL_SIV
             return
