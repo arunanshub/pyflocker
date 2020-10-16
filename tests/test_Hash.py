@@ -1,4 +1,4 @@
-from itertools import product
+from itertools import combinations_with_replacement
 import pytest
 
 from pyflocker.ciphers import Hash, Backends
@@ -19,7 +19,7 @@ def create_hash(algo, data, *, backend, **kwargs):
 @pytest.mark.parametrize(
     # all possible backend values -- both same and crossed
     "backend1, backend2",
-    product(list(Backends), repeat=2),
+    list(combinations_with_replacement(list(Backends), 2)),
 )
 class TestHash:
     def test_same_hash(self, algo, backend1, backend2):
