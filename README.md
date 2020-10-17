@@ -166,4 +166,4 @@ class MyCustomCipher(base.Cipher):
 
 [pyca]: <https://github.com/pyca/cryptography>
 
-[pyca_vs_self]: <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/?highlight=RSA#key-serialization>
+[pyca_vs_self]: <https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa/#key-serialization>
