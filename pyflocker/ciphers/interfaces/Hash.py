@@ -16,6 +16,9 @@ def get_available_hashes(backend=None):
     return algos
 
 
+algorithms_available = get_available_hashes
+
+
 def new(hashname, data=b"", digest_size=None, *, backend=None):
     """
     Instantiate a new hash instance `hashname` with initial
