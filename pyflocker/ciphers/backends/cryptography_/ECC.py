@@ -62,7 +62,16 @@ class ECCPrivateKey(base.BasePrivateKey):
 
     def __init__(self, curve=None, **kwargs):
         if kwargs:
-            self._key = kwargs.pop("key")
+            key = kwargs.pop("key")
+            if not isinstance(
+                key,
+                (
+                    ec.EllipticCurvePrivateKey,
+                    *special_curves.values(),
+                ),
+            ):
+                raise ValueError("The key is not an EC private key.")
+            self._key = key
         else:
             if curve not in special_curves:
                 self._key = ec.generate_private_key(
@@ -204,13 +213,12 @@ class ECCPrivateKey(base.BasePrivateKey):
             password = memoryview(password)
 
         try:
-            return cls(
-                key=loader(
-                    memoryview(data),
-                    password,
-                    defb(),
-                ),
+            key = loader(
+                memoryview(data),
+                password,
+                defb(),
             )
+            return cls(key=key)
         except (ValueError, TypeError) as e:
             raise ValueError(
                 "Cannot deserialize key. "
@@ -223,6 +231,17 @@ class ECCPublicKey(base.BasePublicKey):
     """Represents ECC public key."""
 
     def __init__(self, key):
+        if not isinstance(
+            key,
+            (
+                ec.EllipticCurvePublicKey,
+                x448.X448PublicKey,
+                x25519.X25519PublicKey,
+                ed25519.Ed25519PublicKey,
+                ed448.Ed448PublicKey,
+            ),
+        ):
+            raise ValueError("The key is not an EC public key.")
         self._key = key
 
     def verifier(self, algorithm="ECDSA"):
@@ -299,7 +318,8 @@ class ECCPublicKey(base.BasePublicKey):
             raise ValueError("incorrect key format")
 
         try:
-            return cls(key=loader(memoryview(data), defb()))
+            key = loader(memoryview(data), defb())
+            return cls(key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Incorrect key format.",

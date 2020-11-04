@@ -49,9 +49,13 @@ class _RSANumbers:
 class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
     def __init__(self, n=None, e=65537, **kwargs):
         if kwargs:
-            # we have the key made beforehand
-            # or from some classmethod
-            self._key = kwargs.pop("key")
+            key = kwargs.pop("key")
+            if not isinstance(
+                key,
+                rsa.RSAPrivateKey,
+            ):
+                raise ValueError("The key is not an RSA private key.")
+            self._key = key
         else:
             if n is None:
                 raise ValueError("modulus not provided")
@@ -176,13 +180,12 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             password = memoryview(password)
 
         try:
-            return cls(
-                key=loader(
-                    memoryview(data),
-                    password,
-                    defb(),
-                ),
+            key = loader(
+                memoryview(data),
+                password,
+                defb(),
             )
+            return cls(key=key)
         except (ValueError, TypeError) as e:
             raise ValueError(
                 "Cannot deserialize key. "
@@ -195,6 +198,11 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
+        if not isinstance(
+            key,
+            rsa.RSAPublicKey,
+        ):
+            raise ValueError("The key is not an RSA public key.")
         self._key = key
 
     def encryptor(self, padding=OAEP()):
@@ -271,7 +279,9 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             raise ValueError("incorrect key format")
 
         try:
-            return cls(key=loader(memoryview(data), defb()))
+            key = loader(memoryview(data), defb())
+            return cls(key=key)
+
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Incorrect key format.",

@@ -14,7 +14,10 @@ from ._serialization import (
 class DHParameters:
     def __init__(self, key_size=None, generator=2, **kwargs):
         if kwargs:
-            self._params = kwargs.pop("parameter")
+            params = kwargs.pop("parameter")
+            if not isinstance(params, dh.DHParameters):
+                raise ValueError("The parameter is not a DH parameter object.")
+            self._params = params
         else:
             if key_size is None:
                 raise ValueError("key_size is not provided")
@@ -137,6 +140,8 @@ class _DHKey:
 
 class DHPrivateKey(_DHKey, base.BasePrivateKey):
     def __init__(self, key):
+        if not isinstance(key, dh.DHPrivateKey):
+            raise ValueError("The key is not a DH private key.")
         self._key = key
 
     def public_key(self):
@@ -225,13 +230,12 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
             passphrase = memoryview(passphrase)
 
         try:
-            return cls(
-                key=loader(
-                    memoryview(data),
-                    passphrase,
-                    defb(),
-                ),
+            key = loader(
+                memoryview(data),
+                passphrase,
+                defb(),
             )
+            return cls(key=key)
         except (ValueError, TypeError) as e:
             raise ValueError(
                 "Cannot deserialize key. "
@@ -242,6 +246,8 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
 class DHPublicKey(_DHKey, base.BasePublicKey):
     def __init__(self, key):
+        if not isinstance(key, dh.DHPublicKey):
+            raise ValueError("The key is not a DH public key.")
         self._key = key
 
     def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
@@ -289,7 +295,8 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
             raise ValueError("incorrect key format")
 
         try:
-            return cls(key=loader(data, defb()))
+            key = loader(memoryview(data), defb())
+            return cls(key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Incorrect key format.",
