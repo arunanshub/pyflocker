@@ -76,7 +76,7 @@ def load_backend(bknd=None):
     Args:
         bknd (:class:`pyflocker.ciphers.backends.Backends`):
             The name of the backend to load. If `bknd` is None and
-            the default backend is set via `set_default_backend`,
+            the default backend is set via :func:`set_default_backend`,
             that is loaded instead, and if default backend was not
             set, any available backend is loaded.
 
