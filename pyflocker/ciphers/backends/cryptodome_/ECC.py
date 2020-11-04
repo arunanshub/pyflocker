@@ -232,13 +232,13 @@ class ECCPublicKey(base.BasePublicKey):
                 The key as bytes object.
 
         Returns:
-            :any:`ECCPrivateKey`: `ECCPrivateKey` object.
+            :any:`ECCPublicKey`: `ECCPublicKey` object.
 
         Raises:
             ValueError: if the key could not be deserialized.
         """
         try:
-            key = ECC.import_key(data, passphrase)
+            key = ECC.import_key(data)
             if key.has_private():
                 raise ValueError("The key is not a private key")
             return cls(key=key)
