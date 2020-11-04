@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="PyFLocker",
-    version="0.2.3",
+    version="0.2.4",
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
     packages=find_packages(exclude=["tests"]),
@@ -15,6 +15,7 @@ setup(
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Intended Audience :: Developers",
