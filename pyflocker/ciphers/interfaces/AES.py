@@ -27,15 +27,15 @@ def _aes_cipher_from_mode(mode, bknd, hasfile):
 
 
 def supported_modes(backend):
-    """Lists all modes supported by the cipher. It is
-    limited to backend's implementation and capability,
-    and hence, varies from backend to backend.
+    """Lists all modes supported by the cipher. It is limited to backend's
+    implementation and capability, and hence, varies from backend to backend.
 
     Args:
-        backend: An attribute from Backends enum.
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            An attribute from :any:`Backends` enum.
 
     Returns:
-        list of Modes object supported by backend.
+        list: list of :any:`Modes` object supported by backend.
     """
     return list(_load_algo("AES", backend).supported)
 
@@ -44,42 +44,48 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
     """Instantiate a new AES cipher wrapper object.
 
     Args:
-        locking:
+        locking (bool):
             True is encryption and False is decryption.
-        key:
+        key (bytes, bytearray, memoryview):
             The key for the cipher.
-        mode:
+        mode (:class:`pyflocker.ciphers.modes.Modes`):
             The mode to use for AES cipher. All backends may not support
             that particular mode.
-        iv_or_nonce:
+        iv_or_nonce (bytes, bytearray, memoryview):
             The Initialization Vector or Nonce for the cipher. It must not be
             repeated with the same key.
 
-    Kwargs:
-        file:
+    Keyword Arguments:
+        file (filelike):
             The source file to read from. If `file` is specified
             and the `mode` is not an AEAD mode, HMAC is always used.
-        backend:
-            The backend to use. It must be a value from `Backends`.
-
-        The following arguments must not be passed if the `mode` is an
-        AEAD mode.
-        hashed:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
+        hashed (bool):
             Should the cipher use HMAC as authentication or not,
             if it does not support AEAD. (Default: False)
-        digestmod:
+        digestmod (str):
             The algorithm to use for HMAC. Defaults to `sha256`.
             Specifying this value without setting `hashed` to True
             has no effect.
 
+    Important:
+        The following arguments must not be passed if the mode is an AEAD mode:
+
+          - hashed
+          - digestmod
+
     Returns:
-        AES cipher wrapper from the appropriate backend module.
+        :any:`Cipher`:
+            AES cipher wrapper from the appropriate backend module.
 
     Raises:
-        `ValueError` if the `mode` is an AEAD mode and still the
-        extra kwargs are provided.
-        `NotImplementedError` if backend does not support that mode.
-        `UnsupportedAlgorithm` if the backend does not support AES.
+        ValueError: if the `mode` is an AEAD mode and still the extra kwargs
+            are provided.
+        NotImplementedError: if backend does not support that mode.
+        UnsupportedAlgorithm: if the backend does not support AES.
+
+    Note:
         Any other error that is raised is from the backend itself.
     """
     _cpr = _aes_cipher_from_mode(mode, backend, file is not None)

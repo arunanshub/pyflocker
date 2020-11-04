@@ -13,28 +13,29 @@ class Cipher(ABC):
 
     @abstractmethod
     def update(self, data):
-        """Takes bytes-like object and returns
-        encrypted/decrypted bytes object.
+        """Takes bytes-like object and returns encrypted/decrypted
+        bytes object.
 
         Args:
-            data: The bytes-like object to pass to the cipher.
+            data (bytes, bytesarray):
+                The bytes-like object to pass to the cipher.
 
         Returns:
-            bytes-like encrypted data.
+            bytes: bytes-like encrypted data.
         """
 
     @abstractmethod
     def update_into(self, data, out):
-        """Works almost like `update` method, except
-        for it fills a preallocated buffer with data
-        with no intermideate copying of data.
+        """Works almost like :py:attr:`~Cipher.update` method, except for
+        it fills a preallocated buffer with data with no intermideate
+        copying of data.
 
         Args:
-            data:
+            data (bytes, bytearray, memoryview):
                 The bytes-like object to pass to the cipher.
-            out:
-                The buffer interface where the encrypted/decrypted
-                data must be written into.
+            out (bytearray, memoryview):
+                The buffer interface where the encrypted/decrypted data
+                must be written into.
 
         Returns:
             None
@@ -43,19 +44,20 @@ class Cipher(ABC):
     @abstractmethod
     def authenticate(self, data):
         """Authenticates additional data.
-        Data must be a bytes, bytearray or memoryview object.
-        You can call it to pass additional data that must be
-        authenticated, but would be transmitted in the clear.
+        Data must be a bytes, bytearray or memoryview object. You can call
+        it to pass additional data that must be authenticated, but would be
+        transmitted in the clear.
 
         Args:
-            data: The bytes-like object that must be authenticated.
+            data (bytes, bytearray, memoryview):
+                The bytes-like object that must be authenticated.
 
         Returns:
             None
 
         Raises:
-            TypeError is raised if this method is called after calling
-            `update`.
+            TypeError:
+                if this method is called after calling :py:attr:`~Cipher.update`.
         """
 
     @abstractmethod
@@ -63,7 +65,7 @@ class Cipher(ABC):
         """Finalizes and closes the cipher.
 
         Args:
-            tag:
+            tag (bytes, bytearray):
                 The associated tag that authenticates the decryption.
                 `tag` is required for decryption only. If the mode is
                 not AEAD, tag is not required for verification.
@@ -79,16 +81,13 @@ class Cipher(ABC):
     @abstractmethod
     def calculate_tag(self):
         """Calculates and returns the associated `tag`.
-        Args:
-            None
 
         Returns:
-            `None` if decrypting.
-            bytes-like tag if encrypting.
+            If encrypting, it returns `None`, otherwise a `bytes` object.
 
         Raises:
-            NotImplementedError if the mode is non-AEAD or cipher doesn't
-            support AEAD.
+            NotImplementedError:
+                if the mode is non-AEAD or cipher doesn't support AEAD.
         """
 
 
@@ -108,7 +107,8 @@ class BaseHash(ABC):
         """Update the hash function
 
         Args:
-            data: The bytes-like object to pass to the hash algorithm.
+            data (bytes, bytearray):
+                The bytes-like object to pass to the hash algorithm.
 
         Returns:
             None
@@ -119,22 +119,16 @@ class BaseHash(ABC):
         """Return a copy of the hash function.
         This cannot be called after digest has been called.
 
-        Args:
-            None
-
         Returns:
-            Hash object.
+            :any:`BaseHash`: Hash object.
         """
 
     @abstractmethod
     def digest(self):
         """Finalize and return the hash as bytes object.
 
-        Args:
-            None
-
         Returns:
-            bytes object representing the digest of the message.
+            bytes: bytes object representing the digest of the message.
         """
 
     @abstractmethod
@@ -142,23 +136,24 @@ class BaseHash(ABC):
         """Return a new hash object.
 
         Args:
-            data: The initial data to be passed to the hash object.
+            data (bytes, bytearray):
+                The initial data to be passed to the hash object.
 
-        Kwargs:
-            digest_size:
+        Keyword Arguments:
+            digest_size (int):
                 The digest size of the hash algorithm.
                 If digest_size is None, it is equal to the current
                 hash object's digest size.
-                Valid only for BLAKE and SHAKE.
+                Valid only for `BLAKE` and `SHAKE`.
 
         Returns:
-            Hash object.
+            :any:`BaseHash`: Hash object.
 
-        Raises:
-            See documentation for Hash.
+        Note:
+            See documentation for :func:`pyflocker.ciphers.interfaces.Hash.new`.
         """
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return f"<Hash '{self.name}' at {hex(id(self))}>"
 
 
@@ -195,13 +190,13 @@ def finalizer(f=None, *, allow=False):
     """Finalizes the cipher.
 
     Args:
-        f: The method to wrap.
-        allow:
+        f (function): The method to wrap.
+        allow (bool):
             setting `allow` to True means that this function can
             be called multiple times even after finalization.
 
     Returns:
-        The wrapped function.
+        function: The wrapped function.
     """
     if f is None:
         return partial(finalizer, allow=allow)
@@ -224,7 +219,8 @@ def before_finalized(f):
     """Methods decorated with this decorator can only be called
     before the cipher has been finalized.
 
-    see: `finalizer`
+    See also:
+        :func:`~pyflocker.ciphers.base.finalizer`
     """
 
     @wraps(f)
@@ -242,7 +238,8 @@ def after_finalized(f):
     """Methods decorated with this decorator can only be called
     after the cipher has been finalized.
 
-    see: `finalizer`
+    See also:
+        :func:`~pyflocker.ciphers.base.finalizer`
     """
 
     @wraps(f)
@@ -262,8 +259,7 @@ def after_finalized(f):
 
 def cipher(cls):
     """Decorator to create a Cipher wrapper.
-    It must be applied on a class that derives from
-    `Cipher` class.
+    It must be applied on a class that derives from :any:`Cipher` class.
     """
     if not issubclass(cls, Cipher):
         raise TypeError(f"Class must be derived from `{Cipher.__name__}`")

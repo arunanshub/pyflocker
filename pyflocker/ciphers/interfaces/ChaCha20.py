@@ -6,26 +6,29 @@ def new(locking, key, nonce, *, file=None, backend=None):
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:
-        locking:
+        locking (bool):
             True is encryption and False is decryption.
-        key:
+        key (bytes, bytearray, memoryview):
             The key for the cipher.
-        nonce:
+        nonce (bytes, bytearray, memoryview):
             The Nonce for the cipher.
             It must not be repeated with the same key.
 
-    Kwargs:
-        file:
+    Keyword Arguments:
+        file (filelike):
             The source file to read from.
-        backend:
-            The backend to use. It must be a value from `Backends`.
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        ChaCha20Poly1305 cipher wrapper from the appropriate backend module.
+        :any:`Cipher`:
+            ChaCha20Poly1305 cipher wrapper from the appropriate backend module.
 
     Raises:
-        `NotImplementedError` if backend does not support that mode.
-        `ModuleNotFoundError` if the backend is not found.
+        NotImplementedError: if backend does not support that mode.
+        ModuleNotFoundError: if the backend is not found.
+
+    Note:
         Any other error that is raised is from the backend itself.
     """
     cpr = _load_algo("ChaCha20", backend)

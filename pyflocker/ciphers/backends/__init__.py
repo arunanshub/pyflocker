@@ -25,15 +25,14 @@ def set_default_backend(backend):
     will be searched instead.
 
     Args:
-        backend:
-            The backend to use. It must be an attribute of
-            `Backends`.
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be an attribute of :any:`Backends`.
 
     Returns:
         None
 
     Raises:
-        `TypeError` if the backend is not recognized or is invalid.
+        TypeError: if the backend is not recognized or is invalid.
     """
     if not isinstance(backend, Backends):
         raise TypeError(f"invalid backend type: {backend}")
@@ -46,14 +45,14 @@ def load_algorithm(name, backend=None):
     Generally used by interfaces to load the implemented counterpart.
 
     Args:
-        name:
+        name (str):
             Name of the cipher module to load.
-        bknd:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to fetch the cipher from. If backend is None,
             any available backend will be used.
 
     Returns:
-        The algorithm module from the backend.
+        module: The algorithm module from the backend.
 
     Raises:
         UnsupportedAlgorithm: If the algorithm is not supported by backend.
@@ -75,7 +74,7 @@ def load_backend(bknd=None):
     If both are available, loads `Cryptodome`.
 
     Args:
-        bknd:
+        bknd (:class:`pyflocker.ciphers.backends.Backends`):
             The name of the backend to load. If `bknd` is None and
             the default backend is set via `set_default_backend`,
             that is loaded instead, and if default backend was not

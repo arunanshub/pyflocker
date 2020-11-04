@@ -25,9 +25,28 @@ class DHParameters:
             )
 
     def private_key(self):
+        """Create a DH private key from the parameters.
+
+        Returns:
+            :any:`DHPrivateKey`: A `DHPrivateKey` object.
+        """
         return DHPrivateKey(self._params.generate_private_key())
 
     def serialize(self, encoding="PEM", format="PKCS3"):
+        """Serialize the DH parameters.
+
+        Args:
+            encoding (str): The encoding can be `PEM` or `DER`.
+                Defaults to `PEM`.
+
+            format (str): the format. Defaults to `PKCS3`.
+
+        Returns:
+            bytes: The parameters encoded as bytes object.
+
+        Raises:
+            KeyError: if the encoding of format is invalid.
+        """
         return self._params.parameter_bytes(
             encodings[encoding],
             parameter_format[format],
@@ -35,18 +54,42 @@ class DHParameters:
 
     @property
     def g(self):
+        """The generator value.
+
+        Returns:
+            int: generator value.
+        """
         return self._params.parameter_numbers().g
 
     @property
     def p(self):
+        """The prime modulus value.
+
+        Returns:
+            int: the prime modulus value.
+        """
         return self._params.parameter_numbers().p
 
     @property
     def q(self):
+        """The p subgroup order value.
+
+        Returns:
+            int: p subgroup order value.
+        """
         return self._params.parameter_numbers().q
 
     @classmethod
     def load(cls, data):
+        """Load the :any:`DHParameters` from the encoded format.
+
+        Args:
+            data (bytes, bytearray):
+                The parameters as an encoded bytes object.
+
+        Returns:
+            :any:`DHParameters`: `DHParameters` object.
+        """
         if data.startswith(b"-----BEGIN DH PARAMETERS"):
             param = ser.load_pem_parameters(memoryview(data), defb())
 
@@ -59,16 +102,35 @@ class DHParameters:
 
     @classmethod
     def load_from_parameters(cls, p, g=2, q=None):
+        """Generates a DH parameter group from the parameters.
+
+        Args:
+            p (int): The prime modulus value.
+            g (int): The generator value. Must be 2 or 5. Default is 2.
+            q (int): p subgroup order value. Defaults to `None`.
+
+        Returns:
+            :any:`DHParameters`: DHParameters object.
+        """
         param_nos = dh.DHParameterNumbers(p, g, q)
         return cls(parameter=param_nos.parameters(defb()))
 
 
 class _DHKey:
     def parameters(self):
-        return DHParameters(parameter=self._key.parameters())
+        """Creates a new :any:`DHParameters` object from the key.
 
+        Returns:
+            :any:`DHParameters`: The DH parameter object.
+        return DHParameters(parameter=self._key.parameters())
+    """
     @property
     def key_size(self):
+        """Size of the key, in bytes.
+
+        Returns:
+            int: key size, in bytes.
+        """
         return self._key.key_size
 
 
@@ -77,15 +139,44 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         self._key = key
 
     def public_key(self):
+        """Create a public key from the private key.
+
+        Returns:
+            :any:`DHPublicKey`: `DHPublicKey` object.
+        """
         return DHPublicKey(self._key.public_key())
 
     def exchange(self, peer_public_key):
+        """Perform a key exchange.
+
+        Args:
+            peer_public_key (bytes, :any:`DHPublicKey`):
+                The peer public key can be a bytes or a :any:`DHPublicKey`
+                object.
+
+        Returns:
+            bytes: A shared key.
+        """
         if isinstance(peer_public_key, (bytes, bytearray, memoryview)):
             peer_public_key = DHPublicKey.load(peer_public_key)
 
         return self._key.exchange(peer_public_key._key)
 
     def serialize(self, encoding="PEM", format="PKCS8", passphrase=None):
+        """Serialize the private key.
+
+        Args:
+            encoding (str): The encoding to use.
+            format (str): The format can be `PKCS8` only.
+            passphrase (bytes):
+                The passphrase to use to protect the private key
+
+        Returns:
+            bytes: The private key as bytes object.
+
+        Raises:
+            KeyError: if the encoding or format is invalid.
+        """
         if passphrase is None:
             prot = ser.NoEncryption()
 
@@ -105,6 +196,20 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
     @classmethod
     def load(cls, data, passphrase=None):
+        """Deserialize and load the the private key.
+ 
+        Args:
+            data (bytes): The serialized private key as `bytes` object.
+            passphrase (bytes, bytearray):
+                The passphrase that was used to protect the private key.
+                If key is not protected, passphrase is `None`.
+
+        Returns:
+            :any:`DHPrivateKey`: A `DHPrivateKey` object.
+
+        Raises:
+            ValueError: If the key could not be deserialized.
+        """
         if data.startswith(b"-----"):
             loader = ser.load_pem_private_key
 
@@ -139,6 +244,18 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
         self._key = key
 
     def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
+        """Serialize the public key.
+
+        Args:
+            encoding (str): The encoding to use. It can be `PEM` or `DER`.
+            format (str): The format can be `SubjectPublicKeyInfo` only.
+
+        Returns:
+            bytes: The public key as bytes object.
+
+        Raises:
+            KeyError: if the encoding or format is invalid.
+        """
         return self._key.public_bytes(
             encodings[encoding],
             public_format[format],
@@ -150,6 +267,17 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
 
     @classmethod
     def load(cls, data):
+        """Deserialize and load the public key.
+ 
+        Args:
+            data (bytes): The serialized public key as `bytes` object.
+
+        Returns:
+            :any:`DHPublicKey`: A `DHPublicKey` object.
+
+        Raises:
+            ValueError: If the key could not be deserialized.
+        """
         if data.startswith(b"-----"):
             loader = ser.load_pem_public_key
 

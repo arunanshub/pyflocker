@@ -75,11 +75,8 @@ class ECCPrivateKey(base.BasePrivateKey):
     def public_key(self):
         """Creates a public key from the private key
 
-        Args:
-            None
-
         Returns:
-            ECCPublicKey interface.
+            :any:`ECCPublicKey`: ECCPublicKey interface.
         """
         return ECCPublicKey(self._key.public_key())
 
@@ -87,20 +84,20 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding: PEM or DER (defaults to PEM).
-            format: The formats can be:
+            encoding (str): PEM or DER (defaults to PEM).
+            format (str): The formats can be:
+
               - PKCS8 (default)
               - TraditionalOpenSSL
               - OpenSSH (available from pyca/cryptography version >=3.X)
-              - PKCS1 (alias to TraditionalOpenSSL for
-                PyCryptodome(x) compat)
-            passphrase:
-            A bytes-like object to protect the private key.
-            If `passphrase` is None, the private key will
-            be exported in the clear!
+              - PKCS1 (alias to TraditionalOpenSSL for Cryptodome compat)
+            passphrase (bytes, bytearray, memoryview):
+                A bytes-like object to protect the private key.
+                If `passphrase` is None, the private key will be exported
+                in the clear!
 
         Returns:
-            The private key as a bytes object.
+            bytes: The private key as a bytes object.
 
         Raises:
            KeyError:
@@ -120,14 +117,16 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Perform a key exchange.
 
         Args:
-            peer_public_key: The public key from the other party.
-                It can be a `ECCPublicKey` object or a serialized
-                `ECCPublicKey` in `bytes`.
-            algorithm: The algorithm to use to perform the exchange.
+            peer_public_key (bytes, :any:`ECCPublicKey`):
+                The public key from the other party.
+                It can be a :any:`ECCPublicKey` object or a serialized
+                :any:`ECCPublicKey` in `bytes`.
+            algorithm (str):
+                The algorithm to use to perform the exchange.
                 Only ECDH is avaliable.
 
         Returns:
-            Shared key as bytes object.
+            bytes: Shared key as bytes object.
 
         Raises:
             NotImplementedError: the key does not support key exchange.
@@ -150,11 +149,12 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Create a signer context.
 
         Args:
-            algorithm: The algorithm to use for signing.
+            algorithm (str): The algorithm to use for signing.
                 Currently ECDSA is only available.
 
         Returns:
-            An ECCSignerCtx object for signing messages.
+            :any:`ECCSignerCtx`:
+                An ECCSignerCtx object for signing messages.
 
         Raises:
             NotImplementedError: if the key doesn't support signing.
@@ -174,18 +174,18 @@ class ECCPrivateKey(base.BasePrivateKey):
         the Key interface.
 
         Args:
-            data:
+            data (bytes, bytearray):
                 The key as bytes object.
-            password:
+            password (bytes, bytearray):
                 The password that deserializes the private key.
                 `password` must be a `bytes` object if the key
                 was encrypted while serialization, otherwise `None`.
 
         Returns:
-            ECCPrivateKey interface object.
+            :any:`ECCPrivateKey`: ECCPrivateKey interface object.
 
         Raises:
-            ValueError if the key could  not be deserialized.
+            ValueError: if the key could not be deserialized.
         """
         if data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY"):
             loader = ser.load_ssh_private_key
@@ -233,7 +233,8 @@ class ECCPublicKey(base.BasePublicKey):
                 Currently ECDSA is only available.
 
         Returns:
-            An ECCVerifierCtx object for verifying messages.
+            :any:`ECCVerifierCtx`:
+                An `ECCVerifierCtx` object for verifying messages.
 
         Raises:
             NotImplementedError: if the key doesn't support verification.
@@ -251,16 +252,17 @@ class ECCPublicKey(base.BasePublicKey):
         """Serialize the public key.
 
         Args:
-            encoding: PEM, DER, OpenSSH, or X962 (defaults to PEM).
-            format: The supported formats are:
-              - SubjectPublicKeyInfo (default)
-              - PKCS1
-              - OpenSSH
-              - ComperssedPoint
-              - UncompressedPoint
+            encoding (str): PEM, DER, OpenSSH, or X962 (defaults to PEM).
+            format (str): The supported formats are:
+
+                - SubjectPublicKeyInfo (default)
+                - PKCS1
+                - OpenSSH
+                - ComperssedPoint
+                - UncompressedPoint
 
         Returns:
-            Serialized public key as bytes object.
+            bytes: Serialized public key as bytes object.
 
         Raises:
             KeyError: if the encoding or format is incorrect or unsupported.
@@ -275,14 +277,14 @@ class ECCPublicKey(base.BasePublicKey):
         the Key interface.
 
         Args:
-            data:
+            data (bytes, bytearray):
                 The key as bytes object.
 
         Returns:
-            ECCPublicKey key interface object.
+            :any:`ECCPublicKey`: `ECCPublicKey` key interface object.
 
         Raises:
-            ValueError if the key could not be deserialized.
+            ValueError: if the key could not be deserialized.
         """
         if data.startswith(b"ecdsa-"):
             loader = ser.load_ssh_public_key
@@ -304,7 +306,7 @@ class ECCPublicKey(base.BasePublicKey):
             ) from e
 
 
-class SigVerContext:
+class _SigVerContext:
     def __init__(self, key, algo):
         self._algo = algo
         try:
@@ -313,21 +315,20 @@ class SigVerContext:
             self._verify = key.verify
 
 
-class ECCSignerCtx(SigVerContext):
+class ECCSignerCtx(_SigVerContext):
     """Signing context for ECC private key."""
 
     def sign(self, msghash):
         """Return the signature of the message hash.
 
         Args:
-            msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the ECC key. Refer to `Hash.new` function's
-                documentation.
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                The hash algorithm used to digest the object.
+                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new` function's
+                documentation for more information about Hash objects.
 
         Returns:
-            signature of the message as bytes object.
+            bytes: signature of the message as bytes object.
 
         Raises:
             TypeError: if the `msghash` object is not from the same
@@ -351,20 +352,19 @@ class ECCSignerCtx(SigVerContext):
         )
 
 
-class ECCVerifierCtx(SigVerContext):
+class ECCVerifierCtx(_SigVerContext):
     """Verification context for ECC public key."""
 
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
         Args:
-            msghash:
-                `msghash` must be an instance of `BaseHash` and
-                must be instantiated from the same backend as that
-                of the RSA key. Refer to `Hash.new` function's
-                documentation.
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                The hash algorithm used to digest the object.
+                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new` function's
+                documentation for more information about Hash objects.
 
-            signature:
+            signature (bytes, bytesarray):
                 signature must be a `bytes` or `bytes-like` object.
 
         Returns:

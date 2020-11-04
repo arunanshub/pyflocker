@@ -3,19 +3,23 @@
 Parts of the package
 ~~~~~~~~~~~~~~~~~~~~
 
-- interfaces : Provides seamless interface to various ciphers
-               implemented (and supported) by backend.
+- interfaces:
+    Provides seamless interface to various ciphers implemented
+    (and supported) by backend.
 
-- modes : Contains the modes that are supported by the
-          ciphers (in `Modes` class). Additionally, the
-          modes are categorized according to their type.
+- modes:
+    Contains the modes that are supported by the ciphers (in `Modes`
+    class). Additionally, the modes are categorized according to their type.
 
-- backends : Provides the implementation counterpart of ciphers.
-             Each backend has its own package.
+- backends:
+    Provides the implementation counterpart of ciphers. Each backend has its
+    own package.
 
-- base : Base class and utility tools to wrap new ciphers.
+- base:
+    Base class and utility tools to wrap new ciphers.
 
-- exc : Exceptions raised by `pyflocker`.
+- exc:
+    Exceptions raised by `pyflocker`.
 """
 
 # import the modes class

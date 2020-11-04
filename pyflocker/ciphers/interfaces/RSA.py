@@ -14,14 +14,15 @@ def generate(bits, e=65537, *, backend=None):
     Recommended size of `bits` > 1024.
 
     Args:
-        bits: The bit length of the RSA key.
-        e: The public exponent value. Default is 65537.
+        bits (int): The bit length of the RSA key.
+        e (int): The public exponent value. Default is 65537.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        A RSAPrivateKey object.
+        :any:`BasePrivateKey`: A `RSAPrivateKey` object.
     """
     return _load_rsa_cpr(backend).RSAPrivateKey(bits, e)
 
@@ -30,13 +31,15 @@ def load_public_key(data, *, backend=None):
     """Loads the public key and returns a Key interface.
 
     Args:
-        data: The public key (a bytes-like object) to deserialize.
+        data (bytes, bytearray):
+            The public key (a bytes-like object) to deserialize.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An RSAPublicKey interface.
+        :any:`BasePublicKey`: An `RSAPublicKey` object.
     """
     return _load_rsa_cpr(backend).RSAPublicKey.load(data)
 
@@ -48,17 +51,17 @@ def load_private_key(data, passphrase=None, *, backend=None):
     `passphrase` must be `None`, otherwise it must be a `bytes` object.
 
     Args:
-        data:
+        data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        passphrase:
-            The password (in bytes) that was used to encrypt the
-            private key.`None` if the private key was not encrypted.
+        passphrase (bytes, bytearray):
+            The password that was used to encrypt the private key.
+            `None` if the private key was not encrypted.
 
-    Kwargs:
-        backend:
-            The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An RSAPrivateKey interface.
+        :any:`BasePrivateKey`: A `RSAPrivateKey` object.
     """
     return _load_rsa_cpr(backend).RSAPrivateKey.load(data, passphrase)

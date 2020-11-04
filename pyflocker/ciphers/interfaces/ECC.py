@@ -13,17 +13,19 @@ def generate(curve, *, backend=None):
     Generate a private key with given curve `curve`.
 
     Args:
-        curve: The name of the curve to use.
+        curve (str): The name of the curve to use.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An ECC private key interface.
+        :any:`BasePrivateKey`: An `ECCPrivateKey` interface.
 
     Raises:
-        `KeyError` if the curve is not supported by the backend or
-        the name of the curve is invalid.
+        KeyError:
+            if the curve is not supported by the backend or the name of the
+            curve is invalid.
     """
     return _load_ecc_cpr(backend).ECCPrivateKey(curve)
 
@@ -32,13 +34,15 @@ def load_public_key(data, *, backend=None):
     """Loads the public key and returns a Key interface.
 
     Args:
-        data: The public key (a bytes-like object) to deserialize.
+        data (bytes, bytearray):
+            The public key (a bytes-like object) to deserialize.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An ECCPublicKey interface.
+        :any:`BasePublicKey`: An `ECCPublicKey` interface.
     """
     return _load_ecc_cpr(backend).ECCPublicKey.load(data)
 
@@ -50,17 +54,17 @@ def load_private_key(data, passphrase=None, *, backend=None):
     `passphrase` must be `None`, otherwise it must be a `bytes` object.
 
     Args:
-        data:
+        data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        password:
+        password (bytes, bytearray):
             The password (in bytes) that was used to encrypt the
-            private key.`None` if the password was not encrypted
+            private key. `None` if the key was not encrypted.
 
-    Kwargs:
-        backend:
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from `Backends`.
 
     Returns:
-        An ECCPrivateKey interface.
+        :any:`BasePrivateKey`: An ECCPrivateKey interface.
     """
     return _load_ecc_cpr(backend).ECCPrivateKey.load(data, passphrase)

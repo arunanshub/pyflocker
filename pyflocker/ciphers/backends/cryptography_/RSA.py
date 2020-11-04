@@ -73,11 +73,9 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
     def public_key(self):
         """Creates a public key from the private key
 
-        Args:
-            None
-
         Returns:
-            RSAPublicKey interface.
+            :any:`RSAPublicKey`:
+                `RSAPublicKey` interface.
         """
         return RSAPublicKey(self._key.public_key())
 
@@ -85,10 +83,11 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         """Creates a decryption context
 
         Args:
-            padding: The padding to use. Default is OAEP.
+            padding: The padding to use. Default is `OAEP`.
 
         Returns:
-            RSADecryptionCtx for decrypting ciphertexts.
+            :any:`RSADecryptionCtx`:
+                `RSADecryptionCtx` object for decrypting ciphertexts.
         """
         return RSADecryptionCtx(self._key, padding)
 
@@ -96,10 +95,11 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         """Create a signer context.
 
         Args:
-            padding: The padding to use. Default is PSS.
+            padding: The padding to use. Default is `PSS`.
 
         Returns:
-            A RSASignerCtx object for signing messages.
+            :any:`RSASignerCtx`:
+                A `RSASignerCtx` object for signing messages.
         """
         return RSASignerCtx(self._key, padding)
 
@@ -107,20 +107,20 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding: PEM or DER (defaults to PEM).
-            format: The formats can be:
-              - PKCS8 (default)
-              - TraditionalOpenSSL
-              - OpenSSH (available from pyca/cryptography version >=3.X)
-              - PKCS1 (alias to TraditionalOpenSSL for
-                PyCryptodome(x) compat)
-            passphrase:
-            A bytes-like object to protect the private key.
-            If `passphrase` is None, the private key will
-            be exported in the clear!
+            encoding (str): PEM or DER (defaults to PEM).
+            format (str): The formats can be:
+
+                - PKCS8 (default)
+                - TraditionalOpenSSL
+                - OpenSSH (available from pyca/cryptography version >=3.X)
+                - PKCS1 (alias to TraditionalOpenSSL for Cryptodome compat)
+            passphrase (bytes, bytearray, memoryview):
+                A bytes-like object to protect the private key.
+                If `passphrase` is None, the private key will
+                be exported in the clear!
 
         Returns:
-            The private key as a bytes object.
+            bytes: The private key as a bytes object.
 
         Raises:
            KeyError:
@@ -145,18 +145,19 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         the Key interface.
 
         Args:
-            data:
+            data (bytes, bytearray):
                 The key as bytes object.
-            password:
+            password (bytes, bytearray):
                 The password that deserializes the private key.
                 `password` must be a `bytes` object if the key
                 was encrypted while serialization, otherwise `None`.
 
         Returns:
-            RSAPrivateKey interface object.
+            :any:`RSAPrivateKey`:
+                `RSAPrivateKey` object.
 
         Raises:
-            ValueError if the key could  not be deserialized.
+            ValueError: if the key could  not be deserialized.
         """
         if data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY"):
             loader = ser.load_ssh_private_key
@@ -203,7 +204,8 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             padding: The padding to use. Defaults to OAEP.
 
         Returns:
-            An RSAEncryptionCtx encryption context object.
+            :any:`RSAEncryptionCtx`:
+                An `RSAEncryptionCtx` object.
         """
         return RSAEncryptionCtx(self._key, padding)
 
@@ -214,7 +216,8 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             padding: The padding to use. Defaults to ECC.
 
         Returns:
-            RSAVerifierCtx verification context object.
+            :any:`RSAVerifierCtx`:
+                `RSAVerifierCtx` verification context object.
         """
         return RSAVerifierCtx(self._key, padding)
 
@@ -224,12 +227,13 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         Args:
             encoding: PEM, DER or OpenSSH (defaults to PEM).
             format: The supported formats are:
-              - SubjectPublicKeyInfo (default)
-              - PKCS1
-              - OpenSSH
+
+                - SubjectPublicKeyInfo (default)
+                - PKCS1
+                - OpenSSH
 
         Returns:
-            Serialized public key as bytes object.
+            bytes: Serialized public key as bytes object.
 
         Raises:
             KeyError: if the encoding or format is incorrect or unsupported.
@@ -244,14 +248,15 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         the Key interface.
 
         Args:
-            data:
+            data (bytes):
                 The key as bytes object.
 
         Returns:
-            RSAPublicKey key interface object.
+            :any:`RSAPublicKey`:
+                `RSAPublicKey` key object.
 
         Raises:
-            ValueError if the key could not be deserialized.
+            ValueError: if the key could not be deserialized.
         """
         if data.startswith(b"ssh-rsa "):
             loader = ser.load_ssh_public_key
@@ -285,7 +290,7 @@ def _get_padding(pad):
     return _pad, mgf
 
 
-class Context:
+class _EncDecContext:
     def __init__(self, key, padding):
         pad, mgf = _get_padding(padding)
         try:
@@ -306,28 +311,30 @@ class Context:
         )
 
 
-class RSAEncryptionCtx(Context):
+class RSAEncryptionCtx(_EncDecContext):
     def encrypt(self, plaintext):
         """Encrypts the plaintext and returns the ciphertext.
 
         Args:
-            plaintext: a `bytes` or `bytes-like` object.
+            plaintext (bytes, bytearray):
+                The data to encrypt.
 
         Returns:
-            encrypted bytes object.
+            bytes: encrypted bytes object.
         """
         return self._encrypt_or_decrypt(plaintext)
 
 
-class RSADecryptionCtx(Context):
+class RSADecryptionCtx(_EncDecContext):
     def decrypt(self, ciphertext):
         """Decrypts the ciphertext and returns the plaintext.
 
         Args:
-            ciphertext: a `bytes` or `bytes-like` object.
+            ciphertext (bytes, bytearray):
+                The ciphertext to decrypt.
 
         Returns:
-            decrypted plaintext.
+            bytes: decrypted plaintext.
 
         Raises:
             DecryptionError: if the decryption was not successful.
@@ -338,7 +345,7 @@ class RSADecryptionCtx(Context):
             raise exc.DecryptionError from e
 
 
-class SigVerContext:
+class _SigVerContext:
     def __init__(self, key, padding):
         pad, mgf = _get_padding(padding)
         salt_len = (
@@ -361,20 +368,17 @@ class SigVerContext:
         )
 
 
-class RSASignerCtx(SigVerContext):
+class RSASignerCtx(_SigVerContext):
     def sign(self, msghash):
         """Return the signature of the message hash.
 
         Args:
-            msghash:
-                It must be a `Hash` object, used to digest the message to sign.
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
 
         Returns:
-            signature of the message as bytes object.
-
-        Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
+            bytes: signature of the message as bytes object.
         """
         if isinstance(msghash, Hash):
             hashalgo = msghash._hasher.algorithm
@@ -390,15 +394,16 @@ class RSASignerCtx(SigVerContext):
         )
 
 
-class RSAVerifierCtx(SigVerContext):
+class RSAVerifierCtx(_SigVerContext):
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
         Args:
-            msghash:
-                It must be a `Hash` object, used to digest the message to sign.
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
 
-            signature:
+            signature (bytes, bytearray):
                 signature must be a `bytes` or `bytes-like` object.
 
         Returns:

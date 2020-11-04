@@ -11,17 +11,18 @@ def _load_dhe(backend):
 def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):
     """
     Generate DHE parameter with prime number's bit size `bits` and
-    generator `e` (default 65537). Recommended size of `bits` > 1024.
+    generator `g` (default 2). Recommended size of `bits` > 1024.
 
     Args:
-        key_size: The bit length of the prime modulus to generate
-        g: The `int` to use as a generator value. Default is 2.
+        key_size (int): The bit length of the prime modulus.
+        g (int): The value to use as a generator value. Default is 2.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        A DH key exchange paramenter object.
+        :any:`DHParameters`: A DH key exchange paramenter object.
     """
     return _load_dhe(backend).DHParameters(key_size, g)
 
@@ -30,12 +31,16 @@ def load_from_parameters(p, g=2, q=None, *, backend=Backends.CRYPTOGRAPHY):
     """Create a DHParameter object from the given parameters.
 
     Args:
-        p: The prime modulus `p` as `int`.
-        g: The generator
-        q: `p` subgroup order value.
+        p (int): The prime modulus `p` as `int`.
+        g (int): The generator.
+        q (int): `p` subgroup order value.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
+
+    Returns:
+        :any:`DHParameters`: A DH key exchange paramenter object.
     """
     return _load_dhe(backend).DHParameters.load_from_parameters(p, g, q)
 
@@ -44,13 +49,15 @@ def load_public_key(data, *, backend=Backends.CRYPTOGRAPHY):
     """Loads the public key and returns a Key interface.
 
     Args:
-        data: The public key (a bytes-like object) to deserialize.
+        data (bytes, bytearray):
+            The public key (a bytes-like object) to deserialize.
 
-    Kwargs:
-        backend: The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An DHPublicKey interface.
+        :any:`BasePublicKey`: An DHPublicKey interface.
     """
     return _load_dhe(backend).DHPublicKey.load(data)
 
@@ -62,17 +69,17 @@ def load_private_key(data, passphrase=None, *, backend=Backends.CRYPTOGRAPHY):
     `passphrase` must be `None`, otherwise it must be a `bytes` object.
 
     Args:
-        data:
+        data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        password:
+        password (bytes, bytearray):
             The password (in bytes) that was used to encrypt the
-            private key.`None` if the password was not encrypted
+            private key.`None` if the key was not encrypted.
 
-    Kwargs:
-        backend:
-            The backend to use. It must be a value from `Backends`.
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        An DHPrivateKey interface.
+        :any:`BasePrivateKey`: An DHPrivateKey interface.
     """
     return _load_dhe(backend).DHPrivateKey.load(data, passphrase)
