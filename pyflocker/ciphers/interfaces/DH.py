@@ -45,6 +45,22 @@ def load_from_parameters(p, g=2, q=None, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters.load_from_parameters(p, g, q)
 
 
+def load_parameters(data, *, backend=Backends.CRYPTOGRAPHY):
+    """Deserialize the DH parameters and load a parameter object.
+
+    Args:
+        data (bytes): Serialized DH Parameter.
+
+    Keyword Arguments:
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
+
+    Returns:
+        :any:`DHParameters`: A `DHParameters` object.
+    """
+    return _load_dhe(backend).DHParameters.load(data)
+
+
 def load_public_key(data, *, backend=Backends.CRYPTOGRAPHY):
     """Loads the public key and returns a Key interface.
 
