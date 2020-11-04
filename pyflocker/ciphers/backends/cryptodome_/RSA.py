@@ -38,7 +38,7 @@ class _RSAKey:
                 The key as bytes object.
             password (bytes, bytearray, memoryview):
                 The password that deserializes the private key. `password`
-                must be a `bytes` object if the key was encrypted while 
+                must be a `bytes` object if the key was encrypted while
                 serialization, otherwise `None`. `password` has no meaning
                 for public key.
 

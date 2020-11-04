@@ -122,8 +122,9 @@ class _DHKey:
 
         Returns:
             :any:`DHParameters`: The DH parameter object.
+        """
         return DHParameters(parameter=self._key.parameters())
-    """
+
     @property
     def key_size(self):
         """Size of the key, in bytes.
@@ -197,7 +198,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
     @classmethod
     def load(cls, data, passphrase=None):
         """Deserialize and load the the private key.
- 
+
         Args:
             data (bytes): The serialized private key as `bytes` object.
             passphrase (bytes, bytearray):
@@ -268,7 +269,7 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
     @classmethod
     def load(cls, data):
         """Deserialize and load the public key.
- 
+
         Args:
             data (bytes): The serialized public key as `bytes` object.
 
