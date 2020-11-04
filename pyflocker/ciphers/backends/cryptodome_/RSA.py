@@ -28,36 +28,6 @@ class _RSAKey:
     def e(self):
         return self._key.e
 
-    @classmethod
-    def load(cls, data, password=None):
-        """Loads the public or private key as `bytes` object and returns the
-        Key interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-            password (bytes, bytearray, memoryview):
-                The password that deserializes the private key. `password`
-                must be a `bytes` object if the key was encrypted while
-                serialization, otherwise `None`. `password` has no meaning
-                for public key.
-
-        Returns:
-            :any:`RSAPrivateKey` or :any:`RSAPublicKey` interface depending
-            upon the key object.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
-        try:
-            return cls(key=RSA.import_key(data, password))
-        except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
-                "password is missing or incorrect.",
-            ) from e
-
 
 class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     """RSA private key wrapper class."""
@@ -185,6 +155,37 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             protection=protection,
         )
 
+    @classmethod
+    def load(cls, data, password=None):
+        """Loads the private key as `bytes` object and returns the
+        Key interface.
+
+        Args:
+            data (bytes):
+                The key as bytes object.
+            password (bytes, bytearray, memoryview):
+                The password that deserializes the private key. `password`
+                must be a `bytes` object if the key was encrypted while
+                serialization, otherwise `None`.
+
+        Returns:
+            :any:`RSAPrivateKey`: `RSAPrivateKey` key object.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+        try:
+            key = RSA.import_key(data, password)
+            if not key.has_private():
+                raise ValueError("The key is not a private key")
+            return cls(key=key)
+        except ValueError as e:
+            raise ValueError(
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
+
 
 class RSAPublicKey(_RSAKey, base.BasePublicKey):
     """RSA Public Key wrapper class."""
@@ -229,6 +230,31 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
             KeyError: if the encoding is not supported or invalid.
         """
         return self._key.export_key(format=encodings[encoding])
+
+    @classmethod
+    def load(cls, data):
+        """Loads the public key as `bytes` object and returns the
+        Key interface.
+
+        Args:
+            data (bytes):
+                The key as bytes object.
+
+        Returns:
+            :any:`RSAPublicKey`: `RSAPublicKey` key object.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+        try:
+            key = RSA.import_key(data)
+            if key.has_private():
+                raise ValueError("The key is not a public key")
+            return cls(key=key)
+        except ValueError as e:
+            raise ValueError(
+                "Cannot deserialize key. " "Key format might be invalid."
+            ) from e
 
 
 def _get_padding(pad):

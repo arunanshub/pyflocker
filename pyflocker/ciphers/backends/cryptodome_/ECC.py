@@ -22,39 +22,7 @@ _sig_modes = {
 curves = {k: k for k in ECC._curves}
 
 
-class _ECCKey:
-    @classmethod
-    def load(cls, data, passphrase=None):
-        """Loads the public or private key as `bytes` object
-        and returns the Key interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-            password (bytes, bytearray, memoryview):
-                The password that deserializes the private key.
-                `password` must be a `bytes` object if the key
-                was encrypted while serialization, otherwise `None`.
-                `password` has no meaning for public key.
-
-        Returns:
-            :any:`ECCPrivateKey` or any:`ECCPublicKey` interface depending
-            upon the key object.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
-        try:
-            return cls(key=ECC.import_key(data, passphrase))
-        except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
-                "password is missing or incorrect.",
-            ) from e
-
-
-class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
+class ECCPrivateKey(base.BasePrivateKey):
     """Represents ECC private key."""
 
     def __init__(self, curve=None, **kwargs):
@@ -168,8 +136,39 @@ class ECCPrivateKey(_ECCKey, base.BasePrivateKey):
             "key exchange is currently not supported by the backend."
         )
 
+    @classmethod
+    def load(cls, data, passphrase=None):
+        """Loads the private key as `bytes` object and returns the Key
+        interface.
 
-class ECCPublicKey(_ECCKey, base.BasePublicKey):
+        Args:
+            data (bytes):
+                The key as bytes object.
+            password (bytes, bytearray, memoryview):
+                The password that deserializes the private key.
+                `password` must be a `bytes` object if the key
+                was encrypted while serialization, otherwise `None`.
+
+        Returns:
+            :any:`ECCPrivateKey`:  `ECCPrivateKey` object.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+        try:
+            key = ECC.import_key(data, passphrase)
+            if not key.has_private():
+                raise ValueError("The key is not a private key")
+            return cls(key=key)
+        except ValueError as e:
+            raise ValueError(
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
+
+
+class ECCPublicKey(base.BasePublicKey):
     """Represents ECC public key."""
 
     def __init__(self, key):
@@ -222,6 +221,33 @@ class ECCPublicKey(_ECCKey, base.BasePublicKey):
             KeyError: if the mode or encoding is invalid or not supported.
         """
         return ECCVerifierCtx(self._key, mode=mode, encoding=encoding)
+
+    @classmethod
+    def load(cls, data):
+        """Loads the public key as `bytes` object and returns the Key
+        interface.
+
+        Args:
+            data (bytes):
+                The key as bytes object.
+
+        Returns:
+            :any:`ECCPrivateKey`: `ECCPrivateKey` object.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+        try:
+            key = ECC.import_key(data, passphrase)
+            if key.has_private():
+                raise ValueError("The key is not a private key")
+            return cls(key=key)
+        except ValueError as e:
+            raise ValueError(
+                "Cannot deserialize key. "
+                "Either Key format is invalid or "
+                "password is missing or incorrect.",
+            ) from e
 
 
 class _SigVerContext:
