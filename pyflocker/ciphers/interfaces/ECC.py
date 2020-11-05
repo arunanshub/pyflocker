@@ -30,7 +30,7 @@ def generate(curve, *, backend=None):
     return _load_ecc_cpr(backend).ECCPrivateKey(curve)
 
 
-def load_public_key(data, *, backend=None):
+def load_public_key(data, *, edwards=None, backend=None):
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -40,14 +40,23 @@ def load_public_key(data, *, backend=None):
     Keyword Arguments:
         backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from :any:`Backends`.
+        edwards (bool, NoneType):
+            Whether the `Raw` encoded key of length 32 bytes
+            must be imported as an `Ed25519` key or `X25519` key.
+
+            If `True`, the key will be imported as an `Ed25519` key,
+            otherwise an `X25519` key.
 
     Returns:
         :any:`BasePublicKey`: An `ECCPublicKey` interface.
     """
-    return _load_ecc_cpr(backend).ECCPublicKey.load(data)
+    kwargs = dict()
+    if len(data) == 32:
+        kwargs = dict(edwards=edwards)
+    return _load_ecc_cpr(backend).ECCPublicKey.load(data, **kwargs)
 
 
-def load_private_key(data, passphrase=None, *, backend=None):
+def load_private_key(data, passphrase=None, *, edwards=None, backend=None):
     """Loads the private key and returns a Key interface.
 
     If the private key was not encrypted duting the serialization,
@@ -63,8 +72,21 @@ def load_private_key(data, passphrase=None, *, backend=None):
     Keyword Arguments:
         backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from `Backends`.
+        edwards (bool, NoneType):
+            Whether the `Raw` encoded key of length 32 bytes
+            must be imported as an `Ed25519` key or `X25519` key.
+
+            If `True`, the key will be imported as an `Ed25519` key,
+            otherwise an `X25519` key.
 
     Returns:
         :any:`BasePrivateKey`: An ECCPrivateKey interface.
     """
-    return _load_ecc_cpr(backend).ECCPrivateKey.load(data, passphrase)
+    kwargs = dict()
+    if len(data) == 32:
+        kwargs = dict(edwards=edwards)
+    return _load_ecc_cpr(backend).ECCPrivateKey.load(
+        data,
+        passphrase,
+        **kwargs,
+    )

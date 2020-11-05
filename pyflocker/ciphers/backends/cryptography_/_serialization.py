@@ -26,6 +26,7 @@ public_format = {
     "OpenSSH": ser.PublicFormat.OpenSSH,
     "CompressedPoint": ser.PublicFormat.CompressedPoint,
     "UncompressedPoint": ser.PublicFormat.UncompressedPoint,
+    "Raw": ser.PublicFormat.Raw,
 }
 
 parameter_format = {

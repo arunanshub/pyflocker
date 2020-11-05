@@ -93,17 +93,22 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding (str): PEM or DER (defaults to PEM).
+            encoding (str): PEM, DER or Raw (defaults to PEM).
+                Raw encoding can be used only with Ed* and X* keys.
             format (str): The formats can be:
 
               - PKCS8 (default)
               - TraditionalOpenSSL
               - OpenSSH (available from pyca/cryptography version >=3.X)
               - PKCS1 (alias to TraditionalOpenSSL for Cryptodome compat)
+              - Raw (can only be used with Raw encoding and Ed*/X* keys)
             passphrase (bytes, bytearray, memoryview):
                 A bytes-like object to protect the private key.
                 If `passphrase` is None, the private key will be exported
                 in the clear!
+
+        Note:
+            `passphrase` cannot be used with `Raw` encoding.
 
         Returns:
             bytes: The private key as a bytes object.
@@ -178,7 +183,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         return ECCSignerCtx(self._key, signature_algorithms[algorithm])
 
     @classmethod
-    def load(cls, data, password=None):
+    def load(cls, data, password=None, *, edwards=None):
         """Loads the private key as `bytes` object and returns
         the Key interface.
 
@@ -189,6 +194,14 @@ class ECCPrivateKey(base.BasePrivateKey):
                 The password that deserializes the private key.
                 `password` must be a `bytes` object if the key
                 was encrypted while serialization, otherwise `None`.
+
+        Keyword Arguments:
+            edwards (bool, NoneType):
+                Whether the `Raw` encoded key of length 32 bytes
+                must be imported as an `Ed25519` key or `X25519` key.
+
+                If `True`, the key will be imported as an `Ed25519` key,
+                otherwise an `X25519` key.
 
         Returns:
             :any:`ECCPrivateKey`: ECCPrivateKey interface object.
@@ -204,6 +217,26 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         elif data[0] == 0x30:
             loader = ser.load_der_private_key
+
+        elif len(data) == 57:
+            loader = lambda data, *args: (
+                ed448.Ed448PrivateKey.from_private_bytes(data)
+            )
+
+        elif len(data) == 56:
+            loader = lambda data, *args: (
+                x448.X448PrivateKey.from_private_bytes(data)
+            )
+
+        elif len(data) == 32:
+            if edwards:
+                loader = lambda data, *args: (
+                    ed25519.Ed25519PrivateKey.from_private_bytes(data)
+                )
+            else:
+                loader = lambda data, *args: (
+                    x25519.X25519PrivateKey.from_private_bytes(data)
+                )
 
         else:
             raise ValueError("incorrect key format")
@@ -271,14 +304,16 @@ class ECCPublicKey(base.BasePublicKey):
         """Serialize the public key.
 
         Args:
-            encoding (str): PEM, DER, OpenSSH, or X962 (defaults to PEM).
+            encoding (str): PEM, DER, OpenSSH, Raw or X962 (defaults to PEM).
+                Raw can be used only with Ed* and X* keys.
             format (str): The supported formats are:
 
                 - SubjectPublicKeyInfo (default)
                 - PKCS1
                 - OpenSSH
-                - ComperssedPoint
-                - UncompressedPoint
+                - ComperssedPoint (X962 encoding only)
+                - UncompressedPoint (X962 encoding only)
+                - Raw (Raw encoding only; only with Ed*/X* keys)
 
         Returns:
             bytes: Serialized public key as bytes object.
@@ -291,13 +326,19 @@ class ECCPublicKey(base.BasePublicKey):
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
-    def load(cls, data):
+    def load(cls, data, *, edwards=None):
         """Loads the public key as `bytes` object and returns
         the Key interface.
 
         Args:
             data (bytes, bytearray):
                 The key as bytes object.
+
+        Keyword Arguments:
+            edwards (bool, NoneType):
+                The password that deserializes the private key.
+                `password` must be a `bytes` object if the key
+                was encrypted while serialization, otherwise `None`.
 
         Returns:
             :any:`ECCPublicKey`: `ECCPublicKey` key interface object.
@@ -313,6 +354,26 @@ class ECCPublicKey(base.BasePublicKey):
 
         elif data[0] == 0x30:
             loader = ser.load_der_public_key
+
+        elif len(data) == 57:
+            loader = lambda data, *args: (
+                ed448.Ed448PublicKey.from_public_bytes(data)
+            )
+
+        elif len(data) == 56:
+            loader = lambda data, *args: (
+                x448.X448PublicKey.from_public_bytes(data)
+            )
+
+        elif len(data) == 32:
+            if edwards:
+                loader = lambda data, *args: (
+                    ed25519.Ed25519PrivateKey.from_private_bytes(data)
+                )
+            else:
+                loader = lambda data, *args: (
+                    x25519.X25519PrivateKey.from_private_bytes(data)
+                )
 
         else:
             raise ValueError("incorrect key format")
@@ -344,16 +405,17 @@ class ECCSignerCtx(_SigVerContext):
         Args:
             msghash (:class:`pyflocker.ciphers.base.BaseHash`):
                 The hash algorithm used to digest the object.
-                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new` function's
-                documentation for more information about Hash objects.
+                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new`
+                function's documentation for more information about
+                Hash objects.
 
         Returns:
             bytes: signature of the message as bytes object.
-
-        Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
         """
+        # special case 1: x* only key
+        if self._algo is None:
+            return self._sign(msghash.digest())
+
         if isinstance(msghash, Hash):
             hashalgo = msghash._hasher.algorithm
         else:
@@ -361,10 +423,6 @@ class ECCSignerCtx(_SigVerContext):
                 msghash.name,
                 digest_size=msghash.digest_size,
             )._hasher.algorithm
-
-        # special case 1: x* only key
-        if self._algo is None:
-            return self._sign(msghash.digest())
 
         return self._sign(
             msghash.digest(),
@@ -391,18 +449,8 @@ class ECCVerifierCtx(_SigVerContext):
             None
 
         Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
             SignatureError: if the `signature` was incorrect.
         """
-        if isinstance(msghash, Hash):
-            hashalgo = msghash._hasher.algorithm
-        else:
-            hashalgo = Hash(
-                msghash.name,
-                digest_size=msghash.digest_size,
-            )._hasher.algorithm
-
         # special case 1: ed* only key
         if self._algo is None:
             try:
@@ -412,6 +460,14 @@ class ECCVerifierCtx(_SigVerContext):
                 )
             except bkx.InvalidSignature as e:
                 raise exc.SignatureError from e
+
+        if isinstance(msghash, Hash):
+            hashalgo = msghash._hasher.algorithm
+        else:
+            hashalgo = Hash(
+                msghash.name,
+                digest_size=msghash.digest_size,
+            )._hasher.algorithm
 
         # normal case
         try:
