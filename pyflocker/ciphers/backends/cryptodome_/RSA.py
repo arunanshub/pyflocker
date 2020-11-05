@@ -262,7 +262,7 @@ def _get_padding(pad):
     mhash = Hash(
         pad.mgf.hash.name, digest_size=pad.mgf.hash.digest_size
     )  # ._hasher
-    _mgf = lambda x, y: paddings[pad.mgf.__class__](x, y, mhash)  # noqa: E731
+    _mgf = lambda x, y: paddings[pad.mgf.__class__](x, y, mhash)
     return _pad, _mgf
 
 
