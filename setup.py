@@ -3,7 +3,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="PyFLocker",
-    version="0.2.4",
+    version="0.2.5",
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
     packages=find_packages(exclude=["tests"]),
