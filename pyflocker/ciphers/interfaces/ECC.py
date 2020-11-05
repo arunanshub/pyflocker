@@ -38,14 +38,14 @@ def load_public_key(data, *, edwards=None, backend=None):
             The public key (a bytes-like object) to deserialize.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
         edwards (bool, NoneType):
             Whether the `Raw` encoded key of length 32 bytes
             must be imported as an `Ed25519` key or `X25519` key.
 
             If `True`, the key will be imported as an `Ed25519` key,
             otherwise an `X25519` key.
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
         :any:`BasePublicKey`: An `ECCPublicKey` interface.
@@ -70,14 +70,14 @@ def load_private_key(data, passphrase=None, *, edwards=None, backend=None):
             private key. `None` if the key was not encrypted.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from `Backends`.
         edwards (bool, NoneType):
             Whether the `Raw` encoded key of length 32 bytes
             must be imported as an `Ed25519` key or `X25519` key.
 
             If `True`, the key will be imported as an `Ed25519` key,
             otherwise an `X25519` key.
+        backend (:class:`pyflocker.ciphers.backends.Backends`):
+            The backend to use. It must be a value from `Backends`.
 
     Returns:
         :any:`BasePrivateKey`: An ECCPrivateKey interface.
