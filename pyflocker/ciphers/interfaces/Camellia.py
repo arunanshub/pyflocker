@@ -6,7 +6,12 @@ from .. import Backends
 
 def _cml_cipher_from_mode(mode, bknd, hasfile):
     if mode not in supported_modes(bknd):
-        raise NotImplementedError("backend does not support this mode.")
+        raise NotImplementedError(
+            "Camellia from backend {} does not support mode {}.".format(
+                bknd.name.lower(),
+                mode.name,
+            )
+        )
     cpr = _load_algo("Camellia", bknd)
     if not hasfile:
         return cpr.Camellia
