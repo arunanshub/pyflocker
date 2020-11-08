@@ -16,7 +16,7 @@ At large, PyFLocker is divided into two parts:
 Read the documentation of these modules to know more.
 """
 
-from . import ciphers
-
 from .ciphers import Backends, exc
 from .ciphers.backends import set_default_backend
+
+__version__ = "0.2.5"
