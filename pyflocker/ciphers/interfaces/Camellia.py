@@ -7,7 +7,7 @@ from .. import Backends
 def _cml_cipher_from_mode(mode, bknd, hasfile):
     if mode not in supported_modes(bknd):
         raise NotImplementedError(
-            "Camellia from backend {} does not support mode {}.".format(
+            "backend {} does not implement mode {} for Camellia.".format(
                 bknd.name.lower(),
                 mode.name,
             )

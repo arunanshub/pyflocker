@@ -9,7 +9,10 @@ globals().update({val.name: val for val in list(_m)})
 
 def _aes_cipher_from_mode(mode, bknd, hasfile):
     if mode not in supported_modes(bknd):
-        raise NotImplementedError("backend does not support this mode.")
+        raise NotImplementedError(
+            f"backend {bknd.name.lower()} does "
+            f"not implement {mode.name} for AES."
+        )
 
     cpr = _load_algo("AES", bknd)
     if mode in aead:
