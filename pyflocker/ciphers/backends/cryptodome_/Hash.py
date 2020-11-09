@@ -74,7 +74,7 @@ class Hash(base.BaseHash):
         _hash = hashes[name]
 
         if digest_size is None:
-            if name in arbitrary_digest_size_hashes:
+            if name in arbitrary_digest_size_hashes:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
 
         if name in arbitrary_digest_size_hashes.keys() ^ xofs.keys():
@@ -98,9 +98,9 @@ class Hash(base.BaseHash):
         except AttributeError:
             try:
                 return _block_sizes[self.name]
-            except KeyError:
+            except KeyError:  # pragma: no cover
                 pass  # raise below
-            raise AttributeError(
+            raise AttributeError(  # pragma: no cover
                 f"Hash algorithm {self.name} does not "
                 "have block_size parameter."
             ) from None
@@ -117,11 +117,11 @@ class Hash(base.BaseHash):
         except AttributeError:
             base_msg = "oid is avaliable only for digest sizes "
             # for BLAKE-2b/2s
-            if self.name == "blake2b":
+            if self.name == "blake2b":  # pragma: no cover
                 msg = base_msg + "20, 32, 48 and 64"
-            elif self.msg == "blake2s":
+            elif self.msg == "blake2s":  # pragma: no cover
                 msg = base_msg + "16, 20, 28 and 32"
-            else:
+            else:  # pragma: no cover
                 msg = f"oid attribute is not available for hash {self.name}"
             raise AttributeError(msg) from None
 

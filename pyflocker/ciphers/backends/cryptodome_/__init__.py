@@ -4,7 +4,7 @@ try:
 except ModuleNotFoundError:
     import Crypto
 
-    if int(Crypto.__version__[0]) < 3:
+    if int(Crypto.__version__[0]) < 3:  # pragma: no cover
         raise
 
 # set the name of backend

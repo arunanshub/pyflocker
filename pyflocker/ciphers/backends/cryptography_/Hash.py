@@ -55,7 +55,7 @@ _oids = {
 class Hash(base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
         if name in _arbitrary_digest_size_hashes:
-            if digest_size is None:
+            if digest_size is None:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
             self._hasher = h.Hash(hashes[name](digest_size), defb())
         else:
@@ -77,9 +77,9 @@ class Hash(base.BaseHash):
         except AttributeError:
             try:
                 return _block_sizes[self.name]
-            except KeyError:
+            except KeyError:  # pragma: no cover
                 pass  # raise below
-            raise AttributeError(
+            raise AttributeError(  # pragma: no cover
                 f"Hash algorithm {self.name} does not have "
                 "block_size parameter."
             ) from None
@@ -97,7 +97,7 @@ class Hash(base.BaseHash):
         # for BLAKE
         if self.name == "blake2b":
             if self.digest_size not in (20, 32, 48, 64):
-                raise AttributeError(
+                raise AttributeError(  # pragma: no cover
                     "oid is avaliable only for "
                     "digest sizes 20, 32, 48 and 64"
                 )
@@ -105,7 +105,7 @@ class Hash(base.BaseHash):
 
         if self.name == "blake2s":
             if self.digest_size not in (16, 20, 28, 32):
-                raise AttributeError(
+                raise AttributeError(  # pragma: no cover
                     "oid is avaliable only for "
                     "digest sizes 16, 20, 28 and 32"
                 )
