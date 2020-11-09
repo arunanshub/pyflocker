@@ -94,7 +94,7 @@ class _EAX:
 
     def authenticate_additional_data(self, data):
         if self._updated:
-            raise ValueError
+            raise ValueError  # pragma: no cover
         self._auth.update(data)
 
     def encryptor(self):
@@ -177,7 +177,7 @@ class _EAX:
     def finalize_with_tag(self, tag):
         self.finalize()
         if not hmac.compare_digest(tag, self._tag):
-            raise bkx.InvalidTag
+            raise bkx.InvalidTag  # pragma: no cover
 
     @property
     def tag(self):

@@ -122,7 +122,7 @@ class AEADOneShot(AEAD):
                 dat = crp(data)
         except ValueError:
             # don't raise decryption failure here
-            pass
+            pass  # pragma: no cover
         self.finalize(tag)
         return dat
 
