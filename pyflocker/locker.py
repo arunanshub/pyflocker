@@ -209,7 +209,7 @@ def lockerf(
     if metadata is None:
         metadata = b"CREATED BY: PYFLOCKER"
     else:
-        if len(metadata) < 32:
+        if len(metadata) > 32:
             raise ValueError("maximum metadata length exceeded")
 
     # header extract if decrypting,
