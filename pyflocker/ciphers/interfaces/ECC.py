@@ -1,6 +1,6 @@
 """Interface to ECC signature algorithm and key-exchange."""
 
-from ..backends import load_algorithm as _load_algo
+from ..backends import load_algorithm as _load_algo, Backends as _Backends
 
 
 def _load_ecc_cpr(backend):
@@ -84,7 +84,8 @@ def load_private_key(data, passphrase=None, *, edwards=None, backend=None):
     """
     kwargs = dict()
     if len(data) == 32:
-        kwargs = dict(edwards=edwards)
+        if backend == _Backends.CRYPTOGRAPHY:
+            kwargs = dict(edwards=edwards)
     return _load_ecc_cpr(backend).ECCPrivateKey.load(
         data,
         passphrase,
