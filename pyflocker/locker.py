@@ -85,7 +85,7 @@ def locker(
     try:
         with open(file, "rb") as infile, open(newfile, "xb") as outfile:
             lockerf(infile, outfile, password, locking, **kwargs)
-    except TypeError, exc.DecryptionError:
+    except (TypeError, exc.DecryptionError):
         # remove invalid file
         os.remove(newfile)
         raise
