@@ -2,7 +2,11 @@ from types import MappingProxyType
 
 from Cryptodome.Cipher import AES
 
-from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
+from .symmetric import (
+    AEADCipherTemplate,
+    NonAEADCipherTemplate,
+    FileCipherWrapper,
+)
 
 from .misc import derive_hkdf_key
 from ..symmetric import HMACWrapper
@@ -51,7 +55,7 @@ def new(
             crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
 
     if file:
-        crp = FileCipherWapper(crp, file)
+        crp = FileCipherWrapper(crp, file)
 
     return crp
 
