@@ -29,7 +29,7 @@ except ModuleNotFoundError:
         SHAKE256,
     )
 
-from .. import base
+from ... import base
 
 hashes = {
     "sha224": SHA224.new,
@@ -68,7 +68,7 @@ _block_sizes = {
 hashes.update(arbitrary_digest_size_hashes)
 
 
-class Hash(base.BaseHash):
+class Hash:  # (base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
         self._digest_size = digest_size
         _hash = hashes[name]
@@ -125,12 +125,14 @@ class Hash(base.BaseHash):
                 msg = f"oid attribute is not available for hash {self.name}"
             raise AttributeError(msg) from None
 
-    @base.before_finalized
     def update(self, data):
+        if self._hasher is None:
+            raise exc.AlreadyFinalized
         self._hasher.update(data)
 
-    @base.before_finalized
     def copy(self):
+        if self._hasher is None:
+            raise exc.AlreadyFinalized
         hashobj = Hash(self.name, digest_size=self.digest_size)
         try:
             hashobj._hasher = self._hasher.copy()
@@ -140,11 +142,17 @@ class Hash(base.BaseHash):
             ) from None
         return hashobj
 
-    @base.finalizer(allow=True)
     def digest(self):
-        if self._name in xofs:
-            return self._hasher.read(self._digest_size)
-        return self._hasher.digest()
+        if self._hasher is None:
+            return self.__digest
+
+        if self.name in xofs:
+            self.__digest = self._hasher.read(self._digest_size)
+        else:
+            self.__digest = self._hasher.digest()
+
+        self._hasher = None
+        return self.__digest
 
     def new(self, data=b"", *, digest_size=None):
         return type(self)(

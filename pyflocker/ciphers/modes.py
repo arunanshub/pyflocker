@@ -18,18 +18,22 @@ class Modes(Enum):
 
 
 # authenticated modes
-aead = {
-    Modes.MODE_GCM,
-    Modes.MODE_CCM,
-    Modes.MODE_EAX,
-    Modes.MODE_OCB,
-    Modes.MODE_SIV,
-}
+aead = frozenset(
+    {
+        Modes.MODE_GCM,
+        Modes.MODE_CCM,
+        Modes.MODE_EAX,
+        Modes.MODE_OCB,
+        Modes.MODE_SIV,
+    }
+)
 
 # the special modes
-special = {
-    Modes.MODE_SIV,
-    Modes.MODE_CCM,
-    Modes.MODE_OCB,
-    # MODE_OPENPGP,
-}
+special = frozenset(
+    {
+        Modes.MODE_SIV,
+        Modes.MODE_CCM,
+        Modes.MODE_OCB,
+        # MODE_OPENPGP,
+    }
+)
