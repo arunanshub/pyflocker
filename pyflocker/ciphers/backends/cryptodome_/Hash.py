@@ -126,12 +126,12 @@ class Hash:  # (base.BaseHash):
             raise AttributeError(msg) from None
 
     def update(self, data):
-        if self._hasher is None:
+        if self.__done:
             raise exc.AlreadyFinalized
         self._hasher.update(data)
 
     def copy(self):
-        if self._hasher is None:
+        if self.__done:
             raise exc.AlreadyFinalized
         hashobj = Hash(self.name, digest_size=self.digest_size)
         try:
@@ -143,16 +143,11 @@ class Hash:  # (base.BaseHash):
         return hashobj
 
     def digest(self):
-        if self._hasher is None:
-            return self.__digest
-
+        self.__done = True
         if self.name in xofs:
-            self.__digest = self._hasher.read(self._digest_size)
+            return self._hasher.read(self._digest_size)
         else:
-            self.__digest = self._hasher.digest()
-
-        self._hasher = None
-        return self.__digest
+            return self._hasher.digest()
 
     def new(self, data=b"", *, digest_size=None):
         return type(self)(

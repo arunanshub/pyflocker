@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 from cryptography.hazmat.primitives.ciphers import (
     Cipher,
     algorithms as algo,
@@ -5,56 +7,66 @@ from cryptography.hazmat.primitives.ciphers import (
 )
 from cryptography.hazmat.backends import default_backend as defb
 
-from .. import base, Modes as _m
-from ._symmetric import (
-    HMACCipherWrapper,
-    FileCipherMixin,
-    derive_key as _derive_key,
+
+from ... import base
+from ...modes import Modes as _m
+from ..symmetric import HMACWrapper, FileCipherWrapper
+from .misc import derive_hkdf_key
+from .symmetric import NonAEADCipherTemplate
+
+supported = MappingProxyType(
+    {
+        _m.MODE_CFB: modes.CFB,
+        _m.MODE_CTR: modes.CTR,
+        _m.MODE_OFB: modes.OFB,
+    }
 )
 
-supported = {
-    _m.MODE_CFB: modes.CFB,
-    _m.MODE_CTR: modes.CTR,
-    _m.MODE_OFB: modes.OFB,
-}
+del MappingProxyType
 
 
-@base.cipher
-class Camellia(HMACCipherWrapper, base.Cipher):
-    def __init__(
-        self,
-        locking,
-        key,
-        mode,
+def new(
+    encrypting,
+    key,
+    mode,
+    iv_or_nonce,
+    *,
+    file=None,
+    use_hmac=False,
+    digestmod="sha256",
+):
+    if file is not None:
+        use_hmac = True
+
+    if use_hmac:
+        crp = _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod)
+    else:
+        crp = Camellia(encrypting, key, mode, iv_or_nonce)
+
+    if file:
+        crp = FileCipherWrapper(crp, file)
+
+    return crp
+
+
+def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
+    ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
+    crp = HMACWrapper(
+        Camellia(encrypting, ckey, mode, iv_or_nonce),
+        hkey,
         iv_or_nonce,
-        *,
-        hashed=False,
-        digestmod="sha256"
-    ):
-        if hashed:
-            # derive the keys (length same as of the original key)
-            key, hkey = _derive_key(
-                master_key=key,
-                dklen=len(key),
-                hashalgo=digestmod,
-                salt=iv_or_nonce,
-            )
-        else:
-            hkey = None
+        digestmod,
+    )
+    return crp
 
-        self._cipher = Cipher(
+
+class Camellia(NonAEADCipherTemplate):
+    def __init__(self, encrypting, key, mode, iv_or_nonce):
+        cipher = Cipher(
             algo.Camellia(key),
             supported[mode](iv_or_nonce),
             defb(),
         )
-        self._locking = locking
-        super().__init__(
-            key=hkey,
-            hashed=hashed,
-            digestmod=digestmod,
-            rand=iv_or_nonce,
-        )
 
-
-class CamelliaFile(FileCipherMixin, Camellia):
-    pass
+        self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
+        self._encrypting = encrypting

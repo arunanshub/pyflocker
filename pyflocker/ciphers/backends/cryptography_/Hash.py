@@ -52,8 +52,12 @@ _oids = {
 }
 
 
-class Hash(base.BaseHash):
+class Hash:  # (base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
+        self._digest = None
+        self._name = name
+        self.__done = False
+
         if name in _arbitrary_digest_size_hashes:
             if digest_size is None:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
@@ -61,9 +65,6 @@ class Hash(base.BaseHash):
         else:
             self._hasher = h.Hash(hashes[name](), defb())
         self._hasher.update(data)
-        self._digest = None
-
-        self._name = name
 
     @property
     def digest_size(self):
@@ -111,20 +112,22 @@ class Hash(base.BaseHash):
                 )
             return "1.3.6.1.4.1.1722.12.2.2." + str(self.digest_size)
 
-    @base.before_finalized
     def update(self, data):
+        if self.__done:
+            raise exc.AlreadyFinalized
         self._hasher.update(data)
 
-    @base.before_finalized
     def copy(self):
+        if self.__done:
+            raise exc.AlreadyFinalized
         hashobj = Hash(self.name, digest_size=self.digest_size)
         hashobj._hasher = self._hasher.copy()
         return hashobj
 
-    @base.finalizer(allow=True)
     def digest(self):
         if self._digest is None:
             self._digest = self._hasher.finalize()
+            self.__done = True
         return self._digest
 
     def new(self, data=b"", *, digest_size=None):

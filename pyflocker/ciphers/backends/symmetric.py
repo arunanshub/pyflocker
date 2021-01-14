@@ -1,6 +1,66 @@
 import hmac
+from functools import partial
 
 from .. import base, exc
+
+
+class FileCipherWrapper(base.BaseAEADCipher):
+    def __init__(self, cipher: base.BaseAEADCipher, file, offset=0):
+        self._cipher = cipher
+        self.__file = file
+        self.__tag = None
+        self.__encrypting = self._cipher.is_encrypting()
+        self.__offset = offset
+
+    def authenticate(self, data):
+        if self._cipher is None:
+            raise exc.AlreadyFinalized
+        return self._cipher.authenticate(data)
+
+    def is_encrypting(self):
+        return self.__encrypting
+
+    def update(self, blocksize=16384):
+        if self._cipher is None:
+            raise exc.AlreadyFinalized
+        if (data := self.__file.read(blocksize)) :
+            return self._cipher.update(data)
+
+    def update_into(self, file, tag=None, blocksize=16384):
+        if self._cipher is None:
+            raise exc.AlreadyFinalized
+        if not self._cipher.is_encrypting():
+            raise ValueError("tag is required")
+
+        buf = memoryview(bytearray(blocksize + self.__offset))
+        rbuf = buf[:blocksize]
+
+        write = file.write
+        reads = iter(partial(self.__file.readinto, buf), 0)
+        update = self._cipher.update_into
+
+        for i in reads:
+            if i < blocksize:
+                rbuf = rbuf[:i]
+                buf = buf[: i + self.__offset]
+            update(rbuf, buf)
+            write(rbuf)
+
+        self.finalize(tag)
+
+    def finalize(self, tag=None):
+        if self._cipher is None:
+            raise exc.AlreadyFinalized
+
+        try:
+            self._cipher.finalize(tag)
+        finally:
+            self.__tag, self._cipher = self._cipher.calculate_tag(), None
+
+    def calculate_tag(self):
+        if self._cipher is not None:
+            raise exc.NotFinalized
+        return self.__tag
 
 
 class HMACWrapper(base.BaseAEADCipher):
@@ -23,6 +83,7 @@ class HMACWrapper(base.BaseAEADCipher):
         self._ctx = self._get_mac_ctx(cipher, self._auth, offset)
 
         self._len_aad, self._len_ct = 0, 0
+        self._updated = False
 
     def is_encrypting(self):
         return self._cipher.is_encrypting()
@@ -38,12 +99,14 @@ class HMACWrapper(base.BaseAEADCipher):
     def update(self, data):
         if self._ctx is None:
             raise exc.AlreadyFinalized
+        self._updated = True
         self._len_ct += len(data)
         return self._ctx.update(data)
 
     def update_into(self, data, out):
         if self._ctx is None:
             raise exc.AlreadyFinalized
+        self._updated = True
         self._len_ct += len(out[: -self._offset])
         self._ctx.update_into(data, out)
 

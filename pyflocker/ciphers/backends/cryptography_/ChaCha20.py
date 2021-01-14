@@ -6,22 +6,60 @@ from cryptography import exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
-from .. import exc, base
-from ._symmetric import FileCipherMixin
-
-# we don't have any mode to support
-supported = frozenset()
+from ... import base, exc
+from ..symmetric import _EncryptionCtx, _DecryptionCtx
+from .symmetric import NonAEADCipherTemplate
 
 
-@base.cipher
-class ChaCha20Poly1305(base.Cipher):
-    def __init__(self, locking, key, nonce):
+def new(encrypting, key, nonce, *, file=None, use_poly1305=True):
+    if file is not None:
+        use_poly1305 = True
+
+    if use_poly1305:
+        crp = ChaCha20Poly1305(encrypting, key, nonce)
+    else:
+        crp = ChaCha20(encrypting, key, nonce)
+
+    if file:
+        crp = FileCipherWrapper(crp, file, offset=0)
+
+    return crp
+
+
+def get_poly1305_key(ckey, nonce):
+    """Generate a poly1305 key.
+
+    Args:
+        ckey (bytes): The key used for the cipher
+        nonce (bytes): The nonce used for the cipher. It must be 12 bytes.
+
+    Returns:
+        bytes: A Poly1305 key.
+
+    Raises:
+        ValueError: If the length of nonce is not equal to 8 or 12 bytes.
+    """
+    if len(nonce) not in (8, 12):
+        raise ValueError("Poly1305 key must be 16 bytes long.")
+
+    if len(nonce) == 8:
+        nonce = bytes(4) + nonce
+
+    crp = CrCipher(
+        algo.ChaCha20(ckey, bytes(4) + nonce),
+        None,
+        defb(),
+    ).encryptor()
+    return crp.update(bytes(32))
+
+
+class ChaCha20Poly1305(base.BaseAEADCipher):
+    def __init__(self, encrypting, key, nonce):
         if not len(nonce) in (8, 12):
             raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 
-        self._locking = locking
         cipher = CrCipher(
             algo.ChaCha20(
                 key,
@@ -30,36 +68,20 @@ class ChaCha20Poly1305(base.Cipher):
             None,
             defb(),
         )
-        if locking:
-            self._cipher = cipher.encryptor()
-        else:
-            self._cipher = cipher.decryptor()
 
-        # generate Poly1305 key (r, s) and instantiate
-        cpr = CrCipher(
-            algo.ChaCha20(key, bytes(4) + nonce),
-            None,
-            defb(),
-        ).encryptor()
-        rs = cpr.update(bytes(32))
-        self._auth = Poly1305(rs)
+        ctx = cipher.encryptor() if encrypting else cipher.decryptor()
 
-        self._tag = None
+        self._encrypting = encrypting
+        self._auth = Poly1305(get_poly1305_key(key, nonce))
+        self._ctx = self._get_auth_ctx(encrypting, ctx, self._auth)
+        self._len_aad, self._len_ct = 0, 0
         self._updated = False
 
-        self._len_aad = 0
-        self._len_ct = 0
-
-        self._update = self._get_update()
-        self._update_into = self._get_update_into()
-
-    def authenticate(self, data):
-        if self._updated:
-            raise TypeError(
-                "cannot authenticate data after update has been called"
-            )
-        self._len_aad += len(memoryview(data))
-        self._auth.update(data)
+    @staticmethod
+    def _get_auth_ctx(encrypting, ctx, auth):
+        if encrypting:
+            return _EncryptionCtx(ctx, auth, 0)
+        return _DecryptionCtx(ctx, auth)
 
     def _pad_aad(self):
         if not self._updated:
@@ -67,14 +89,37 @@ class ChaCha20Poly1305(base.Cipher):
                 self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
         self._updated = True
 
+    def is_encrypting(self):
+        return self._encrypting
+
+    def authenticate(self, data):
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
+        if self._updated:
+            raise TypeError
+        self._len_aad += len(data)
+        self._auth.update(data)
+
     def update(self, data):
-        return self._update(data)
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
+        self._pad_aad()
+        self._len_ct += len(data)
+        return self._ctx.update(data)
 
     def update_into(self, data, out):
-        self._update_into(data, out)
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
+        self._pad_aad()
+        self._len_ct += len(out)
+        self._ctx.update_into(data, out)
 
     def finalize(self, tag=None):
-        self._cipher.finalize()
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
+        if not self.is_encrypting():
+            raise ValueError("tag is required for decryption")
+
         self._pad_aad()
 
         if self._len_ct & 0x0F:
@@ -83,7 +128,9 @@ class ChaCha20Poly1305(base.Cipher):
         self._auth.update(self._len_aad.to_bytes(8, "little"))
         self._auth.update(self._len_ct.to_bytes(8, "little"))
 
-        if not self._locking:
+        self._ctx = None
+
+        if not self.is_encrypting():
             try:
                 self._auth.verify(tag)
             except bkx.InvalidSignature as e:
@@ -92,51 +139,28 @@ class ChaCha20Poly1305(base.Cipher):
             self._tag = self._auth.finalize()
 
     def calculate_tag(self):
-        if self._locking:
+        if self._ctx is not None:
+            raise exc.NotFinalized
+
+        if self.is_encrypting():
             return self._tag
 
-    def _get_update(self):
-        pad = self._pad_aad
-        if self._locking:
 
-            def update(data):
-                pad()
-                res = self._cipher.update(data)
-                self._len_ct += len(data)
-                self._auth.update(res)
-                return res
+class ChaCha20(NonAEADCipherTemplate):
+    def __init__(self, encrypting, key, nonce):
+        if not len(nonce) in (8, 12):
+            raise ValueError("A 8 or 12 byte nonce is required")
+        if len(nonce) == 8:
+            nonce = bytes(4) + nonce
 
-        else:
+        cipher = CrCipher(
+            algo.ChaCha20(
+                key,
+                bytes(4) + nonce,
+            ),
+            None,
+            defb(),
+        )
 
-            def update(data):
-                pad()
-                self._len_ct += len(data)
-                self._auth.update(data)
-                return self._cipher.update(data)
-
-        return update
-
-    def _get_update_into(self):
-        pad = self._pad_aad
-        if self._locking:
-
-            def update_into(data, out):
-                pad()
-                self._cipher.update_into(data, out)
-                self._len_ct += len(data)
-                self._auth.update(out)
-
-        else:
-
-            def update_into(data, out):
-                pad()
-                self._auth.update(data)
-                self._len_ct += len(data)
-                self._cipher.update_into(data, out)
-
-        return update_into
-
-
-@base.cipher
-class ChaCha20Poly1305File(FileCipherMixin, ChaCha20Poly1305):
-    pass
+        self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
+        self._encrypting = encrypting

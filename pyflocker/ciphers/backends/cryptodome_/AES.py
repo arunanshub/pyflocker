@@ -5,11 +5,10 @@ from Cryptodome.Cipher import AES
 from .symmetric import (
     AEADCipherTemplate,
     NonAEADCipherTemplate,
-    FileCipherWrapper,
 )
 
 from .misc import derive_hkdf_key
-from ..symmetric import HMACWrapper
+from ..symmetric import HMACWrapper, FileCipherWrapper
 from ... import base, exc
 from ... import modes
 from ...modes import Modes as _m

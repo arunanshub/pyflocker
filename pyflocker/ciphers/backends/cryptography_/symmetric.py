@@ -7,27 +7,27 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
 
     Subclasses need to provide:
         - `_encrypting`
-        - `_update_func`
+        - `_ctx`
     """
 
     def is_encrypting(self):
         return self._encrypting
 
     def update(self, data):
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        return self._update_func(data)
+        return self._ctx.update(data)
 
     def update_into(self, data, out):
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        self._update_func(data, out)
+        self._ctx.update_into(data, out)
 
     def finalize(self):
-        if not self._update_func:
+        if not self._ctx:
             raise exc.AlreadyFinalized
 
-        self._update_func = None
+        self._ctx = None
 
 
 class AEADCipherTemplate(base.BaseAEADCipher):
@@ -36,50 +36,53 @@ class AEADCipherTemplate(base.BaseAEADCipher):
 
     Subclasses need to provide the following attributes:
         - `_encrypting`
-        - `_update_func`
-        - `_cipher`
+        - `_ctx`
         - `_updated`
+        - `_tag`
     """
 
     def is_encrypting(self):
         return self._encrypting
 
     def update(self, data):
-        self._updated = True
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        return self._update_func(data)
+        self._updated = True
+        return self._ctx.update(data)
 
     def update_into(self, data, out):
-        self._updated = True
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        self._update_func(data, out)
+        self._updated = True
+        self._ctx.update_into(data, out)
 
     def authenticate(self, data):
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
         if self._updated:
             raise TypeError
-        self._cipher.update(data)
+        self._ctx.authenticate_additional_data(data)
 
     def finalize(self, tag=None):
-        if self._update_func is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
 
         if not self._encrypting and tag is None:
             raise ValueError("tag is required for finalization")
 
-        self._update_func = None
+        ctx, self._ctx = self._ctx, None
 
         try:
             if not self._encrypting:
-                self._cipher.verify(tag)
+                ctx.finalize_with_tag(tag)
+            else:
+                ctx.finalize()
+                self._tag = ctx.tag
         except ValueError as e:
             raise exc.DecryptionError from e
 
     def calculate_tag(self):
-        if self._update_func is not None:
+        if self._ctx is not None:
             raise exc.NotFinalized
 
-        return self._cipher.digest()
+        return self._tag

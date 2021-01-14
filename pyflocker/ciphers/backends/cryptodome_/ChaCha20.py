@@ -7,11 +7,14 @@ from ... import base
 from .symmetric import (
     NonAEADCipherTemplate,
     AEADCipherTemplate,
-    FileCipherWrapper,
 )
+from ..symmetric import FileCipherWrapper
 
 
 def new(encrypting, key, nonce, *, use_poly1305=True, file=None):
+    if file is not None:
+        use_poly1305 = True
+
     if use_poly1305:
         crp = ChaCha20Poly1305(encrypting, key, nonce)
     else:

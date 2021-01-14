@@ -1,5 +1,5 @@
 import struct
-import hmac
+from types import MappingProxyType
 
 import cryptography.exceptions as bkx
 
@@ -11,22 +11,32 @@ from cryptography.hazmat.primitives.ciphers import (
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.backends import default_backend as defb
 
-from .. import base, Modes as _m
-from ._symmetric import (
-    AEADCipherWrapper,
-    HMACCipherWrapper,
-    FileCipherMixin,
-    derive_key as _derive_key,
+from ... import base, modes
+from ...modes import Modes as _m
+from ..symmetric import (
+    HMACWrapper,
+    FileCipherWrapper,
+    _EncryptionCtx,
+    _DecryptionCtx,
+)
+from .symmetric import (
+    AEADCipherTemplate,
+    NonAEADCipherTemplate,
+)
+from .misc import derive_hkdf_key
+
+supported = MappingProxyType(
+    {
+        _m.MODE_GCM: modes.GCM,
+        _m.MODE_EAX: None,  # not defined by backend
+        _m.MODE_CTR: modes.CTR,
+        _m.MODE_CFB8: modes.CFB8,
+        _m.MODE_CFB: modes.CFB,
+        _m.MODE_OFB: modes.OFB,
+    }
 )
 
-supported = {
-    _m.MODE_GCM: modes.GCM,
-    _m.MODE_EAX: None,  # not defined by backend
-    _m.MODE_CTR: modes.CTR,
-    _m.MODE_CFB8: modes.CFB8,
-    _m.MODE_CFB: modes.CFB,
-    _m.MODE_OFB: modes.OFB,
-}
+del MappingProxyType
 
 
 def _aes_cipher(key, mode, nonce_or_iv):
@@ -35,16 +45,68 @@ def _aes_cipher(key, mode, nonce_or_iv):
     return CrCipher(algo.AES(key), supported[mode](nonce_or_iv), defb())
 
 
-@base.cipher
-class AEAD(AEADCipherWrapper, base.Cipher):
-    def __init__(self, locking, key, mode, *args, **kwargs):
-        self._cipher = _aes_cipher(key, mode, *args, **kwargs)
-        self._locking = locking
-        super().__init__()
+def new(
+    encrypting,
+    key,
+    mode,
+    iv_or_nonce,
+    *,
+    use_hmac=False,
+    file=None,
+    digestmod="sha256"
+):
+    if file is not None:
+        use_hmac = True
+
+    if mode in modes.aead:
+        crp = AEAD(encrypting, key, mode, iv_or_nonce)
+    else:
+        if use_hmac:
+            crp = _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod)
+        else:
+            crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
+
+    if file:
+        crp = FileCipherWrapper(crp, file)
+
+    return crp
 
 
-class AEADFile(FileCipherMixin, AEAD):
-    pass
+def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
+    ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
+    crp = HMACWrapper(
+        NonAEAD(encrypting, ckey, mode, iv_or_nonce),
+        hkey,
+        iv_or_nonce,
+        digestmod,
+    )
+    return crp
+
+
+class AEAD(AEADCipherTemplate):
+    def __init__(self, encrypting, key, mode, nonce):
+        self._encrypting = encrypting
+        self._updated = False
+        self._tag = None
+
+        cipher = _aes_cipher(key, mode, nonce)
+        # cryptography already provides a context
+        if encrypting:
+            self._ctx = cipher.encryptor()
+        else:
+            self._ctx = cipher.decryptor()
+
+
+class NonAEAD(NonAEADCipherTemplate):
+    def __init__(self, encrypting, key, mode, nonce):
+        self._encrypting = encrypting
+
+        cipher = _aes_cipher(key, mode, nonce)
+        # cryptography already provides a context
+        if encrypting:
+            self._ctx = cipher.encryptor()
+        else:
+            self._ctx = cipher.decryptor()
 
 
 def strxor(x, y):
@@ -53,7 +115,7 @@ def strxor(x, y):
 
 
 class _EAX:
-    """Pseudo pyca/cryptography style cipher for EAX mode."""
+    """AES-EAX adapter for pyca/cryptography."""
 
     def __init__(self, key, nonce, mac_len=16):
         self._mac_len = mac_len
@@ -79,10 +141,9 @@ class _EAX:
             defb(),
         )
 
-        self._update = None
-        self._update_into = None
         self._updated = False
-        self._tag = None
+        self.__ctx = None
+        self.__tag = None
 
     @property
     def _ctx(self):
@@ -93,129 +154,53 @@ class _EAX:
         return self._cipher._ctx
 
     def authenticate_additional_data(self, data):
+        if self.__ctx is None:
+            raise bkx.AlreadyFinalized
         if self._updated:
             raise ValueError  # pragma: no cover
         self._auth.update(data)
 
     def encryptor(self):
-        """Create a pseudo-encryptor context.
-
-        Pseudo in the sense that, pyca/cryptography uses a encryption
-        or decryption context, but we replace the object variable.
-
-        Replaces the variables `_update` and `_update_into`
-        with suitable functions.
-        """
-        self._cipher = self._cipher.encryptor()
-
-        hashup = self._omac[2].update
-        cipherup1 = self._cipher.update
-        cipherup2 = self._cipher.update_into
-
-        def update(data):
-            ctxt = cipherup1(data)
-            hashup(ctxt)
-            return ctxt
-
-        def update_into(data, out):
-            cipherup2(data, out)
-            hashup(bytes(out[:-15]))  # bytes obj only
-
-        self._update = update
-        self._update_into = update_into
+        self.__ctx = _EncryptionCtx(self._cipher.encryptor(), self._auth, 15)
         return self
 
     def decryptor(self):
-        """Create a pseudo-encryptor context.
-
-        Pseudo in the sense that, pyca/cryptography uses a encryption
-        or decryption context, but we replace the object variable.
-
-        Replaces the variables `_update` and `_update_into`
-        with suitable functions.
-        """
-        self._cipher = self._cipher.decryptor()
-
-        hashup = self._omac[2].update
-        cipherup1 = self._cipher.update
-        cipherup2 = self._cipher.update_into
-
-        def update(ctxt):
-            hashup(ctxt)
-            data = cipherup1(ctxt)
-            return data
-
-        def update_into(data, out):
-            hashup(bytes(data))  # bytes obj only
-            cipherup2(data, out)
-
-        self._update = update
-        self._update_into = update_into
+        self.__ctx = _DecryptionCtx(self._cipher.decryptor(), self._auth)
         return self
 
     def update(self, data):
+        if self.__ctx is None:
+            raise bkx.AlreadyFinalized
         self._updated = True
-        return self._update(data)
+        return self.__ctx.update(data)
 
     def update_into(self, data, out):
+        if self.__ctx is None:
+            raise bkx.AlreadyFinalized
         self._updated = True
-        self._update_into(data, out)
+        self.__ctx.update_into(data, out)
 
     def finalize(self):
-        """Finalizes the cipher. It is not affected by the number of
-        calls to it."""
-        if not self._tag:
-            tag = bytes(algo.AES.block_size // 8)
-            for i in range(3):
-                try:
-                    tag = strxor(tag, self._omac_cache[i])
-                except IndexError:
-                    self._omac_cache.append(self._omac[i].finalize())
-                    tag = strxor(tag, self._omac_cache[i])
-            self._tag = tag[: self._mac_len]
+        """Finalizes the cipher."""
+        if self.__ctx is None:
+            raise bkx.AlreadyFinalized
+
+        tag = bytes(algo.AES.block_size // 8)
+        for i in range(3):
+            try:
+                tag = strxor(tag, self._omac_cache[i])
+            except IndexError:
+                self._omac_cache.append(self._omac[i].finalize())
+                tag = strxor(tag, self._omac_cache[i])
+        self.__tag, self.__ctx = tag[: self._mac_len], None
 
     def finalize_with_tag(self, tag):
         self.finalize()
-        if not hmac.compare_digest(tag, self._tag):
+        if not hmac.compare_digest(tag, self.__tag):
             raise bkx.InvalidTag  # pragma: no cover
 
     @property
     def tag(self):
-        return self._tag
-
-
-@base.cipher
-class NonAEAD(HMACCipherWrapper, base.Cipher):
-    def __init__(
-        self,
-        locking,
-        key,
-        mode,
-        iv_or_nonce,
-        *,
-        hashed=False,
-        digestmod="sha256",
-    ):
-        self._locking = locking
-        hkey = None
-        if hashed:
-            # derive the keys (length same as of the original key)
-            key, hkey = _derive_key(
-                master_key=key,
-                dklen=len(key),
-                hashalgo=digestmod,
-                salt=iv_or_nonce,
-            )
-
-        self._cipher = _aes_cipher(key, mode, iv_or_nonce)
-        # for HMAC mixin
-        super().__init__(
-            key=hkey,
-            hashed=hashed,
-            digestmod=digestmod,
-            rand=iv_or_nonce,
-        )
-
-
-class NonAEADFile(FileCipherMixin, NonAEAD):
-    pass
+        if self.__ctx is not None:
+            raise bkx.NotYetFinalized
+        return self.__tag
