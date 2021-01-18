@@ -1,7 +1,7 @@
 from cryptography.hazmat.primitives import hashes as h
 from cryptography.hazmat.backends import default_backend as defb
 
-from .. import base
+from ... import base
 
 hashes = {
     "sha1": h.SHA1,
@@ -56,7 +56,7 @@ class Hash:  # (base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
         self._digest = None
         self._name = name
-        self.__done = False
+        self._done = False
 
         if name in _arbitrary_digest_size_hashes:
             if digest_size is None:  # pragma: no cover
@@ -113,21 +113,21 @@ class Hash:  # (base.BaseHash):
             return "1.3.6.1.4.1.1722.12.2.2." + str(self.digest_size)
 
     def update(self, data):
-        if self.__done:
+        if self._done:
             raise exc.AlreadyFinalized
         self._hasher.update(data)
 
     def copy(self):
-        if self.__done:
+        if self._done:
             raise exc.AlreadyFinalized
-        hashobj = Hash(self.name, digest_size=self.digest_size)
+        hashobj = type(self)(self.name, digest_size=self.digest_size)
         hashobj._hasher = self._hasher.copy()
         return hashobj
 
     def digest(self):
         if self._digest is None:
             self._digest = self._hasher.finalize()
-            self.__done = True
+            self._done = True
         return self._digest
 
     def new(self, data=b"", *, digest_size=None):

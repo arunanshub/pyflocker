@@ -1,6 +1,8 @@
+"""ChaCha20 and ChaCha20Poly1305 cipher implementation classes."""
+
 from cryptography.hazmat.primitives.ciphers import (
     algorithms as algo,
-    Cipher as CrCipher,
+    Cipher,
 )
 from cryptography import exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
@@ -9,9 +11,32 @@ from cryptography.hazmat.primitives.poly1305 import Poly1305
 from ... import base, exc
 from ..symmetric import _EncryptionCtx, _DecryptionCtx
 from .symmetric import NonAEADCipherTemplate
+from .misc import derive_poly1305_key
 
 
-def new(encrypting, key, nonce, *, file=None, use_poly1305=True):
+def new(encrypting, key, nonce, *, use_poly1305=True, file=None):
+    """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
+
+    Args:
+        encrypting (bool):
+            True is encryption and False is decryption.
+        key (bytes, bytearray, memoryview):
+            The key for the cipher.
+        nonce (bytes, bytearray, memoryview):
+            The Nonce for the cipher.
+            It must not be repeated with the same key.
+
+    Keyword Arguments:
+        use_poly1305 (bool): Whether to use Poly1305 MAC with ChaCha20 cipher.
+        file (filelike): The source file to read from.
+
+    Returns:
+        :any:`BaseCipher`:
+            ChaCha20(-Poly1305) cipher wrapper object.
+
+    Note:
+        Any other error that is raised is from the backend itself.
+    """
     if file is not None:
         use_poly1305 = True
 
@@ -45,7 +70,7 @@ def get_poly1305_key(ckey, nonce):
     if len(nonce) == 8:
         nonce = bytes(4) + nonce
 
-    crp = CrCipher(
+    crp = Cipher(
         algo.ChaCha20(ckey, bytes(4) + nonce),
         None,
         defb(),
@@ -54,13 +79,15 @@ def get_poly1305_key(ckey, nonce):
 
 
 class ChaCha20Poly1305(base.BaseAEADCipher):
+    """ChaCha20Poly1305 Cipher class."""
+
     def __init__(self, encrypting, key, nonce):
         if not len(nonce) in (8, 12):
             raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 
-        cipher = CrCipher(
+        cipher = Cipher(
             algo.ChaCha20(
                 key,
                 (1).to_bytes(4, "little") + nonce,
@@ -72,7 +99,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         ctx = cipher.encryptor() if encrypting else cipher.decryptor()
 
         self._encrypting = encrypting
-        self._auth = Poly1305(get_poly1305_key(key, nonce))
+        self._auth = Poly1305(derive_poly1305_key(key, nonce))
         self._ctx = self._get_auth_ctx(encrypting, ctx, self._auth)
         self._len_aad, self._len_ct = 0, 0
         self._updated = False
@@ -147,13 +174,20 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
 
 
 class ChaCha20(NonAEADCipherTemplate):
+    """ChaCha20 Cipher class.
+
+    This class alone does not provide any authentication. For AEAD purposes,
+    wrap `ChaCha20` object with a class that implements `BaseAEADCipher` or
+    use `ChaCha20Poly1305`.
+    """
+
     def __init__(self, encrypting, key, nonce):
         if not len(nonce) in (8, 12):
             raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 
-        cipher = CrCipher(
+        cipher = Cipher(
             algo.ChaCha20(
                 key,
                 bytes(4) + nonce,

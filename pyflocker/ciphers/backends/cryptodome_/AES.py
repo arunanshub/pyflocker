@@ -1,3 +1,5 @@
+"""Implementation of AES cipher."""
+
 from types import MappingProxyType
 
 from Cryptodome.Cipher import AES
@@ -43,6 +45,47 @@ def new(
     use_hmac=False,
     digestmod="sha256",
 ):
+    """Create a new backend specific AES cipher.
+
+    Args:
+        encrypting (bool):
+            True is encryption and False is decryption.
+        key (bytes, bytearray, memoryview):
+            The key for the cipher.
+        mode (:any:`Modes`):
+            The mode to use for AES cipher. All backends may not support
+            that particular mode.
+        iv_or_nonce (bytes, bytearray, memoryview):
+            The Initialization Vector or Nonce for the cipher. It must not be
+            repeated with the same key.
+
+    Keyword Arguments:
+        file (filelike):
+            The source file to read from. If `file` is specified
+            and the `mode` is not an AEAD mode, HMAC is always used.
+        use_hmac (bool):
+            Should the cipher use HMAC as authentication or not,
+            if it does not support AEAD. (Default: False)
+        digestmod (str):
+            The algorithm to use for HMAC. Defaults to `sha256`.
+            Specifying this value without setting `hashed` to True
+            has no effect.
+
+    Important:
+        The following arguments must not be passed if the mode is an AEAD mode:
+          - use_hmac
+          - digestmod
+
+    Returns:
+        :any:`BaseCipher`: AES cipher.
+
+    Raises:
+        ValueError: if the `mode` is an AEAD mode and still the extra kwargs
+            are provided.
+
+    Note:
+        Any other error that is raised is from the backend itself.
+    """
     if mode in modes.special:
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
     elif mode in modes.aead:
@@ -59,6 +102,17 @@ def new(
     return crp
 
 
+def supported_modes():
+    """Lists all modes supported by AES cipher of this backend.
+
+    Args:
+        None
+    Returns:
+        list: list of :any:`Modes` object supported by backend.
+    """
+    return list(supported)
+
+
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     crp = HMACWrapper(
@@ -70,7 +124,7 @@ def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
     return crp
 
 
-def get_aes_cipher(key, mode, iv_or_nonce):
+def _get_aes_cipher(key, mode, iv_or_nonce):
     args = (iv_or_nonce,)
     kwargs = dict()
 
@@ -89,8 +143,13 @@ def get_aes_cipher(key, mode, iv_or_nonce):
 
 
 class AEAD(AEADCipherTemplate):
+    """AES-AEAD cipher class.
+
+    Adapts the AES cipher from Cryptodome backend.
+    """
+
     def __init__(self, encrypting, key, mode, nonce):
-        self._cipher = get_aes_cipher(key, mode, nonce)
+        self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
         # creating a context is relatively expensive here
@@ -100,8 +159,13 @@ class AEAD(AEADCipherTemplate):
 
 
 class NonAEAD(NonAEADCipherTemplate):
+    """AES-NonAEAD cipher class.
+
+    Adapts the AES cipher from Cryptodome backend.
+    """
+
     def __init__(self, encrypting, key, mode, nonce):
-        self._cipher = get_aes_cipher(key, mode, nonce)
+        self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
 
@@ -112,8 +176,14 @@ class NonAEAD(NonAEADCipherTemplate):
 
 
 class AEADOneShot(AEAD):
+    """AES-AEAD-OneShot cipher class.
+
+    Adapts the backend specific AES cipher modes which support one shot
+    operation.
+    """
+
     def __init__(self, encrypting, key, mode, nonce):
-        self._cipher = get_aes_cipher(key, mode, nonce)
+        self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
         self.__mode = mode
@@ -154,6 +224,7 @@ class AEADOneShot(AEAD):
                     ) from e
                 data = self._update_func(data)
         except ValueError:
+            # decryption error is ignored, and raised from finalize method
             pass
 
         self.finalize(tag)

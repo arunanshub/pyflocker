@@ -1,3 +1,5 @@
+"""Implementation of AES cipher."""
+
 import struct
 from types import MappingProxyType
 
@@ -11,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import (
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.backends import default_backend as defb
 
-from ... import base, modes
+from ... import base, modes as modes_
 from ...modes import Modes as _m
 from ..symmetric import (
     HMACWrapper,
@@ -55,10 +57,51 @@ def new(
     file=None,
     digestmod="sha256"
 ):
+    """Create a new backend specific AES cipher.
+
+    Args:
+        encrypting (bool):
+            True is encryption and False is decryption.
+        key (bytes, bytearray, memoryview):
+            The key for the cipher.
+        mode (:any:`Modes`):
+            The mode to use for AES cipher. All backends may not support
+            that particular mode.
+        iv_or_nonce (bytes, bytearray, memoryview):
+            The Initialization Vector or Nonce for the cipher. It must not be
+            repeated with the same key.
+
+    Keyword Arguments:
+        file (filelike):
+            The source file to read from. If `file` is specified
+            and the `mode` is not an AEAD mode, HMAC is always used.
+        use_hmac (bool):
+            Should the cipher use HMAC as authentication or not,
+            if it does not support AEAD. (Default: False)
+        digestmod (str):
+            The algorithm to use for HMAC. Defaults to `sha256`.
+            Specifying this value without setting `hashed` to True
+            has no effect.
+
+    Important:
+        The following arguments must not be passed if the mode is an AEAD mode:
+          - use_hmac
+          - digestmod
+
+    Returns:
+        :any:`BaseCipher`: AES cipher.
+
+    Raises:
+        ValueError: if the `mode` is an AEAD mode and still the extra kwargs
+            are provided.
+
+    Note:
+        Any other error that is raised is from the backend itself.
+    """
     if file is not None:
         use_hmac = True
 
-    if mode in modes.aead:
+    if mode in modes_.aead:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
     else:
         if use_hmac:
@@ -70,6 +113,17 @@ def new(
         crp = FileCipherWrapper(crp, file)
 
     return crp
+
+
+def supported_modes():
+    """Lists all modes supported by AES cipher of this backend.
+
+    Args:
+        None
+    Returns:
+        list: list of :any:`Modes` object supported by backend.
+    """
+    return list(supported)
 
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):

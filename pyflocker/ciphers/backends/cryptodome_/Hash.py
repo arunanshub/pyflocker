@@ -1,3 +1,5 @@
+from types import MappingProxyType
+
 try:
     from Cryptodome.Hash import (
         SHA224,
@@ -44,17 +46,21 @@ hashes = {
     "sha3_512": SHA3_512.new,
 }
 
-arbitrary_digest_size_hashes = {
-    "blake2b": BLAKE2b.new,
-    "blake2s": BLAKE2s.new,
-    "shake128": SHAKE128.new,
-    "shake256": SHAKE256.new,
-}
+arbitrary_digest_size_hashes = MappingProxyType(
+    {
+        "blake2b": BLAKE2b.new,
+        "blake2s": BLAKE2s.new,
+        "shake128": SHAKE128.new,
+        "shake256": SHAKE256.new,
+    }
+)
 
-xofs = {
-    "shake128": SHAKE128.new,
-    "shake256": SHAKE256.new,
-}
+xofs = MappingProxyType(
+    {
+        "shake128": SHAKE128.new,
+        "shake256": SHAKE256.new,
+    }
+)
 
 _block_sizes = {
     "sha3_224": 114,
@@ -66,6 +72,10 @@ _block_sizes = {
 }
 
 hashes.update(arbitrary_digest_size_hashes)
+
+hashes = MappingProxyType(hashes)
+
+del MappingProxyType
 
 
 class Hash:  # (base.BaseHash):
@@ -81,7 +91,9 @@ class Hash:  # (base.BaseHash):
             self._hasher = _hash(data=data, digest_bytes=digest_size)
         else:
             self._hasher = _hash(data)
+
         self._name = name
+        self._done = False
 
     @property
     def digest_size(self):
@@ -126,14 +138,14 @@ class Hash:  # (base.BaseHash):
             raise AttributeError(msg) from None
 
     def update(self, data):
-        if self.__done:
+        if self._done:
             raise exc.AlreadyFinalized
         self._hasher.update(data)
 
     def copy(self):
-        if self.__done:
+        if self._done:
             raise exc.AlreadyFinalized
-        hashobj = Hash(self.name, digest_size=self.digest_size)
+        hashobj = type(self)(self.name, digest_size=self.digest_size)
         try:
             hashobj._hasher = self._hasher.copy()
         except AttributeError:
@@ -143,7 +155,7 @@ class Hash:  # (base.BaseHash):
         return hashobj
 
     def digest(self):
-        self.__done = True
+        self._done = True
         if self.name in xofs:
             return self._hasher.read(self._digest_size)
         else:
