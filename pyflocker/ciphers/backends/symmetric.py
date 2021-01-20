@@ -1,4 +1,4 @@
-"""Tools for Symmetric ciphers which are used by both backends."""
+"""Tools for Symmetric ciphers common to all the backends."""
 
 import hmac
 from functools import partial
@@ -43,13 +43,13 @@ class FileCipherWrapper(base.BaseAEADCipher):
     def is_encrypting(self):
         return self._encrypting
 
-    def update(self, blocksize=16384):
+    def update(self, blocksize: int = 16384):
         if self._cipher is None:
             raise exc.AlreadyFinalized("Cipher has already been finalized.")
         if (data := self._file.read(blocksize)) :
             return self._cipher.update(data)
 
-    def update_into(self, file, tag=None, blocksize=16384):
+    def update_into(self, file, tag=None, blocksize: int = 16384):
         if self._cipher is None:
             raise exc.AlreadyFinalized("Cipher has already been finalized.")
         if not self._encrypting:

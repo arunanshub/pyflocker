@@ -4,17 +4,17 @@ from enum import Enum
 class Modes(Enum):
     """All modes supported by pyflocker and various ciphers."""
 
-    MODE_GCM = "MODE_GCM"
-    MODE_CTR = "MODE_CTR"
-    # MODE_CBC = "MODE_CBC"
-    MODE_CFB = "MODE_CFB"
-    MODE_CFB8 = "MODE_CFB8"
-    MODE_OFB = "MODE_OFB"
-    # MODE_OPENPGP = "MODE_OPENPGP"
-    MODE_CCM = "MODE_CCM"
-    MODE_EAX = "MODE_EAX"
-    MODE_SIV = "MODE_SIV"
-    MODE_OCB = "MODE_OCB"
+    MODE_GCM = "GCM"
+    MODE_CTR = "CTR"
+    # MODE_CBC = "CBC"
+    MODE_CFB = "CFB"
+    MODE_CFB8 = "CFB8"
+    MODE_OFB = "OFB"
+    # MODE_OPENPGP = "OPENPGP"
+    MODE_CCM = "CCM"
+    MODE_EAX = "EAX"
+    MODE_SIV = "SIV"
+    MODE_OCB = "OCB"
 
 
 # authenticated modes

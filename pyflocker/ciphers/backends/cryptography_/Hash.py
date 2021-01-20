@@ -1,28 +1,38 @@
+from types import MappingProxyType
+
 from cryptography.hazmat.primitives import hashes as h
 from cryptography.hazmat.backends import default_backend as defb
 
-from ... import base
+from ... import base, exc
 
-hashes = {
-    "sha1": h.SHA1,
-    "sha224": h.SHA224,
-    "sha256": h.SHA256,
-    "sha384": h.SHA384,
-    "sha512": h.SHA512,
-    "sha3_224": h.SHA3_224,
-    "sha3_256": h.SHA3_256,
-    "sha3_384": h.SHA3_384,
-    "sha3_512": h.SHA3_512,
-    "sha512_224": h.SHA512_224,
-    "sha512_256": h.SHA512_256,
-}
+hashes = MappingProxyType(
+    {
+        "sha1": h.SHA1,
+        "sha224": h.SHA224,
+        "sha256": h.SHA256,
+        "sha384": h.SHA384,
+        "sha512": h.SHA512,
+        "sha3_224": h.SHA3_224,
+        "sha3_256": h.SHA3_256,
+        "sha3_384": h.SHA3_384,
+        "sha3_512": h.SHA3_512,
+        "sha512_224": h.SHA512_224,
+        "sha512_256": h.SHA512_256,
+        "shake128": h.SHAKE128,
+        "shake256": h.SHAKE256,
+        "blake2b": h.BLAKE2b,
+        "blake2s": h.BLAKE2s,
+    }
+)
 
-_arbitrary_digest_size_hashes = {
-    "shake128": h.SHAKE128,
-    "shake256": h.SHAKE256,
-    "blake2b": h.BLAKE2b,
-    "blake2s": h.BLAKE2s,
-}
+_arbitrary_digest_size_hashes = MappingProxyType(
+    {
+        "shake128": h.SHAKE128,
+        "shake256": h.SHAKE256,
+        "blake2b": h.BLAKE2b,
+        "blake2s": h.BLAKE2s,
+    }
+)
 
 _block_sizes = {
     "sha3_224": 114,
@@ -33,7 +43,6 @@ _block_sizes = {
     "shake256": 136,
 }
 
-hashes.update(_arbitrary_digest_size_hashes)
 
 # the ASN.1 Object IDs
 _oids = {

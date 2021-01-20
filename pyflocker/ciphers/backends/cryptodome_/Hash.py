@@ -31,7 +31,7 @@ except ModuleNotFoundError:
         SHAKE256,
     )
 
-from ... import base
+from ... import base, exc
 
 hashes = {
     "sha224": SHA224.new,

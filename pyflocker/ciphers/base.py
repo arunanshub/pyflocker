@@ -1,6 +1,7 @@
 """Base classes for pyflocker."""
 
 import sys
+import typing
 
 from functools import wraps, partial
 from abc import ABCMeta, abstractmethod
@@ -10,7 +11,7 @@ from . import exc
 
 class BaseCipher(metaclass=ABCMeta):
     @abstractmethod
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         """Whether the cipher is encrypting or not.
 
         Args:
@@ -23,7 +24,7 @@ class BaseCipher(metaclass=ABCMeta):
 
 class BaseNonAEADCipher(BaseCipher):
     @abstractmethod
-    def update(self, data):
+    def update(self, data: typing.ByteString) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
         bytes object.
 
@@ -36,10 +37,9 @@ class BaseNonAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def update_into(self, data, out):
-        """Works almost like :py:attr:`~Cipher.update` method, except for
-        it fills a preallocated buffer with data with no intermideate
-        copying of data.
+    def update_into(self, data, out) -> None:
+        """Encrypt or decrypt the `data` and store it in a preallocated buffer
+        `out`.
 
         Args:
             data (bytes, bytearray, memoryview):
@@ -53,7 +53,7 @@ class BaseNonAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def finalize(self):
+    def finalize(self) -> None:
         """Finalizes and closes the cipher.
 
         Returns:
@@ -72,7 +72,7 @@ class BaseAEADCipher(BaseCipher):
     """
 
     @abstractmethod
-    def update(self, data):
+    def update(self, data) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
         bytes object, while passing it through the MAC.
 
@@ -85,7 +85,7 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def update_into(self, data, out):
+    def update_into(self, data, out) -> None:
         """Works almost like :py:attr:`~Cipher.update` method, except for
         it fills a preallocated buffer with data with no intermideate
         copying of data. The data buffer is passed through the MAC.
@@ -102,7 +102,7 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def authenticate(self, data):
+    def authenticate(self, data: typing.ByteString) -> None:
         """Authenticates additional data.
         Data must be a bytes, bytearray or memoryview object. You can call
         it to pass additional data that must be authenticated, but would be
@@ -121,7 +121,7 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[typing.ByteString] = None) -> None:
         """Finalizes and closes the cipher.
 
         Args:
@@ -138,7 +138,7 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def calculate_tag(self):
+    def calculate_tag(self) -> bytes:
         """Calculates and returns the associated `tag`.
 
         Args:

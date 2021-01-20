@@ -1,3 +1,6 @@
+"""Cryptodome backend specific templates and tools for symmetric ciphers."""
+
+import typing
 from ... import base, exc
 
 
@@ -9,6 +12,10 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
         - `_encrypting`
         - `_update_func`
     """
+
+    # these are *not* class variables
+    _encrypting: bool
+    _update_func: typing.Callable
 
     def is_encrypting(self):
         return self._encrypting
@@ -38,8 +45,15 @@ class AEADCipherTemplate(base.BaseAEADCipher):
         - `_encrypting`
         - `_update_func`
         - `_cipher`
-        - `_updated`
     """
+
+    # these are *not* class variables
+    _updated: bool = False
+    _tag: typing.Optional[bytes] = None
+
+    _encrypting: bool
+    _update_func: typing.Callable
+    _cipher: typing.Any
 
     def is_encrypting(self):
         return self._encrypting
@@ -67,19 +81,22 @@ class AEADCipherTemplate(base.BaseAEADCipher):
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
-        if not self._encrypting and tag is None:
-            raise ValueError("tag is required for finalization")
+        if not self.is_encrypting():
+            if tag is None:
+                raise ValueError("tag is required for finalization")
 
-        self._update_func = None
-
-        try:
-            if not self._encrypting:
-                self._cipher.verify(tag)
-        except ValueError as e:
-            raise exc.DecryptionError from e
+            cipher, self._cipher = self._cipher, None
+            self._update_func = None
+            try:
+                cipher.verify(tag)
+            except ValueError as e:
+                raise exc.DecryptionError from e
+        else:
+            self._tag, self._cipher = self._cipher.digest(), None
+            self._update_func = None
 
     def calculate_tag(self):
         if self._update_func is not None:
             raise exc.NotFinalized
 
-        return self._cipher.digest()
+        return self._tag

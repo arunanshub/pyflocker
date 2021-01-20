@@ -25,16 +25,64 @@ supported = MappingProxyType(
 del MappingProxyType
 
 
+class Camellia(NonAEADCipherTemplate):
+    """Camellia cipher class."""
+
+    def __init__(self, encrypting, key, mode, iv_or_nonce):
+        cipher = Cipher(
+            algo.Camellia(key),
+            supported[mode](iv_or_nonce),
+            defb(),
+        )
+
+        self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
+        self._encrypting = encrypting
+
+
 def new(
-    encrypting,
-    key,
-    mode,
-    iv_or_nonce,
+    encrypting: bool,
+    key: typing.ByteString,
+    mode: _m,
+    iv_or_nonce: typing.ByteString,
     *,
-    file=None,
-    use_hmac=False,
-    digestmod="sha256",
-):
+    file: typing.Optional[typing.BinaryIO] = None,
+    use_hmac: bool = False,
+    digestmod: str = "sha256",
+) -> typing.Union[Camellia, FileCipherWrapper, HMACWrapper]:
+    """Instantiate a new Camellia cipher wrapper object.
+
+    Args:
+        encrypting (bool):
+            True is encryption and False is decryption.
+        key (bytes, bytearray, memoryview):
+            The key for the cipher.
+        mode (:class:`pyflocker.ciphers.modes.Modes`):
+            The mode to use for Camellia cipher. All backends may not support
+            that particular mode.
+        iv_or_nonce (bytes, bytearray, memoryview):
+            The Initialization Vector or Nonce for the cipher. It must not be
+            repeated with the same key.
+
+    Keyword Arguments:
+        file (filelike):
+            The source file to read from.
+            HMAC is always used when file is supplied.
+        use_hmac (bool):
+            Should the cipher use HMAC as authentication or not.
+            (Default: `False`)
+        digestmod (str):
+            The algorithm to use for `HMAC`. Defaults to `sha256`.
+            Specifying this value without setting `use_hmac` to True
+            has no effect.
+
+    Returns:
+        :any:`BaseCipher`:
+            Camellia cipher.
+
+    Note:
+        Any other error that is raised is from the backend itself.
+    """
+    crp: typing.Any
     if file is not None:
         use_hmac = True
 
@@ -58,15 +106,3 @@ def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
         digestmod,
     )
     return crp
-
-
-class Camellia(NonAEADCipherTemplate):
-    def __init__(self, encrypting, key, mode, iv_or_nonce):
-        cipher = Cipher(
-            algo.Camellia(key),
-            supported[mode](iv_or_nonce),
-            defb(),
-        )
-
-        self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
-        self._encrypting = encrypting

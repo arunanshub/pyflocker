@@ -1,3 +1,6 @@
+"""Cryptography backend specific templates and tools for symmetric ciphers."""
+
+import typing
 from ... import base, exc
 
 
@@ -9,6 +12,9 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
         - `_encrypting`
         - `_ctx`
     """
+
+    _encrypting: bool
+    _ctx: typing.Any
 
     def is_encrypting(self):
         return self._encrypting
@@ -37,9 +43,14 @@ class AEADCipherTemplate(base.BaseAEADCipher):
     Subclasses need to provide the following attributes:
         - `_encrypting`
         - `_ctx`
-        - `_updated`
-        - `_tag`
     """
+
+    # these are *not* class variables
+    _updated: bool = False
+    _tag: typing.Optional[bytes] = None
+
+    _encrypting: bool
+    _ctx: typing.Any
 
     def is_encrypting(self):
         return self._encrypting
@@ -67,19 +78,19 @@ class AEADCipherTemplate(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
-        if not self._encrypting and tag is None:
-            raise ValueError("tag is required for finalization")
+        if not self.is_encrypting():
+            if tag is None:
+                raise ValueError("tag is required for finalization")
 
-        ctx, self._ctx = self._ctx, None
-
-        try:
-            if not self._encrypting:
+            ctx, self._ctx = self._ctx, None
+            try:
                 ctx.finalize_with_tag(tag)
-            else:
-                ctx.finalize()
-                self._tag = ctx.tag
-        except ValueError as e:
-            raise exc.DecryptionError from e
+            except ValueError as e:
+                raise exc.DecryptionError from e
+        else:
+            ctx, self._ctx = self._ctx, None
+            ctx.finalize()
+            self._tag = ctx.tag
 
     def calculate_tag(self):
         if self._ctx is not None:

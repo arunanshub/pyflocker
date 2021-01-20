@@ -1,5 +1,7 @@
 """ChaCha20 and ChaCha20Poly1305 cipher implementation classes."""
 
+import typing
+
 from cryptography.hazmat.primitives.ciphers import (
     algorithms as algo,
     Cipher,
@@ -9,73 +11,9 @@ from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
 from ... import base, exc
-from ..symmetric import _EncryptionCtx, _DecryptionCtx
+from ..symmetric import FileCipherWrapper, _EncryptionCtx, _DecryptionCtx
 from .symmetric import NonAEADCipherTemplate
 from .misc import derive_poly1305_key
-
-
-def new(encrypting, key, nonce, *, use_poly1305=True, file=None):
-    """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
-
-    Args:
-        encrypting (bool):
-            True is encryption and False is decryption.
-        key (bytes, bytearray, memoryview):
-            The key for the cipher.
-        nonce (bytes, bytearray, memoryview):
-            The Nonce for the cipher.
-            It must not be repeated with the same key.
-
-    Keyword Arguments:
-        use_poly1305 (bool): Whether to use Poly1305 MAC with ChaCha20 cipher.
-        file (filelike): The source file to read from.
-
-    Returns:
-        :any:`BaseCipher`:
-            ChaCha20(-Poly1305) cipher wrapper object.
-
-    Note:
-        Any other error that is raised is from the backend itself.
-    """
-    if file is not None:
-        use_poly1305 = True
-
-    if use_poly1305:
-        crp = ChaCha20Poly1305(encrypting, key, nonce)
-    else:
-        crp = ChaCha20(encrypting, key, nonce)
-
-    if file:
-        crp = FileCipherWrapper(crp, file, offset=0)
-
-    return crp
-
-
-def get_poly1305_key(ckey, nonce):
-    """Generate a poly1305 key.
-
-    Args:
-        ckey (bytes): The key used for the cipher
-        nonce (bytes): The nonce used for the cipher. It must be 12 bytes.
-
-    Returns:
-        bytes: A Poly1305 key.
-
-    Raises:
-        ValueError: If the length of nonce is not equal to 8 or 12 bytes.
-    """
-    if len(nonce) not in (8, 12):
-        raise ValueError("Poly1305 key must be 16 bytes long.")
-
-    if len(nonce) == 8:
-        nonce = bytes(4) + nonce
-
-    crp = Cipher(
-        algo.ChaCha20(ckey, bytes(4) + nonce),
-        None,
-        defb(),
-    ).encryptor()
-    return crp.update(bytes(32))
 
 
 class ChaCha20Poly1305(base.BaseAEADCipher):
@@ -198,3 +136,49 @@ class ChaCha20(NonAEADCipherTemplate):
 
         self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
         self._encrypting = encrypting
+
+
+def new(
+    encrypting: bool,
+    key: typing.ByteString,
+    nonce: typing.ByteString,
+    *,
+    use_poly1305: bool = True,
+    file: typing.Optional[typing.BytesIO] = None,
+) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
+    """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
+
+    Args:
+        encrypting (bool):
+            True is encryption and False is decryption.
+        key (bytes, bytearray, memoryview):
+            The key for the cipher.
+        nonce (bytes, bytearray, memoryview):
+            The Nonce for the cipher.
+            It must not be repeated with the same key.
+
+    Keyword Arguments:
+        use_poly1305 (bool): Whether to use Poly1305 MAC with ChaCha20 cipher.
+        file (filelike): The source file to read from.
+
+    Returns:
+        :any:`BaseCipher`:
+            ChaCha20(-Poly1305) cipher wrapper object.
+
+    Note:
+        Any other error that is raised is from the backend itself.
+    """
+    crp: typing.Any
+
+    if file is not None:
+        use_poly1305 = True
+
+    if use_poly1305:
+        crp = ChaCha20Poly1305(encrypting, key, nonce)
+    else:
+        crp = ChaCha20(encrypting, key, nonce)
+
+    if file:
+        crp = FileCipherWrapper(crp, file, offset=0)
+
+    return crp

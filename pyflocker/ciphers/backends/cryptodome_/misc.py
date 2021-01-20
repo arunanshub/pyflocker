@@ -2,6 +2,8 @@
 Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 """
 
+import typing
+
 try:
     from Cryptodome.Protocol import KDF
 except ModuleNotFoundError:
@@ -11,13 +13,13 @@ from .Hash import hashes as _hashes
 
 
 def derive_hkdf_key(
-    master_key,
-    dklen,
-    hashalgo,
-    salt,
-    cipher_ctx=b"enc-key",
-    auth_ctx=b"auth-key",
-):
+    master_key: typing.ByteString,
+    dklen: int,
+    hashalgo: str,
+    salt: typing.ByteString,
+    cipher_ctx: typing.ByteString = b"enc-key",
+    auth_ctx: typing.ByteString = b"auth-key",
+) -> typing.Tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
     Args:
@@ -36,7 +38,7 @@ def derive_hkdf_key(
         master=master_key,
         key_len=dklen,
         salt=salt,
-        hashmod=_hash,
+        hashmod=hash_,
         num_keys=1,
         context=cipher_ctx,
     )

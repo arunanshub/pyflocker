@@ -2,6 +2,8 @@
 Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 """
 
+import typing
+
 import cryptography.exceptions as bkx
 
 from cryptography.hazmat.primitives.ciphers import (
@@ -11,15 +13,17 @@ from cryptography.hazmat.primitives.ciphers import (
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend as defb
 
+from .Hash import hashes as _hashes
+
 
 def derive_hkdf_key(
-    master_key,
-    dklen,
-    hashalgo,
-    salt,
-    cipher_ctx=b"enc-key",
-    auth_ctx=b"auth-key",
-):
+    master_key: typing.ByteString,
+    dklen: int,
+    hashalgo: str,
+    salt: typing.ByteString,
+    cipher_ctx: typing.ByteString = b"enc-key",
+    auth_ctx: typing.ByteString = b"auth-key",
+) -> typing.Tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
     Args:
@@ -52,7 +56,9 @@ def derive_hkdf_key(
     return key, hkey
 
 
-def derive_poly1305_key(ckey, nonce):
+def derive_poly1305_key(
+    ckey: typing.ByteString, nonce: typing.ByteString
+) -> bytes:
     """Generate a poly1305 key.
 
     Args:
