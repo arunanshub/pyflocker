@@ -1,3 +1,4 @@
+import typing
 from types import MappingProxyType
 
 from cryptography.hazmat.primitives.ciphers import (

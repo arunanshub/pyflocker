@@ -144,7 +144,7 @@ def new(
     nonce: typing.ByteString,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[typing.BytesIO] = None,
+    file: typing.Optional[typing.BinaryIO] = None,
 ) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
