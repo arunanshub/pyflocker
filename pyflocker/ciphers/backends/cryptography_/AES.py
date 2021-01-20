@@ -2,6 +2,7 @@
 
 import hmac
 import struct
+import typing
 from types import MappingProxyType
 
 import cryptography.exceptions as bkx
@@ -230,7 +231,7 @@ def new(
             crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
 
     if file:
-        crp = FileCipherWrapper(crp, file)
+        crp = FileCipherWrapper(crp, file, offset=15)
 
     return crp
 

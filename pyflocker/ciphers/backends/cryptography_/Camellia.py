@@ -93,7 +93,7 @@ def new(
         crp = Camellia(encrypting, key, mode, iv_or_nonce)
 
     if file:
-        crp = FileCipherWrapper(crp, file)
+        crp = FileCipherWrapper(crp, file, offset=15)
 
     return crp
 
