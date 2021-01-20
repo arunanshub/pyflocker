@@ -9,7 +9,7 @@ from abc import ABCMeta, abstractmethod
 from . import exc
 
 
-class BaseCipher(metaclass=ABCMeta):
+class BaseSymmetricCipher(metaclass=ABCMeta):
     @abstractmethod
     def is_encrypting(self) -> bool:
         """Whether the cipher is encrypting or not.
@@ -22,7 +22,7 @@ class BaseCipher(metaclass=ABCMeta):
         """
 
 
-class BaseNonAEADCipher(BaseCipher):
+class BaseNonAEADCipher(BaseSymmetricCipher):
     @abstractmethod
     def update(self, data: typing.ByteString) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
@@ -37,7 +37,11 @@ class BaseNonAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def update_into(self, data, out) -> None:
+    def update_into(
+        self,
+        data: typing.ByteString,
+        out: typing.ByteString,
+    ) -> None:
         """Encrypt or decrypt the `data` and store it in a preallocated buffer
         `out`.
 
@@ -64,7 +68,7 @@ class BaseNonAEADCipher(BaseCipher):
         """
 
 
-class BaseAEADCipher(BaseCipher):
+class BaseAEADCipher(BaseSymmetricCipher):
     """Abstract base class for AEAD ciphers.
 
     Custom cipher wrappers that provide AEAD functionality to NonAEAD
@@ -72,12 +76,12 @@ class BaseAEADCipher(BaseCipher):
     """
 
     @abstractmethod
-    def update(self, data) -> bytes:
+    def update(self, data: typing.ByteString) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
         bytes object, while passing it through the MAC.
 
         Args:
-            data (bytes, bytesarray):
+            data (bytes, bytesarray, memoryview):
                 The bytes-like object to pass to the cipher.
 
         Returns:
@@ -85,10 +89,13 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def update_into(self, data, out) -> None:
-        """Works almost like :py:attr:`~Cipher.update` method, except for
-        it fills a preallocated buffer with data with no intermideate
-        copying of data. The data buffer is passed through the MAC.
+    def update_into(
+        self,
+        data: typing.ByteString,
+        out: typing.ByteString,
+    ) -> None:
+        """Encrypt or decrypt the `data` and store it in a preallocated buffer
+        `out`. The data is authenticated internally.
 
         Args:
             data (bytes, bytearray, memoryview):
@@ -103,10 +110,8 @@ class BaseAEADCipher(BaseCipher):
 
     @abstractmethod
     def authenticate(self, data: typing.ByteString) -> None:
-        """Authenticates additional data.
-        Data must be a bytes, bytearray or memoryview object. You can call
-        it to pass additional data that must be authenticated, but would be
-        transmitted in the clear.
+        """Authenticates part of the message that get deliverd as is, without
+        any encryption.
 
         Args:
             data (bytes, bytearray, memoryview):
@@ -117,12 +122,13 @@ class BaseAEADCipher(BaseCipher):
 
         Raises:
             TypeError:
-                if this method is called after calling :py:attr:`~Cipher.update`.
+                if this method is called after calling
+                :py:attr:`~BaseAEADCipher.update`.
         """
 
     @abstractmethod
     def finalize(self, tag: typing.Optional[typing.ByteString] = None) -> None:
-        """Finalizes and closes the cipher.
+        """Finalizes and ends the cipher state.
 
         Args:
             tag (bytes, bytearray):
@@ -138,12 +144,14 @@ class BaseAEADCipher(BaseCipher):
         """
 
     @abstractmethod
-    def calculate_tag(self) -> bytes:
+    def calculate_tag(self) -> typing.Optional[bytes]:
         """Calculates and returns the associated `tag`.
 
         Args:
             None
 
         Returns:
-            If encrypting, it returns `None`, otherwise a `bytes` object.
+            Union[None, bytes]:
+                Returns None if decrypting, otherwise the associated
+                authentication tag.
         """

@@ -77,7 +77,7 @@ def new(
             has no effect.
 
     Returns:
-        :any:`BaseCipher`:
+        :any:`BaseSymmetricCipher`:
             Camellia cipher.
 
     Note:

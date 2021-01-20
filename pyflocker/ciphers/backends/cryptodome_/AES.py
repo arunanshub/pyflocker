@@ -184,7 +184,7 @@ def new(
           - digestmod
 
     Returns:
-        :any:`BaseCipher`: AES cipher.
+        :any:`BaseSymmetricCipher`: AES cipher.
 
     Raises:
         ValueError: if the `mode` is an AEAD mode and still the extra kwargs
