@@ -6,8 +6,8 @@ Base Classes, Algorithms and Backends
    :undoc-members:
    :show-inheritance:
 
-Base classes and loaders
-------------------------
+Base classes and exceptions
+---------------------------
 
 .. toctree::
    :maxdepth: 4
@@ -15,6 +15,13 @@ Base classes and loaders
    base
    exc
    modes
+
+Algorithm loaders
+-----------------
+
+.. toctree::
+   :maxdepth: 4
+
    interfaces/index
 
 Backend of PyFLocker
