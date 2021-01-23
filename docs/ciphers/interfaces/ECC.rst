@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.ECC module
-=======================================
+Elleptic-curve Cryptography
+===========================
 
 .. automodule:: pyflocker.ciphers.interfaces.ECC
    :members:

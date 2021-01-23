@@ -1,21 +1,32 @@
-pyflocker.ciphers.backends.cryptography\_ package
-=================================================
+Cryptography specific implementation
+====================================
 
 .. automodule:: pyflocker.ciphers.backends.cryptography_
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
+Symmetric ciphers
+-----------------
 .. toctree::
    :maxdepth: 4
 
    AES
-   Camellia
    ChaCha20
-   DH
+   Camellia
+
+Asymmetric ciphers
+------------------
+.. toctree::
+   :maxdepth: 4
+
    ECC
-   Hash
    RSA
+   DH
+
+Hash functions
+--------------
+.. toctree::
+   :maxdepth: 4
+
+   Hash

@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptodome\_.ECC module
-==================================================
+ECC
+===
 
 .. automodule:: pyflocker.ciphers.backends.cryptodome_.ECC
    :members:

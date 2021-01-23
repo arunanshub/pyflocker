@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptodome\_.AES module
-==================================================
+AES
+===
 
 .. automodule:: pyflocker.ciphers.backends.cryptodome_.AES
    :members:

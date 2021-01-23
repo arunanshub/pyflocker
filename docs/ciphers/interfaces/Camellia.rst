@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.Camellia module
-============================================
+Camellia
+========
 
 .. automodule:: pyflocker.ciphers.interfaces.Camellia
    :members:

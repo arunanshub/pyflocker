@@ -1,19 +1,30 @@
-pyflocker.ciphers.backends.cryptodome\_ package
-===============================================
+Cryptodome specific implementation
+==================================
 
 .. automodule:: pyflocker.ciphers.backends.cryptodome_
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
-
+Symmetric ciphers
+-----------------
 .. toctree::
    :maxdepth: 4
 
    AES
    ChaCha20
+
+Asymmetric ciphers
+------------------
+.. toctree::
+   :maxdepth: 4
+
    ECC
-   Hash
    RSA
+
+Hash functions
+--------------
+.. toctree::
+   :maxdepth: 4
+
+   Hash

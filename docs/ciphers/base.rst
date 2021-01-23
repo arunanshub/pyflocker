@@ -1,5 +1,5 @@
-pyflocker.ciphers.base module
-=============================
+Base classes
+============
 
 .. automodule:: pyflocker.ciphers.base
    :members:

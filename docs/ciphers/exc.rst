@@ -1,5 +1,5 @@
-pyflocker.ciphers.exc module
-============================
+Exception classes
+=================
 
 .. automodule:: pyflocker.ciphers.exc
    :members:

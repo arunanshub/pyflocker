@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.RSA module
-=======================================
+RSA Asymmetric Cipher
+=====================
 
 .. automodule:: pyflocker.ciphers.interfaces.RSA
    :members:

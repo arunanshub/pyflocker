@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptography\_.Camellia module
-=========================================================
+Camellia
+========
 
 .. automodule:: pyflocker.ciphers.backends.cryptography_.Camellia
    :members:

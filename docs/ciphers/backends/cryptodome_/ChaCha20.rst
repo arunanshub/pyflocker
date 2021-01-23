@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptodome\_.ChaCha20 module
-=======================================================
+ChaCha20
+========
 
 .. automodule:: pyflocker.ciphers.backends.cryptodome_.ChaCha20
    :members:

@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.Hash module
-========================================
+Hash functions
+==============
 
 .. automodule:: pyflocker.ciphers.interfaces.Hash
    :members:

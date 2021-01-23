@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptography\_.RSA module
-====================================================
+RSA
+===
 
 .. automodule:: pyflocker.ciphers.backends.cryptography_.RSA
    :members:

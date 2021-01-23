@@ -1,13 +1,13 @@
-pyflocker.ciphers.backends package
-==================================
+Backend of PyFLocker
+====================
 
 .. automodule:: pyflocker.ciphers.backends
    :members:
    :undoc-members:
    :show-inheritance:
 
-Subpackages
------------
+Implementations
+---------------
 
 .. toctree::
    :maxdepth: 4

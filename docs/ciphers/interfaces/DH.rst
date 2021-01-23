@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.DH module
-======================================
+Diffie-Hellman Key Exchange
+===========================
 
 .. automodule:: pyflocker.ciphers.interfaces.DH
    :members:

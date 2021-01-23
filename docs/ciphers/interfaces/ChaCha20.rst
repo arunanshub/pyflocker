@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.ChaCha20 module
-============================================
+ChaCha20
+========
 
 .. automodule:: pyflocker.ciphers.interfaces.ChaCha20
    :members:

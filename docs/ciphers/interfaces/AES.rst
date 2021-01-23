@@ -1,5 +1,5 @@
-pyflocker.ciphers.interfaces.AES module
-=======================================
+AES
+===
 
 .. automodule:: pyflocker.ciphers.interfaces.AES
    :members:

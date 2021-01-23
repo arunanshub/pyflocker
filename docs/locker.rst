@@ -1,5 +1,5 @@
-pyflocker.locker module
-=======================
+File encryption tools
+=====================
 
 .. automodule:: pyflocker.locker
    :members:

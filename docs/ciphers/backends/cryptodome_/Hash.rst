@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptodome\_.Hash module
-===================================================
+Hash functions
+==============
 
 .. automodule:: pyflocker.ciphers.backends.cryptodome_.Hash
    :members:

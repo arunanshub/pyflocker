@@ -1,5 +1,5 @@
-pyflocker.ciphers.modes module
-==============================
+Symmetric cipher modes
+======================
 
 .. automodule:: pyflocker.ciphers.modes
    :members:

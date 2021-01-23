@@ -1,13 +1,13 @@
-pyflocker.ciphers.interfaces package
-====================================
+Algorithm loaders
+=================
 
 .. automodule:: pyflocker.ciphers.interfaces
    :members:
    :undoc-members:
    :show-inheritance:
 
-Submodules
-----------
+Symmetric Ciphers
+-----------------
 
 .. toctree::
    :maxdepth: 4
@@ -15,7 +15,21 @@ Submodules
    AES
    Camellia
    ChaCha20
+
+Asymmetric Ciphers
+------------------
+
+.. toctree::
+   :maxdepth: 4
+
    DH
    ECC
-   Hash
    RSA
+
+Hash functions
+--------------
+
+.. toctree::
+   :maxdepth: 4
+
+   Hash

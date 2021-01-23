@@ -1,5 +1,5 @@
-pyflocker.ciphers.backends.cryptography\_.DH module
-===================================================
+DH
+==
 
 .. automodule:: pyflocker.ciphers.backends.cryptography_.DH
    :members:
