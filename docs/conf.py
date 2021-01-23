@@ -12,6 +12,7 @@
 #
 import os
 import sys
+from datetime import date
 
 sys.path.insert(0, "..")
 
@@ -19,7 +20,7 @@ sys.path.insert(0, "..")
 # -- Project information -----------------------------------------------------
 
 project = "PyFLocker"
-copyright = "2021, Arunanshu Biswas"
+copyright = f"{date.today().year}, Arunanshu Biswas"
 author = "Arunanshu Biswas"
 release = "0.2.6"
 
