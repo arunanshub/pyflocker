@@ -1,8 +1,19 @@
 # PyFLocker
-![Upload Python Package](https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg)
-![Build](https://github.com/arunanshub/pyflocker/workflows/Build/badge.svg)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![Python Versions](https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions)](https://pypi.org/project/PyFLocker)
+
+<p align="center">
+    <a href="https://github.com/arunanshub/pyflocker/actions?query=workflow%3A%22Upload+Python+Package%22" alt="Upload Python Package">
+        <img src="https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg" />
+    </a>
+    <a href="https://github.com/arunanshub/pyflocker/actions?query=workflow%3ABuild">
+        <img src="https://github.com/arunanshub/pyflocker/workflows/Build/badge.svg" />
+    </a>
+    <a href="https://github.com/psf/black">
+        <img src="https://img.shields.io/badge/code%20style-black-000000.svg" />
+    </a>
+    <a href="https://pypi.org/project/PyFLocker">
+        <img src="https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions" />
+    </a>
+</p>
 
 #### Python Cryptographic (File Locking) Library
 

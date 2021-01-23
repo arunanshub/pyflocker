@@ -118,34 +118,34 @@ def lockerf(
 
     Operation details:
 
-        1. Password derivation
+    1. Password derivation
 
-            The `password` is first derived into a key with PBKDF2-HMAC with
-            32 byte salt, 50000 iterations, 'sha256' as the hash algorithm,
-            although they can be modified by keeping `kdf` as None, and passing
-            the modified values through `kwargs`, except `password` and `salt`
+       The `password` is first derived into a key with PBKDF2-HMAC with
+       32 byte salt, 50000 iterations, 'sha256' as the hash algorithm,
+       although they can be modified by keeping `kdf` as None, and passing
+       the modified values through `kwargs`, except `password` and `salt`
 
-            If you want to use a different KDF, pass it to `kdf` and pass the
-            remaining arguments through `kwargs`
+       If you want to use a different KDF, pass it to `kdf` and pass the
+       remaining arguments through `kwargs`
 
-        2. Cipher creation
+    2. Cipher creation
 
-            The cipher is created with 12 byte nonce if mode is GCM else 16
-            byte nonce. The nonce is stored as a part of HEADER for identifying
-            the file, along with other required values.
+       The cipher is created with 12 byte nonce if mode is GCM else 16
+       byte nonce. The nonce is stored as a part of HEADER for identifying
+       the file, along with other required values.
 
-            2.1. Authentication
+       1. Authentication
 
-                Before the operation begins, the authentication data is passed
-                to the cipher. The authentication bits are: (salt, metadata)
-                in that order.
+          Before the operation begins, the authentication data is passed
+          to the cipher. The authentication bits are: (salt, metadata)
+          in that order.
 
-        3. Finalization
+    3. Finalization
 
-            After completion of the entire operation, the tag created by the
-            authenticatior of the cipher is written to the file as a part of
-            `HEADER`. If the file is being decrypted, it is read from the
-            `HEADER` for verifying the file integrity and correct decryption.
+       After completion of the entire operation, the tag created by the
+       authenticatior of the cipher is written to the file as a part of
+       `HEADER`. If the file is being decrypted, it is read from the
+       `HEADER` for verifying the file integrity and correct decryption.
 
     Note:
         If the cipher mode does not support authentication, HMAC is used.
