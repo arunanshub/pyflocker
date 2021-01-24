@@ -78,7 +78,7 @@ hashes = MappingProxyType(hashes)
 del MappingProxyType
 
 
-class Hash:  # (base.BaseHash):
+class Hash(base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
         self._digest_size = digest_size
         _hash = hashes[name]

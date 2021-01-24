@@ -1,5 +1,7 @@
 """Base classes for pyflocker."""
 
+from __future__ import annotations
+
 import sys
 import typing
 
@@ -13,9 +15,6 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
     @abstractmethod
     def is_encrypting(self) -> bool:
         """Whether the cipher is encrypting or not.
-
-        Args:
-            None
 
         Returns:
             bool: True if encrypting, else False.
@@ -51,17 +50,11 @@ class BaseNonAEADCipher(BaseSymmetricCipher):
             out (bytearray, memoryview):
                 The buffer interface where the encrypted/decrypted data
                 must be written into.
-
-        Returns:
-            None
         """
 
     @abstractmethod
     def finalize(self) -> None:
         """Finalizes and closes the cipher.
-
-        Returns:
-            None
 
         Raises:
             AlreadyFinalized: If the cipher was already finalized.
@@ -103,9 +96,6 @@ class BaseAEADCipher(BaseSymmetricCipher):
             out (bytearray, memoryview):
                 The buffer interface where the encrypted/decrypted data
                 must be written into.
-
-        Returns:
-            None
         """
 
     @abstractmethod
@@ -116,9 +106,6 @@ class BaseAEADCipher(BaseSymmetricCipher):
         Args:
             data (bytes, bytearray, memoryview):
                 The bytes-like object that must be authenticated.
-
-        Returns:
-            None
 
         Raises:
             TypeError:
@@ -135,9 +122,6 @@ class BaseAEADCipher(BaseSymmetricCipher):
                 The associated tag that authenticates the decryption.
                 `tag` is required for decryption only.
 
-        Returns:
-            None
-
         Raises:
             ValueError: If cipher is decrypting and tag is not supplied.
             DecryptionError: If the decryption was incorrect.
@@ -147,11 +131,88 @@ class BaseAEADCipher(BaseSymmetricCipher):
     def calculate_tag(self) -> typing.Optional[bytes]:
         """Calculates and returns the associated `tag`.
 
-        Args:
-            None
-
         Returns:
             Union[None, bytes]:
                 Returns None if decrypting, otherwise the associated
                 authentication tag.
         """
+
+
+class BaseHash(metaclass=ABCMeta):
+    """Abstract base class for hash functions. Follows PEP-247.
+
+    Custom MACs must use this interface.
+    """
+
+    @property
+    @abstractmethod
+    def digest_size(self) -> int:
+        """
+        The size of the digest produced by the hashing object, measured in
+        bytes. If the hash has a variable output size, this output size must
+        be chosen when the hashing object is created, and this attribute must
+        contain the selected size. Therefore, None is not a legal value for
+        this attribute.
+
+        Returns:
+            int: Digest size as integer.
+        """
+
+    @abstractmethod
+    def update(self, data: typing.ByteString) -> None:
+        """
+        Hash string into the current state of the hashing object. ``update()``
+        can be called any number of times during a hashing object's lifetime.
+
+        Args:
+            data (bytes, bytearray, memoryview):
+                The chunk of message being hashed.
+        """
+
+    @abstractmethod
+    def digest(self) -> bytes:
+        """
+        Return the hash value of this hashing object as a string containing
+        8-bit data. The object is not altered in any way by this function; you
+        can continue updating the object after calling this function.
+
+        Returns:
+            bytes: Digest as binary form.
+        """
+
+    def hexdigest(self) -> str:
+        """
+        Return the hash value of this hashing object as a string containing
+        hexadecimal digits.
+
+        Returns:
+            str: Digest, as a hexadecimal form.
+        """
+        return self.digest().hex()
+
+    @abstractmethod
+    def copy(self) -> BaseHash:
+        """
+        Return a separate copy of this hashing object.
+        An update to this copy won't affect the original object.
+
+        Returns:
+            BaseHash: a copy of hash function.
+
+        Raises:
+            AlreadyFinalized:
+                This is raised if the method is called after calling
+                `~BaseHash.digest` method.
+        """
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Name of the hash function.
+
+        Returns:
+            str: Name of hash function.
+        """
+
+    def __repr__(self) -> str:
+        return f"<{type(self).__name__} '{self.name}' at {hex(id(self))}>"
