@@ -25,23 +25,14 @@ hashes = MappingProxyType(
     }
 )
 
-_arbitrary_digest_size_hashes = MappingProxyType(
-    {
-        "shake128": h.SHAKE128,
-        "shake256": h.SHAKE256,
-        "blake2b": h.BLAKE2b,
-        "blake2s": h.BLAKE2s,
-    }
+var_digest_size = frozenset(
+    (
+        "shake128",
+        "shake256",
+        "blake2b",
+        "blake2s",
+    )
 )
-
-_block_sizes = {
-    "sha3_224": 114,
-    "sha3_256": 136,
-    "sha3_384": 104,
-    "sha3_512": 72,
-    "shake128": 168,
-    "shake256": 136,
-}
 
 
 # the ASN.1 Object IDs
@@ -61,38 +52,37 @@ _oids = {
 }
 
 
-class Hash:  # (base.BaseHash):
+class Hash(base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
-        self._digest = None
         self._name = name
-        self._done = False
+        self._digest = None
+        self._ctx = self._construct_hash(name, data, digest_size)
 
-        if name in _arbitrary_digest_size_hashes:
+        # get values directly from the algorithm object
+        algo = self._ctx.algorithm
+        self._digest_size = algo.digest_size
+        self._block_size = getattr(algo, "block_size", None)
+
+    @staticmethod
+    def _construct_hash(name, data=b"", digest_size=None):
+        if name in var_digest_size:
             if digest_size is None:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
-            self._hasher = h.Hash(hashes[name](digest_size), defb())
+            hash_ = h.Hash(hashes[name](digest_size), defb())
         else:
-            self._hasher = h.Hash(hashes[name](), defb())
-        self._hasher.update(data)
+            hash_ = h.Hash(hashes[name](), defb())
+        hash_.update(data)
+        return hash_
 
     @property
     def digest_size(self):
-        return self._hasher.algorithm.digest_size
+        return self._digest_size
 
     @property
     def block_size(self):
-        """Block size of the underlying hash algorithm."""
-        try:
-            return self._hasher.algorithm.block_size
-        except AttributeError:
-            try:
-                return _block_sizes[self.name]
-            except KeyError:  # pragma: no cover
-                pass  # raise below
-            raise AttributeError(  # pragma: no cover
-                f"Hash algorithm {self.name} does not have "
-                "block_size parameter."
-            ) from None
+        if self._block_size is None:
+            return NotImplemented
+        return self._block_size
 
     @property
     def name(self):
@@ -106,37 +96,37 @@ class Hash:  # (base.BaseHash):
 
         # for BLAKE
         if self.name == "blake2b":
-            if self.digest_size not in (20, 32, 48, 64):
+            if self.digest_size != 64:
                 raise AttributeError(  # pragma: no cover
-                    "oid is avaliable only for "
-                    "digest sizes 20, 32, 48 and 64"
+                    "oid is avaliable only when digest size == 64"
                 )
             return "1.3.6.1.4.1.1722.12.2.1." + str(self.digest_size)
 
         if self.name == "blake2s":
-            if self.digest_size not in (16, 20, 28, 32):
+            if self.digest_size != 32:
                 raise AttributeError(  # pragma: no cover
-                    "oid is avaliable only for "
-                    "digest sizes 16, 20, 28 and 32"
+                    "oid is avaliable only when digest size == 32"
                 )
             return "1.3.6.1.4.1.1722.12.2.2." + str(self.digest_size)
 
     def update(self, data):
-        if self._done:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        self._hasher.update(data)
+        self._ctx.update(data)
 
     def copy(self):
-        if self._done:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
         hashobj = type(self)(self.name, digest_size=self.digest_size)
         hashobj._hasher = self._hasher.copy()
         return hashobj
 
     def digest(self):
-        if self._digest is None:
-            self._digest = self._hasher.finalize()
-            self._done = True
+        if self._ctx is None:
+            return self._digest
+
+        ctx, self._ctx = self._ctx, None
+        self._digest = ctx.finalize()
         return self._digest
 
     def new(self, data=b"", *, digest_size=None):

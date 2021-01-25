@@ -139,7 +139,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
 
 
 class BaseHash(metaclass=ABCMeta):
-    """Abstract base class for hash functions. Follows PEP-247.
+    """Abstract base class for hash functions. Follows PEP-0452.
 
     Custom MACs must use this interface.
     """
@@ -158,6 +158,26 @@ class BaseHash(metaclass=ABCMeta):
             int: Digest size as integer.
         """
 
+    @property
+    @abstractmethod
+    def block_size(self) -> typing.Union[int, NotImplemented]
+        """
+        An integer value or NotImplemented; the internal block size of the hash
+        algorithm in bytes. The block size is used by the HMAC module to pad
+        the secret key to digest_size or to hash the secret key if it is longer
+        than digest_size. If no HMAC algorithm is standardized for the hash
+        algorithm, returns ``NotImplemented`` instead.
+
+        See Also:
+            PEP 452 -- API for Cryptographic Hash Functions v2.0,
+            https://www.python.org/dev/peps/pep-0452
+
+        Returns:
+            Union[int, NotImplemented]:
+                An integer if block size is available, otherwise
+                ``NotImplemented``
+        """
+
     @abstractmethod
     def update(self, data: typing.ByteString) -> None:
         """
@@ -167,6 +187,10 @@ class BaseHash(metaclass=ABCMeta):
         Args:
             data (bytes, bytearray, memoryview):
                 The chunk of message being hashed.
+
+        Raises:
+            AlreadyFinalized:
+                This is raised if ``digest`` or ``hexdigest`` has been called.
         """
 
     @abstractmethod

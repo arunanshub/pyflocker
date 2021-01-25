@@ -1,53 +1,36 @@
+import typing
+
 from types import MappingProxyType
 
-try:
-    from Cryptodome.Hash import (
-        SHA224,
-        SHA256,
-        SHA384,
-        SHA512,
-        SHA3_224,
-        SHA3_256,
-        SHA3_384,
-        SHA3_512,
-        BLAKE2b,
-        BLAKE2s,
-        SHAKE128,
-        SHAKE256,
-    )
-except ModuleNotFoundError:
-    from Crypto.Hash import (
-        SHA224,
-        SHA256,
-        SHA384,
-        SHA512,
-        SHA3_224,
-        SHA3_256,
-        SHA3_384,
-        SHA3_512,
-        BLAKE2b,
-        BLAKE2s,
-        SHAKE128,
-        SHAKE256,
-    )
+from Cryptodome.Hash import (
+    SHA224,
+    SHA256,
+    SHA384,
+    SHA512,
+    SHA3_224,
+    SHA3_256,
+    SHA3_384,
+    SHA3_512,
+    BLAKE2b,
+    BLAKE2s,
+    SHAKE128,
+    SHAKE256,
+)
 
 from ... import base, exc
 
-hashes = {
-    "sha224": SHA224.new,
-    "sha256": SHA256.new,
-    "sha384": SHA384.new,
-    "sha512": SHA512.new,
-    "sha512_224": lambda data=b"": SHA512.new(data, "224"),
-    "sha512_256": lambda data=b"": SHA512.new(data, "256"),
-    "sha3_224": SHA3_224.new,
-    "sha3_256": SHA3_256.new,
-    "sha3_384": SHA3_384.new,
-    "sha3_512": SHA3_512.new,
-}
-
-arbitrary_digest_size_hashes = MappingProxyType(
+hashes = MappingProxyType(
     {
+        "sha224": SHA224.new,
+        "sha256": SHA256.new,
+        "sha384": SHA384.new,
+        "sha512": SHA512.new,
+        "sha512_224": lambda data=b"": SHA512.new(data, "224"),
+        "sha512_256": lambda data=b"": SHA512.new(data, "256"),
+        "sha3_224": SHA3_224.new,
+        "sha3_256": SHA3_256.new,
+        "sha3_384": SHA3_384.new,
+        "sha3_512": SHA3_512.new,
         "blake2b": BLAKE2b.new,
         "blake2s": BLAKE2s.new,
         "shake128": SHAKE128.new,
@@ -55,67 +38,57 @@ arbitrary_digest_size_hashes = MappingProxyType(
     }
 )
 
-xofs = MappingProxyType(
-    {
-        "shake128": SHAKE128.new,
-        "shake256": SHAKE256.new,
-    }
+var_digest_size = frozenset(
+    (
+        "blake2b",
+        "blake2s",
+        "shake128",
+        "shake256",
+    )
 )
 
-_block_sizes = {
-    "sha3_224": 114,
-    "sha3_256": 136,
-    "sha3_384": 104,
-    "sha3_512": 72,
-    "shake128": 168,
-    "shake256": 136,
-}
-
-hashes.update(arbitrary_digest_size_hashes)
-
-hashes = MappingProxyType(hashes)
+xofs = frozenset(
+    (
+        "shake128",
+        "shake256",
+    )
+)
 
 del MappingProxyType
 
 
 class Hash(base.BaseHash):
     def __init__(self, name, data=b"", *, digest_size=None):
-        self._digest_size = digest_size
-        _hash = hashes[name]
-
-        if digest_size is None:
-            if name in arbitrary_digest_size_hashes:  # pragma: no cover
-                raise ValueError("value of digest-size is required")
-
-        if name in arbitrary_digest_size_hashes.keys() ^ xofs.keys():
-            self._hasher = _hash(data=data, digest_bytes=digest_size)
-        else:
-            self._hasher = _hash(data)
-
+        self._ctx = self._construct_hash(name, data, digest_size)
         self._name = name
-        self._done = False
+
+        self._digest_size = (
+            getattr(self._ctx, "digest_size", None) or digest_size
+        )
+        self._block_size = getattr(self._ctx, "block_size", None)
+        self._oid = getattr(self._ctx, "oid", None)
+        self._digest = None
+
+    @staticmethod
+    def _construct_hash(name, data=b"", digest_size=None):
+        hash_ = hashes[name]
+
+        if digest_size is None and name in var_digest_size:  # pragma: no cover
+            raise ValueError("value of digest-size is required")
+
+        if name in var_digest_size ^ xofs:
+            return hash_(data=data, digest_bytes=digest_size)
+        return hash_(data)
 
     @property
     def digest_size(self):
-        try:
-            return self._hasher.digest_size
-        except AttributeError:  # for SHAKE
-            return self._digest_size
+        return self._digest_size
 
     @property
     def block_size(self):
-        """Block size of the underlying hash algorithm."""
-        try:
-            return self._hasher.block_size
-        except AttributeError:
-            try:
-                return _block_sizes[self.name]
-            except KeyError:  # pragma: no cover
-                pass  # raise below
-            raise AttributeError(  # pragma: no cover
-                f"Hash algorithm {self.name} does not "
-                "have block_size parameter."
-            ) from None
+        if self._block_size is None:
+            return NotImplemented
+        return self._block_size
 
     @property
     def name(self):
@@ -124,42 +97,47 @@ class Hash(base.BaseHash):
     @property
     def oid(self):
         """ASN.1 Object ID of the hash algorithm."""
-        try:
-            return self._hasher.oid
-        except AttributeError:
-            base_msg = "oid is avaliable only for digest sizes "
-            # for BLAKE-2b/2s
-            if self.name == "blake2b":  # pragma: no cover
-                msg = base_msg + "20, 32, 48 and 64"
-            elif self.msg == "blake2s":  # pragma: no cover
-                msg = base_msg + "16, 20, 28 and 32"
-            else:  # pragma: no cover
-                msg = f"oid attribute is not available for hash {self.name}"
-            raise AttributeError(msg) from None
+        if self._oid is not None:
+            return self._oid
+
+        base_msg = "oid is avaliable only for digest sizes "
+        # for BLAKE-2b/2s
+        if self.name == "blake2b":  # pragma: no cover
+            msg = base_msg + "20, 32, 48 and 64"
+        elif self.msg == "blake2s":  # pragma: no cover
+            msg = base_msg + "16, 20, 28 and 32"
+        else:  # pragma: no cover
+            msg = f"oid attribute is not available for hash {self.name}"
+        raise AttributeError(msg)
 
     def update(self, data):
-        if self._done:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        self._hasher.update(data)
+        self._ctx.update(data)
 
     def copy(self):
-        if self._done:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        hashobj = type(self)(self.name, digest_size=self.digest_size)
         try:
-            hashobj._hasher = self._hasher.copy()
-        except AttributeError:
+            hash_ = self._ctx.copy()
+            hashobj = type(self)(self.name, digest_size=self.digest_size)
+            hashobj._ctx = hash_
+            return hashobj
+        except AttributeError as e:
             raise AttributeError(
                 f"Hash {self.name} does not support copying."
-            ) from None
-        return hashobj
+            ) from e
 
     def digest(self):
-        self._done = True
+        if self._ctx is None:
+            return self._digest
+
+        ctx, self._ctx = self._ctx, None
         if self.name in xofs:
-            return self._hasher.read(self._digest_size)
+            self._digest = ctx.read(self._digest_size)
         else:
-            return self._hasher.digest()
+            self._digest = ctx.digest()
+        return self._digest
 
     def new(self, data=b"", *, digest_size=None):
         return type(self)(
@@ -167,3 +145,26 @@ class Hash(base.BaseHash):
             data,
             digest_size=digest_size or self.digest_size,
         )
+
+
+def new(
+    name: str,
+    data: typing.ByteString = b"",
+    *,
+    digest_size: typing.Optional[int] = None,
+):
+    """Instantiate an hash object with given parameters.
+
+    Args:
+        name (str):
+            Name of the hash algorithm. It must be compatible with
+            ``hashlib.new``.
+        data (bytes, bytearray, memoryview):
+            Initial data to pass to the hash algorithm.
+        digest_size (int): An integer value.
+
+    Returns:
+        Hash: Hash object.
+    """
+
+    return Hash(name, data, digest_size=digest_size)
