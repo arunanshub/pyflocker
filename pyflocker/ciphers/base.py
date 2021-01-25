@@ -160,7 +160,7 @@ class BaseHash(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def block_size(self) -> typing.Union[int, NotImplemented]
+    def block_size(self) -> typing.Union[int, NotImplemented]:
         """
         An integer value or NotImplemented; the internal block size of the hash
         algorithm in bytes. The block size is used by the HMAC module to pad
