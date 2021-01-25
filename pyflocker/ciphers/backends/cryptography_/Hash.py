@@ -1,3 +1,5 @@
+import typing
+
 from types import MappingProxyType
 
 from cryptography.hazmat.primitives import hashes as h
@@ -135,3 +137,26 @@ class Hash(base.BaseHash):
             data,
             digest_size=digest_size or self.digest_size,
         )
+
+
+def new(
+    name: str,
+    data: typing.ByteString = b"",
+    *,
+    digest_size: typing.Optional[int] = None,
+):
+    """Instantiate an hash object with given parameters.
+
+    Args:
+        name (str):
+            Name of the hash algorithm. It must be compatible with
+            ``hashlib.new``.
+        data (bytes, bytearray, memoryview):
+            Initial data to pass to the hash algorithm.
+        digest_size (int): An integer value.
+
+    Returns:
+        Hash: Hash object.
+    """
+
+    return Hash(name, data, digest_size=digest_size)
