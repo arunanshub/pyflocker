@@ -147,7 +147,7 @@ class HMACWrapper(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized("Cipher has already been finalized.")
 
-        if not self._cipher.is_encrypting():
+        if not self.is_encrypting():
             if tag is None:
                 raise ValueError("tag is required for decryption")
 
@@ -164,7 +164,7 @@ class HMACWrapper(base.BaseAEADCipher):
         if self._ctx is not None:
             raise exc.NotFinalized("Cipher has already been finalized.")
 
-        if self._encrypting:
+        if self.is_encrypting():
             return self._auth.digest()
 
     @staticmethod
