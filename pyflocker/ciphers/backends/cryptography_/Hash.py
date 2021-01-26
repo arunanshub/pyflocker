@@ -7,7 +7,7 @@ from cryptography.hazmat.backends import default_backend as defb
 
 from ... import base, exc
 
-hashes = MappingProxyType(
+HASHES = MappingProxyType(
     {
         "sha1": h.SHA1,
         "sha224": h.SHA224,
@@ -27,7 +27,7 @@ hashes = MappingProxyType(
     }
 )
 
-var_digest_size = frozenset(
+VAR_DIGEST_SIZE = frozenset(
     (
         "shake128",
         "shake256",
@@ -38,20 +38,24 @@ var_digest_size = frozenset(
 
 
 # the ASN.1 Object IDs
-_oids = {
-    "sha224": "2.16.840.1.101.3.4.2.4",
-    "sha256": "2.16.840.1.101.3.4.2.1",
-    "sha384": "2.16.840.1.101.3.4.2.2",
-    "sha512": "2.16.840.1.101.3.4.2.3",
-    "sha512_224": "2.16.840.1.101.3.4.2.5",
-    "sha512_256": "2.16.840.1.101.3.4.2.6",
-    "sha3_224": "2.16.840.1.101.3.4.2.7",
-    "sha3_256": "2.16.840.1.101.3.4.2.8",
-    "sha3_384": "2.16.840.1.101.3.4.2.9",
-    "sha3_512": "2.16.840.1.101.3.4.2.10",
-    "shake128": "2.16.840.1.101.3.4.2.11",
-    "shake256": "2.16.840.1.101.3.4.2.12",
-}
+OIDS = MappingProxyType(
+    {
+        "sha224": "2.16.840.1.101.3.4.2.4",
+        "sha256": "2.16.840.1.101.3.4.2.1",
+        "sha384": "2.16.840.1.101.3.4.2.2",
+        "sha512": "2.16.840.1.101.3.4.2.3",
+        "sha512_224": "2.16.840.1.101.3.4.2.5",
+        "sha512_256": "2.16.840.1.101.3.4.2.6",
+        "sha3_224": "2.16.840.1.101.3.4.2.7",
+        "sha3_256": "2.16.840.1.101.3.4.2.8",
+        "sha3_384": "2.16.840.1.101.3.4.2.9",
+        "sha3_512": "2.16.840.1.101.3.4.2.10",
+        "shake128": "2.16.840.1.101.3.4.2.11",
+        "shake256": "2.16.840.1.101.3.4.2.12",
+    }
+)
+
+del MappingProxyType
 
 
 class Hash(base.BaseHash):
@@ -67,12 +71,12 @@ class Hash(base.BaseHash):
 
     @staticmethod
     def _construct_hash(name, data=b"", digest_size=None):
-        if name in var_digest_size:
+        if name in VAR_DIGEST_SIZE:
             if digest_size is None:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
-            hash_ = h.Hash(hashes[name](digest_size), defb())
+            hash_ = h.Hash(HASHES[name](digest_size), defb())
         else:
-            hash_ = h.Hash(hashes[name](), defb())
+            hash_ = h.Hash(HASHES[name](), defb())
         hash_.update(data)
         return hash_
 
@@ -93,8 +97,8 @@ class Hash(base.BaseHash):
     @property
     def oid(self):
         """ASN.1 Object ID of the hash algorithm."""
-        if self.name in _oids:
-            return _oids[self.name]
+        if self.name in OIDS:
+            return OIDS[self.name]
 
         # for BLAKE
         if self.name == "blake2b":

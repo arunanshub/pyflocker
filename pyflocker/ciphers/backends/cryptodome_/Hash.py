@@ -19,7 +19,7 @@ from Cryptodome.Hash import (
 
 from ... import base, exc
 
-hashes = MappingProxyType(
+HASHES = MappingProxyType(
     {
         "sha224": SHA224.new,
         "sha256": SHA256.new,
@@ -38,7 +38,7 @@ hashes = MappingProxyType(
     }
 )
 
-var_digest_size = frozenset(
+VAR_DIGEST_SIZE = frozenset(
     (
         "blake2b",
         "blake2s",
@@ -47,7 +47,7 @@ var_digest_size = frozenset(
     )
 )
 
-xofs = frozenset(
+XOFS = frozenset(
     (
         "shake128",
         "shake256",
@@ -71,12 +71,12 @@ class Hash(base.BaseHash):
 
     @staticmethod
     def _construct_hash(name, data=b"", digest_size=None):
-        hash_ = hashes[name]
+        hash_ = HASHES[name]
 
-        if digest_size is None and name in var_digest_size:  # pragma: no cover
+        if digest_size is None and name in VAR_DIGEST_SIZE:  # pragma: no cover
             raise ValueError("value of digest-size is required")
 
-        if name in var_digest_size ^ xofs:
+        if name in VAR_DIGEST_SIZE ^ XOFS:
             return hash_(data=data, digest_bytes=digest_size)
         return hash_(data)
 
@@ -133,7 +133,7 @@ class Hash(base.BaseHash):
             return self._digest
 
         ctx, self._ctx = self._ctx, None
-        if self.name in xofs:
+        if self.name in XOFS:
             self._digest = ctx.read(self._digest_size)
         else:
             self._digest = ctx.digest()
