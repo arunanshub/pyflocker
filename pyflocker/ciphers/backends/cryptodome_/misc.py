@@ -4,12 +4,9 @@ Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 
 import typing
 
-try:
-    from Cryptodome.Protocol import KDF
-except ModuleNotFoundError:
-    from Crypto.Protocol import KDF
+from Cryptodome.Protocol import KDF
 
-from .Hash import hashes as _hashes
+from .Hash import HASHES as _hashes
 
 
 def derive_hkdf_key(
