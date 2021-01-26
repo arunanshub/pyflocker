@@ -13,7 +13,7 @@ from cryptography.hazmat.primitives.ciphers import (
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 from cryptography.hazmat.backends import default_backend as defb
 
-from .Hash import hashes as _hashes
+from .Hash import HASHES as _hashes
 
 
 def derive_hkdf_key(
