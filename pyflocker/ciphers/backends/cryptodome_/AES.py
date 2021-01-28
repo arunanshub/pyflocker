@@ -98,7 +98,6 @@ class AEADOneShot(AEAD):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
-        self.__mode = mode
 
         # creating a context is relatively expensive here
         if encrypting:
