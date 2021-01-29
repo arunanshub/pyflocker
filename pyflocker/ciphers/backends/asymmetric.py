@@ -18,7 +18,7 @@ def _default_hash_factory():
     return Hash.new("sha256")
 
 
-@dataclass
+@dataclass(frozen=True)
 class MGF1:
     """
     Mask Generation Function.
@@ -31,7 +31,7 @@ class MGF1:
     hashfunc: base.BaseHash = field(default_factory=_default_hash_factory)
 
 
-@dataclass
+@dataclass(frozen=True)
 class OAEP:
     """
     PKCS#1 OAEP is an asymmetric cipher based on RSA and OAEP padding.
@@ -41,7 +41,8 @@ class OAEP:
         mgf: Mask Generation Function. Defaults to MGF1.
         hashfunc:
             A :any:`BaseHash` object. Defaults to 'sha256'.
-            Can be created from `pyflocker.ciphers.interfaces.Hash.new` function.
+            Can be created from `pyflocker.ciphers.interfaces.Hash.new`
+            function.
         label: A label to apply to this encryption. Defaults to `None`.
     """
 
@@ -50,7 +51,7 @@ class OAEP:
     label: typing.Optional[bytes] = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class PSS:
     """
     Probabilistic Digital Signature Scheme.
@@ -62,4 +63,4 @@ class PSS:
     """
 
     mgf: MGF1 = field(default_factory=MGF1)
-    salt_len: typing.Optional[int] = None
+    salt_length: typing.Optional[int] = None

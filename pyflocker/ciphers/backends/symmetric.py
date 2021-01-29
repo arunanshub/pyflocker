@@ -37,7 +37,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
     def authenticate(self, data):
         if self._cipher is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         return self._cipher.authenticate(data)
 
     def is_encrypting(self):
@@ -45,13 +45,13 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
     def update(self, blocksize: int = 16384):
         if self._cipher is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         if (data := self._file.read(blocksize)) :
             return self._cipher.update(data)
 
     def update_into(self, file, tag=None, blocksize: int = 16384):
         if self._cipher is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         if not self._encrypting:
             raise ValueError("tag is required for decryption")
 
@@ -75,7 +75,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
     def finalize(self, tag=None):
         if self._cipher is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
 
         try:
             self._cipher.finalize(tag)
@@ -120,7 +120,7 @@ class HMACWrapper(base.BaseAEADCipher):
 
     def authenticate(self, data):
         if self._ctx is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         if self._updated:
             raise TypeError(
                 "Cannot call authenticate after update/update_into has been"
@@ -131,21 +131,21 @@ class HMACWrapper(base.BaseAEADCipher):
 
     def update(self, data):
         if self._ctx is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         self._updated = True
         self._len_ct += len(data)
         return self._ctx.update(data)
 
     def update_into(self, data, out):
         if self._ctx is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
         self._updated = True
         self._len_ct += len(out[: -self._offset])
         self._ctx.update_into(data, out)
 
     def finalize(self, tag=None):
         if self._ctx is None:
-            raise exc.AlreadyFinalized("Cipher has already been finalized.")
+            raise exc.AlreadyFinalized
 
         if not self.is_encrypting():
             if tag is None:
@@ -162,7 +162,7 @@ class HMACWrapper(base.BaseAEADCipher):
 
     def calculate_tag(self):
         if self._ctx is not None:
-            raise exc.NotFinalized("Cipher has already been finalized.")
+            raise exc.NotFinalized
 
         if self.is_encrypting():
             return self._auth.digest()

@@ -4,9 +4,8 @@ from __future__ import annotations
 
 import sys
 import typing
-
-from functools import wraps, partial
 from abc import ABCMeta, abstractmethod
+from functools import partial, wraps
 
 from . import exc
 
@@ -20,8 +19,6 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
             bool: True if encrypting, else False.
         """
 
-
-class BaseNonAEADCipher(BaseSymmetricCipher):
     @abstractmethod
     def update(self, data: typing.ByteString) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
@@ -52,6 +49,15 @@ class BaseNonAEADCipher(BaseSymmetricCipher):
                 must be written into.
         """
 
+
+class BaseNonAEADCipher(BaseSymmetricCipher):
+    """
+    Abstract Base Class for ciphers that have no authentication support.
+
+    These ciphers can be wrapped by classes that implement ``BaseAEADCipher``
+    and the wrappers must provide authentication support.
+    """
+
     @abstractmethod
     def finalize(self) -> None:
         """Finalizes and closes the cipher.
@@ -67,36 +73,6 @@ class BaseAEADCipher(BaseSymmetricCipher):
     Custom cipher wrappers that provide AEAD functionality to NonAEAD
     ciphers must derive from this.
     """
-
-    @abstractmethod
-    def update(self, data: typing.ByteString) -> bytes:
-        """Takes bytes-like object and returns encrypted/decrypted
-        bytes object, while passing it through the MAC.
-
-        Args:
-            data (bytes, bytesarray, memoryview):
-                The bytes-like object to pass to the cipher.
-
-        Returns:
-            bytes: bytes-like encrypted data.
-        """
-
-    @abstractmethod
-    def update_into(
-        self,
-        data: typing.ByteString,
-        out: typing.ByteString,
-    ) -> None:
-        """Encrypt or decrypt the `data` and store it in a preallocated buffer
-        `out`. The data is authenticated internally.
-
-        Args:
-            data (bytes, bytearray, memoryview):
-                The bytes-like object to pass to the cipher.
-            out (bytearray, memoryview):
-                The buffer interface where the encrypted/decrypted data
-                must be written into.
-        """
 
     @abstractmethod
     def authenticate(self, data: typing.ByteString) -> None:
@@ -240,3 +216,64 @@ class BaseHash(metaclass=ABCMeta):
 
     def __repr__(self) -> str:
         return f"<{type(self).__name__} '{self.name}' at {hex(id(self))}>"
+
+
+class BasePrivateKey(metaclass=ABCMeta):
+    @abstractmethod
+    def serialize(
+        self,
+        password: typing.Optional[typing.ByteString] = None,
+        *args,
+        **kwargs,
+    ) -> bytes:
+        """Serialize the private key into a bytes object.
+
+        Args:
+            password (bytes, bytearray, memoryview):
+                The password to use to protect (encrypt) the key.
+
+        Returns:
+            bytes: The binary representation of the key.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(
+        cls,
+        password: typing.Optional[typing.ByteString] = None,
+        *args,
+        **kwargs,
+    ) -> BasePrivateKey:
+        """Load (or deserialize) the key into a key object.
+
+        Args:
+            password (bytes):
+                The password to decrypt the private key. Without a password,
+                the key is not encrypted.
+
+        Returns:
+            BaseAsymmetricKey: A key object.
+        """
+
+
+class BasePublicKey(metaclass=ABCMeta):
+    @abstractmethod
+    def serialize(
+        self,
+        *args,
+        **kwargs,
+    ) -> bytes:
+        """Serialize the public key into a bytes object.
+
+        Returns:
+            bytes: The binary representation of the public key.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(cls, *args, **kwargs) -> BasePublicKey:
+        """Load (or deserialize) the key into a key object.
+
+        Returns:
+            BasePublicKey: A key object.
+        """
