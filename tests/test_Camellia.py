@@ -1,9 +1,10 @@
-import pytest
 import os
-
 from functools import partial
 from itertools import product
-from pyflocker.ciphers import Camellia, Modes, Backends, exc
+
+import pytest
+
+from pyflocker.ciphers import Backends, Camellia, Modes, exc
 
 from .base import BaseSymmetric
 

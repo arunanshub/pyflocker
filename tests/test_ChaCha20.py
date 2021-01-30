@@ -1,9 +1,10 @@
 import os
-import pytest
-
 from functools import partial
 from itertools import product
-from pyflocker.ciphers import ChaCha20, Backends, exc
+
+import pytest
+
+from pyflocker.ciphers import Backends, ChaCha20, exc
 
 from .base import BaseSymmetric
 

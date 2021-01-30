@@ -1,7 +1,8 @@
 """Interface to AES cipher"""
 
-from ..backends import load_algorithm as _load_algo, Modes as _m
 from .. import aead, special
+from ..backends import Modes as _m
+from ..backends import load_algorithm as _load_algo
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
 globals().update({val.name: val for val in list(_m)})

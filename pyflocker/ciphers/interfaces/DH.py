@@ -1,6 +1,6 @@
 """Interface to DH key exchange"""
-from ..backends import load_algorithm as _load_algo
 from .. import Backends
+from ..backends import load_algorithm as _load_algo
 
 
 def _load_dhe(backend):

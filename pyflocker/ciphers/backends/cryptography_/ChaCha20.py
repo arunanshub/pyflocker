@@ -2,18 +2,16 @@
 
 import typing
 
-from cryptography.hazmat.primitives.ciphers import (
-    algorithms as algo,
-    Cipher,
-)
 from cryptography import exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
 from ... import base, exc
-from ..symmetric import FileCipherWrapper, _EncryptionCtx, _DecryptionCtx
-from .symmetric import NonAEADCipherTemplate
+from ..symmetric import FileCipherWrapper, _DecryptionCtx, _EncryptionCtx
 from .misc import derive_poly1305_key
+from .symmetric import NonAEADCipherTemplate
 
 
 class ChaCha20Poly1305(base.BaseAEADCipher):

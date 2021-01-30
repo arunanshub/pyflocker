@@ -1,8 +1,8 @@
 from itertools import combinations_with_replacement
+
 import pytest
 
-from pyflocker.ciphers import Hash, Backends
-from pyflocker.ciphers import exc
+from pyflocker.ciphers import Backends, Hash, exc
 
 _BLOCK_SIZE_DIFFERS = [
     "blake2s",

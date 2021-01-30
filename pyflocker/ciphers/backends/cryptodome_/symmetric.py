@@ -1,6 +1,7 @@
 """Cryptodome backend specific templates and tools for symmetric ciphers."""
 
 import typing
+
 from ... import base, exc
 
 

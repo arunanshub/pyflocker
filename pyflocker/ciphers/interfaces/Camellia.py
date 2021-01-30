@@ -1,7 +1,7 @@
 """Interface to Camellia cipher"""
 
-from ..backends import load_algorithm as _load_algo
 from .. import Backends
+from ..backends import load_algorithm as _load_algo
 
 
 def _cml_cipher_from_mode(mode, bknd, hasfile):
@@ -40,7 +40,7 @@ def new(
     *,
     file=None,
     backend=Backends.CRYPTOGRAPHY,
-    **kwargs
+    **kwargs,
 ):
     """Instantiate a new Camellia cipher wrapper object.
 

@@ -1,6 +1,7 @@
 """Interface to ECC signature algorithm and key-exchange."""
 
-from ..backends import load_algorithm as _load_algo, Backends as _Backends
+from ..backends import Backends as _Backends
+from ..backends import load_algorithm as _load_algo
 
 
 def _load_ecc_cpr(backend):

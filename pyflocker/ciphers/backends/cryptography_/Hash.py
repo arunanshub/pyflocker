@@ -1,9 +1,8 @@
 import typing
-
 from types import MappingProxyType
 
-from cryptography.hazmat.primitives import hashes as h
 from cryptography.hazmat.backends import default_backend as defb
+from cryptography.hazmat.primitives import hashes as h
 
 from ... import base, exc
 

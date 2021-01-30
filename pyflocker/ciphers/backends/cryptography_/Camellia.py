@@ -1,17 +1,14 @@
 import typing
 from types import MappingProxyType
 
-from cryptography.hazmat.primitives.ciphers import (
-    Cipher,
-    algorithms as algo,
-    modes,
-)
 from cryptography.hazmat.backends import default_backend as defb
-
+from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import algorithms as algo
+from cryptography.hazmat.primitives.ciphers import modes
 
 from ... import base
 from ...modes import Modes as _m
-from ..symmetric import HMACWrapper, FileCipherWrapper
+from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import NonAEADCipherTemplate
 

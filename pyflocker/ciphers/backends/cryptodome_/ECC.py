@@ -48,7 +48,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         format="PKCS8",
         passphrase=None,
         *,
-        protection=None
+        protection=None,
     ):
         """Serialize the private key.
 

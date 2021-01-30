@@ -1,16 +1,11 @@
 import typing
 
-from Cryptodome.Cipher import (
-    ChaCha20 as _ChaCha20,
-    ChaCha20_Poly1305 as _ChaCha20_Poly1305,
-)
+from Cryptodome.Cipher import ChaCha20 as _ChaCha20
+from Cryptodome.Cipher import ChaCha20_Poly1305 as _ChaCha20_Poly1305
 
 from ... import base
-from .symmetric import (
-    NonAEADCipherTemplate,
-    AEADCipherTemplate,
-)
 from ..symmetric import FileCipherWrapper
+from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
 
 class ChaCha20(NonAEADCipherTemplate):

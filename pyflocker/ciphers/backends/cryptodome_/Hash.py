@@ -1,20 +1,19 @@
 import typing
-
 from types import MappingProxyType
 
 from Cryptodome.Hash import (
-    SHA224,
-    SHA256,
-    SHA384,
-    SHA512,
     SHA3_224,
     SHA3_256,
     SHA3_384,
     SHA3_512,
-    BLAKE2b,
-    BLAKE2s,
+    SHA224,
+    SHA256,
+    SHA384,
+    SHA512,
     SHAKE128,
     SHAKE256,
+    BLAKE2b,
+    BLAKE2s,
 )
 
 from ... import base, exc

@@ -5,13 +5,14 @@ These tests are meant to check the API and hence, do not use
 the official test vectors. The backends used by pyflocker
 implements the tests using the required test vectors.
 """
-import os
 import io
-
-import pytest
+import os
 from functools import partial
 from itertools import product
-from pyflocker.ciphers import AES, Modes, Backends, exc
+
+import pytest
+
+from pyflocker.ciphers import AES, Backends, Modes, exc
 
 from .base import BaseSymmetric
 

@@ -6,11 +6,10 @@ files using AES encryption.
 
 import os
 import struct
-
-from hashlib import pbkdf2_hmac
 from functools import partial
+from hashlib import pbkdf2_hmac
 
-from .ciphers import AES, exc, Modes, aead, special
+from .ciphers import AES, Modes, aead, exc, special
 
 HEADER_FORMAT = struct.Struct(">I 32s 32s 6x 32s 6x 16s")
 
@@ -25,7 +24,7 @@ def locker(
     *,
     ext=None,
     newfile=None,
-    **kwargs
+    **kwargs,
 ):
     """Encrypts or decrypts files with AES algorithm.
 
@@ -107,7 +106,7 @@ def lockerf(
     metadata=None,
     dklen=32,
     backend=None,
-    **kwargs
+    **kwargs,
 ):
     """Utility tool for encrypting files.
 

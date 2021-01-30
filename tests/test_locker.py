@@ -1,11 +1,12 @@
 import os
+from contextlib import contextmanager
+from itertools import combinations_with_replacement
+from tempfile import NamedTemporaryFile, TemporaryDirectory, TemporaryFile
+
 import pytest
 
-from pyflocker.ciphers import modes, exc, Backends
 from pyflocker import locker
-from itertools import combinations_with_replacement
-from contextlib import contextmanager
-from tempfile import TemporaryFile, NamedTemporaryFile, TemporaryDirectory
+from pyflocker.ciphers import Backends, exc, modes
 
 
 @contextmanager

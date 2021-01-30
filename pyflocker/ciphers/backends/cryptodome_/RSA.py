@@ -1,6 +1,6 @@
 try:
-    from Cryptodome.PublicKey import RSA
     from Cryptodome.Cipher import PKCS1_OAEP
+    from Cryptodome.PublicKey import RSA
     from Cryptodome.Signature import PKCS1_PSS
 except ModuleNotFoundError:
     from Crypto.PublicKey import RSA
@@ -8,9 +8,9 @@ except ModuleNotFoundError:
     from Crypto.Signature import PKCS1_PSS
 
 from .. import base, exc
-from .._asymmetric import OAEP, PSS, MGF1
-from .Hash import Hash
+from .._asymmetric import MGF1, OAEP, PSS
 from ._serialization import encodings, formats, protection_schemes
+from .Hash import Hash
 
 paddings = {
     OAEP: PKCS1_OAEP.new,
@@ -94,7 +94,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         format="PKCS8",
         passphrase=None,
         *,
-        protection=None
+        protection=None,
     ):
         """Serialize the private key.
 
