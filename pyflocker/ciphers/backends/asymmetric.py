@@ -4,6 +4,7 @@ import typing
 from dataclasses import dataclass, field
 
 from .. import base
+from ..interfaces import Hash
 
 
 def _default_hash_factory():
@@ -13,8 +14,6 @@ def _default_hash_factory():
     only when they are explicitly called by user or loaded by the
     backend loader.
     """
-
-    # TODO: Add some meat to interfaces package make lazy loading possible.
     return Hash.new("sha256")
 
 

@@ -28,6 +28,8 @@ class FinalizationError(Exception):
 
 
 class UnsupportedAlgorithm(Exception):
+    """Raised if the backend does not support the algorithm."""
+
     pass
 
 

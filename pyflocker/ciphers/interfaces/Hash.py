@@ -44,7 +44,7 @@ def new(hashname, data=b"", digest_size=None, *, backend=None):
     Raises:
         KeyError: if the hashing function is not supported.
     """
-    return _load_algo("Hash", backend).Hash(
+    return _load_algo("Hash", backend).new(
         hashname,
         data,
         digest_size=digest_size,
