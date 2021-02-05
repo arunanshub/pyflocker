@@ -28,12 +28,12 @@ def load_algorithm(name: str, backend: typing.Optional[Backends] = None):
         UnsupportedAlgorithm:
             This is raised if the algorithm is not found in the backend.
     """
-    backend = load_backend(backend)
+    _backend = load_backend(backend)
     try:
-        return import_module(f".{name}", backend.__name__)
-    except ImportError:
+        return import_module(f".{name}", _backend.__name__)
+    except ImportError as e:
         raise exc.UnsupportedAlgorithm(
-            f"{name} not implemented by backend."
+            f"{name} not implemented by backend {backend}."
         ) from e
 
 
