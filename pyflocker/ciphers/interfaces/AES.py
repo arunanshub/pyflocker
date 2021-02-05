@@ -1,33 +1,14 @@
 """Interface to AES cipher"""
 
-from .. import aead, special
-from ..backends import Modes as _m
+import typing
+
+from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
+from ..modes import Modes as _m
+from ..modes import aead, special
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
 globals().update({val.name: val for val in list(_m)})
-
-
-def _aes_cipher_from_mode(mode, bknd, hasfile):
-    if mode not in supported_modes(bknd):
-        raise NotImplementedError(
-            f"backend {bknd.name.lower()} does "
-            f"not implement {mode.name} for AES."
-        )
-
-    cpr = _load_algo("AES", bknd)
-    if mode in aead:
-        if mode in special:
-            if hasfile:
-                raise TypeError("this mode does not support R/W to file")
-            return cpr.AEADOneShot
-        if hasfile:
-            return cpr.AEADFile
-        return cpr.AEAD
-    else:
-        if hasfile:
-            return cpr.NonAEADFile
-        return cpr.NonAEAD
 
 
 def supported_modes(backend):
@@ -44,11 +25,21 @@ def supported_modes(backend):
     return list(_load_algo("AES", backend).supported)
 
 
-def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
-    """Instantiate a new AES cipher wrapper object.
+def new(
+    encrypting: bool,
+    key: typing.ByteString,
+    mode: _m,
+    iv_or_nonce: typing.ByteString,
+    *,
+    use_hmac: bool = False,
+    digestmod: str = "sha256",
+    file: typing.Optional[typing.BinaryIO] = None,
+    backend: _Backends = None,
+):
+    """Instantiate a new AES cipher object.
 
     Args:
-        locking (bool):
+        encrypting (bool):
             True is encryption and False is decryption.
         key (bytes, bytearray, memoryview):
             The key for the cipher.
@@ -65,7 +56,7 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
             and the `mode` is not an AEAD mode, HMAC is always used.
         backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from :any:`Backends`.
-        hashed (bool):
+        use_hmac (bool):
             Should the cipher use HMAC as authentication or not,
             if it does not support AEAD. (Default: False)
         digestmod (str):
@@ -76,11 +67,11 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
     Important:
         The following arguments must not be passed if the mode is an AEAD mode:
 
-          - hashed
-          - digestmod
+        - hashed
+        - digestmod
 
     Returns:
-        :any:`Cipher`:
+        :any:`BaseCipher`:
             AES cipher wrapper from the appropriate backend module.
 
     Raises:
@@ -92,10 +83,12 @@ def new(locking, key, mode, iv_or_nonce, *, file=None, backend=None, **kwargs):
     Note:
         Any other error that is raised is from the backend itself.
     """
-    _cpr = _aes_cipher_from_mode(mode, backend, file is not None)
-
-    if file:
-        if mode not in aead:
-            kwargs.update(dict(hashed=True))  # always use HMAC
-        return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)
-    return _cpr(locking, key, mode, iv_or_nonce, **kwargs)
+    return _load_algo("AES", backend).new(
+        encrypting,
+        key,
+        mode,
+        iv_or_nonce,
+        use_hmac=use_hmac,
+        digestmod=digestmod,
+        file=file,
+    )

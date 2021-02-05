@@ -1,21 +1,9 @@
 """Interface to Camellia cipher"""
+import typing
 
-from .. import Backends
+from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
-
-
-def _cml_cipher_from_mode(mode, bknd, hasfile):
-    if mode not in supported_modes(bknd):
-        raise NotImplementedError(
-            "backend {} does not implement mode {} for Camellia.".format(
-                bknd.name.lower(),
-                mode.name,
-            )
-        )
-    cpr = _load_algo("Camellia", bknd)
-    if not hasfile:
-        return cpr.Camellia
-    return cpr.CamelliaFile
+from ..modes import Modes as _m
 
 
 def supported_modes(backend):
@@ -33,19 +21,20 @@ def supported_modes(backend):
 
 
 def new(
-    locking,
-    key,
-    mode,
-    iv_or_nonce,
+    encrypting: bool,
+    key: typing.ByteString,
+    mode: _m,
+    iv_or_nonce: typing.ByteString,
     *,
-    file=None,
-    backend=Backends.CRYPTOGRAPHY,
-    **kwargs,
+    file: typing.Optional[typing.BinaryIO] = None,
+    backend: _Backends = _Backends.CRYPTOGRAPHY,
+    use_hmac: bool = False,
+    digestmod: str = "sha256",
 ):
     """Instantiate a new Camellia cipher wrapper object.
 
     Args:
-        locking (bool):
+        encrypting (bool):
             True is encryption and False is decryption.
         key (bytes, bytearray, memoryview):
             The key for the cipher.
@@ -81,8 +70,12 @@ def new(
     Note:
         Any other error that is raised is from the backend itself.
     """
-    _cpr = _cml_cipher_from_mode(mode, backend, file is not None)
-    if file:
-        kwargs.update(dict(hashed=True))  # Always use HMAC
-        return _cpr(locking, key, mode, iv_or_nonce, file=file, **kwargs)
-    return _cpr(locking, key, mode, iv_or_nonce, **kwargs)
+    return _load_algo("Camellia", backend).new(
+        encrypting,
+        key,
+        mode,
+        iv_or_nonce,
+        file=file,
+        use_hmac=use_hmac,
+        digestmod=digestmod,
+    )

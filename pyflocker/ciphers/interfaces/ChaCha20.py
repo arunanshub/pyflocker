@@ -1,12 +1,22 @@
 """Interface to ChaCha20-Poly1305 cipher"""
+import typing
+
+from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
 
-def new(locking, key, nonce, *, file=None, backend=None):
+def new(
+    encrypting: bool,
+    key: typing.ByteString,
+    nonce: typing.ByteString,
+    *,
+    file: typing.Optional[typing.BinaryIO] = None,
+    backend: typing.Optional[_Backends] = None,
+):
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:
-        locking (bool):
+        encrypting (bool):
             True is encryption and False is decryption.
         key (bytes, bytearray, memoryview):
             The key for the cipher.
@@ -31,10 +41,9 @@ def new(locking, key, nonce, *, file=None, backend=None):
     Note:
         Any other error that is raised is from the backend itself.
     """
-    cpr = _load_algo("ChaCha20", backend)
-    if file:
-        _cpr = cpr.ChaCha20Poly1305File
-        return _cpr(locking, key, nonce, file=file)
-    else:
-        _cpr = cpr.ChaCha20Poly1305
-        return _cpr(locking, key, nonce)
+    return _load_algo("ChaCha20", backend).new(
+        encrypting,
+        key,
+        nonce,
+        file=file,
+    )
