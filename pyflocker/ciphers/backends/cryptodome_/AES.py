@@ -92,41 +92,42 @@ class AEADOneShot(AEAD):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
+        self._mode = mode
 
         # creating a context is relatively expensive here
-        if encrypting:
-            self._update_func = (
-                lambda data, *args: self._cipher.encrypt_and_digest(  # noqa
-                    data, *args
-                )[0]
-            )
-        else:
-            func = self._cipher.decrypt_and_verify
-            self._update_func = lambda data, tag, *args: func(  # noqa
-                data, tag, *args
-            )
+        self._update_func = self._get_update_func(encrypting, self._cipher)
 
-    def update(self, data):
-        return self.update_into(data, None, None)
+    @staticmethod
+    def _get_update_func(encrypting, cipher):
+        if encrypting:
+            func = cipher.encrypt_and_digest
+            return lambda data, tag=None, **k: func(data, **k)[0]
+
+        func = cipher.decrypt_and_verify
+        return lambda data, tag, **k: func(data, tag, **k)
+
+    def update(self, data, tag=None):
+        return self.update_into(data, None, tag)
 
     def update_into(self, data, out, tag=None):
         if self._update_func is None:
             raise exc.AlreadyFinalized
+
         if not self._encrypting:
             if tag is None:
                 raise ValueError("tag is required for decryption.")
 
         try:
             try:
-                data = self._update_func(data, out)
+                data = self._update_func(data, tag, output=out)
             except TypeError as e:
-                # MODE_OCB does not support writing into buffer.
+                # incorrect nos. of arguments.
                 if out is not None:
                     raise TypeError(
-                        f"{self.__mode} does not support writing into mutable "
+                        f"{self._mode} does not support writing into mutable "
                         "buffers"
                     ) from e
-                data = self._update_func(data)
+                data = self._update_func(data, tag)
         except ValueError:
             # decryption error is ignored, and raised from finalize method
             pass
@@ -172,16 +173,15 @@ def new(
             has no effect.
 
     Important:
-        The following arguments must not be passed if the mode is an AEAD mode:
-          - use_hmac
-          - digestmod
+        The following arguments are ignored if the mode is an AEAD mode:
+
+        - ``use_hmac``
+        - ``digestmod``
 
     Returns:
         :any:`BaseSymmetricCipher`: AES cipher.
 
     Raises:
-        ValueError: if the `mode` is an AEAD mode and still the extra kwargs
-            are provided.
 
     Note:
         Any other error that is raised is from the backend itself.
@@ -190,6 +190,9 @@ def new(
 
     if file is not None:
         use_hmac = True
+
+    if mode not in supported_modes():
+        raise NotImplementedError(f"{mode} not supported.")
 
     if mode in modes.special:
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
