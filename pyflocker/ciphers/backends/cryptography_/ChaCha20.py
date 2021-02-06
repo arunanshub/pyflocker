@@ -39,6 +39,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         self._ctx = self._get_auth_ctx(encrypting, ctx, self._auth)
         self._len_aad, self._len_ct = 0, 0
         self._updated = False
+        self._tag = None
 
     @staticmethod
     def _get_auth_ctx(encrypting, ctx, auth):
