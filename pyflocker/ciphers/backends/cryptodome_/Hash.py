@@ -103,7 +103,7 @@ class Hash(base.BaseHash):
         # for BLAKE-2b/2s
         if self.name == "blake2b":  # pragma: no cover
             msg = base_msg + "20, 32, 48 and 64"
-        elif self.msg == "blake2s":  # pragma: no cover
+        elif self.name == "blake2s":  # pragma: no cover
             msg = base_msg + "16, 20, 28 and 32"
         else:  # pragma: no cover
             msg = f"oid attribute is not available for hash {self.name}"
