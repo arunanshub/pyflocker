@@ -50,7 +50,8 @@ class FileCipherWrapper(base.BaseAEADCipher):
         if self._cipher is None:
             raise exc.AlreadyFinalized
         if not self._encrypting:
-            raise ValueError("tag is required for decryption")
+            if tag is None:
+                raise ValueError("tag is required for decryption")
 
         buf = memoryview(bytearray(blocksize + self._offset))
         rbuf = buf[:blocksize]
