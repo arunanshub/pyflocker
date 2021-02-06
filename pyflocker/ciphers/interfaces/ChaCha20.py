@@ -1,6 +1,7 @@
 """Interface to ChaCha20-Poly1305 cipher"""
 import typing
 
+from .. import base as _base
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
@@ -12,7 +13,7 @@ def new(
     *,
     file: typing.Optional[typing.BinaryIO] = None,
     backend: typing.Optional[_Backends] = None,
-):
+) -> typing.Union[_base.BaseNonAEADCipher, _base.BaseAEADCipher]:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:
