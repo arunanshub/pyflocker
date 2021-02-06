@@ -123,7 +123,7 @@ class Hash(base.BaseHash):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         hashobj = type(self)(self.name, digest_size=self.digest_size)
-        hashobj._hasher = self._hasher.copy()
+        hashobj._ctx = self._ctx.copy()
         return hashobj
 
     def digest(self):
