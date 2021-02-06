@@ -2,6 +2,7 @@
 
 import typing
 
+from .. import base as _base
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 from ..modes import Modes as _m
@@ -22,7 +23,7 @@ def supported_modes(backend):
     Returns:
         list: list of :any:`Modes` object supported by backend.
     """
-    return list(_load_algo("AES", backend).supported)
+    return _load_algo("AES", backend).supported_modes()
 
 
 def new(
@@ -35,7 +36,7 @@ def new(
     digestmod: str = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
     backend: _Backends = None,
-):
+) -> typing.Union[_base.BaseNonAEADCipher, _base.BaseAEADCipher]:
     """Instantiate a new AES cipher object.
 
     Args:
@@ -52,32 +53,30 @@ def new(
 
     Keyword Arguments:
         file (filelike):
-            The source file to read from. If `file` is specified
-            and the `mode` is not an AEAD mode, HMAC is always used.
+            The source file to read from. If ``file`` is specified
+            and the ``mode`` is not an AEAD mode, HMAC is always used.
         backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from :any:`Backends`.
         use_hmac (bool):
-            Should the cipher use HMAC as authentication or not,
-            if it does not support AEAD. (Default: False)
+            Should the cipher use HMAC as authentication or not, if it does
+            not support AEAD. (Default: False)
         digestmod (str):
-            The algorithm to use for HMAC. Defaults to `sha256`.
-            Specifying this value without setting `hashed` to True
+            The algorithm to use for HMAC. Defaults to ``sha256``.
+            Specifying this value without setting ``use_hmac`` to True
             has no effect.
 
     Important:
-        The following arguments must not be passed if the mode is an AEAD mode:
+        The following arguments are ignored if the mode is an AEAD mode:
 
-        - hashed
-        - digestmod
+        - ``use_hmac``
+        - ``digestmod``
 
     Returns:
-        :any:`BaseCipher`:
+        :any:`BaseSymmetricCipher`:
             AES cipher wrapper from the appropriate backend module.
 
     Raises:
-        ValueError: if the `mode` is an AEAD mode and still the extra kwargs
-            are provided.
-        NotImplementedError: if backend does not support that mode.
+        NotImplementedError: if backend does not support the given mode.
         UnsupportedAlgorithm: if the backend does not support AES.
 
     Note:
