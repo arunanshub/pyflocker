@@ -4,7 +4,6 @@ Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 
 import typing
 
-import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
