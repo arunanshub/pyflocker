@@ -12,20 +12,17 @@ class FileCipherWrapper(base.BaseAEADCipher):
     file encryption and decryption facility.
     """
 
-    def __init__(self, cipher: base.BaseAEADCipher, file, offset=0):
+    def __init__(self, cipher: base.BaseAEADCipher, file, offset: int = 0):
         """Initialize a file cipher wrapper.
 
         Args:
             cipher (:any:`base.BaseAEADCipher`):
                 A cipher that supports `BaseAEADCipher` interface.
-            file:
+            file (filelike):
                 A file or file-like object.
             offset (int):
                 The difference between the length of `in` buffer and
                 `out` buffer in `update_into` method of a BaseAEADCipher.
-
-        Returns:
-            None
         """
 
         # the cipher already has an internal context
@@ -106,7 +103,6 @@ class HMACWrapper(base.BaseAEADCipher):
             raise TypeError("Only NonAEAD ciphers can be wrapped.")
 
         self._auth = hmac.new(hkey, digestmod=digestmod)
-        self._offset = offset
 
         self._auth.update(rand)
         self._ctx = self._get_mac_ctx(cipher, self._auth, offset)
@@ -140,7 +136,7 @@ class HMACWrapper(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
-        self._len_ct += len(out[: -self._offset])
+        self._len_ct += len(data)
         self._ctx.update_into(data, out)
 
     def finalize(self, tag=None):
@@ -178,7 +174,7 @@ class _EncryptionCtx:
     def __init__(self, cipher: base.BaseNonAEADCipher, auth, offset):
         self._cipher = cipher
         self._auth = auth
-        self._offset = offset
+        self._offset = -offset or None
 
     def update(self, data):
         ctxt = self._cipher.update(data)
@@ -187,7 +183,7 @@ class _EncryptionCtx:
 
     def update_into(self, data, out):
         self._cipher.update_into(data, out)
-        self._auth.update(out[: -self._offset])
+        self._auth.update(out[: self._offset])
 
 
 class _DecryptionCtx:
