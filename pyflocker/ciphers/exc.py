@@ -43,3 +43,6 @@ class NotFinalized(FinalizationError):
     """The context has not been destroyed yet."""
 
     pass
+
+
+NotYetFinalized = NotFinalized
