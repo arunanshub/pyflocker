@@ -24,6 +24,8 @@ class FileCipherWrapper(base.BaseAEADCipher):
                 The difference between the length of `in` buffer and
                 `out` buffer in `update_into` method of a BaseAEADCipher.
         """
+        if not isinstance(cipher, base.BaseAEADCipher):
+            raise TypeError("cipher must implement BaseAEADCipher interface.")
 
         # the cipher already has an internal context
         self._cipher = cipher
