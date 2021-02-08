@@ -91,7 +91,7 @@ def locker(
     ext: typing.Optional[str] = None,
     newfile: typing.Optional[str] = None,
     **kwargs,
-):
+) -> None:
     """Encrypts or decrypts files with AES algorithm.
 
     See also:
@@ -179,7 +179,7 @@ def lockerf(
     metadata: typing.ByteString = METADATA,
     dklen: int = 32,
     backend: _Backends = None,
-):
+) -> None:
     """Utility tool for encrypting files.
 
     This function reads from ``infile`` in blocks, specified by ``blocksize``,
