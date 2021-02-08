@@ -25,7 +25,7 @@ from ..symmetric import (
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
-supported = MappingProxyType(
+SUPPORTED = MappingProxyType(
     {
         _m.MODE_GCM: modes.GCM,
         _m.MODE_EAX: None,  # not defined by backend
@@ -308,15 +308,15 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.List[_m]:
+def supported_modes() -> typing.Set[_m]:
     """Lists all modes supported by AES cipher of this backend.
 
     Args:
         None
     Returns:
-        list: list of :any:`Modes` object supported by backend.
+        set: set of :any:`Modes` object supported by backend.
     """
-    return list(supported)
+    return set(SUPPORTED)
 
 
 def _aes_cipher(key, mode, nonce_or_iv):
@@ -328,9 +328,9 @@ def _aes_cipher(key, mode, nonce_or_iv):
                 raise ValueError(
                     "Length of nonce must be between 7 and 13 bytes."
                 )
-        return supported[mode](key)
+        return SUPPORTED[mode](key)
 
-    return CrCipher(algo.AES(key), supported[mode](nonce_or_iv), defb())
+    return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv), defb())
 
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):

@@ -11,7 +11,7 @@ from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
-supported = MappingProxyType(
+SUPPORTED = MappingProxyType(
     {
         # classic modes
         _m.MODE_CTR: AES.MODE_CTR,
@@ -45,7 +45,7 @@ def _get_aes_cipher(key, mode, iv_or_nonce):
         )
         args = ()
 
-    return AES.new(key, supported[mode], *args, **kwargs)
+    return AES.new(key, SUPPORTED[mode], *args, **kwargs)
 
 
 class AEAD(AEADCipherTemplate):
@@ -192,7 +192,7 @@ def new(
         use_hmac = True
 
     if mode not in supported_modes():
-        raise NotImplementedError(f"{mode} not supported.")
+        raise NotImplementedError(f"{mode} not SUPPORTED.")
 
     if mode in modes.special:
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
@@ -210,15 +210,15 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.List[_m]:
+def supported_modes() -> typing.Set[_m]:
     """Lists all modes supported by AES cipher of this backend.
 
     Args:
         None
     Returns:
-        list: list of :any:`Modes` object supported by backend.
+        set: set of :any:`Modes` object supported by backend.
     """
-    return list(supported)
+    return set(SUPPORTED)
 
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):

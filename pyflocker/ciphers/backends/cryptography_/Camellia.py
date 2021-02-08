@@ -12,7 +12,7 @@ from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import NonAEADCipherTemplate
 
-supported = MappingProxyType(
+SUPPORTED = MappingProxyType(
     {
         _m.MODE_CFB: modes.CFB,
         _m.MODE_CTR: modes.CTR,
@@ -29,7 +29,7 @@ class Camellia(NonAEADCipherTemplate):
     def __init__(self, encrypting, key, mode, iv_or_nonce):
         cipher = Cipher(
             algo.Camellia(key),
-            supported[mode](iv_or_nonce),
+            SUPPORTED[mode](iv_or_nonce),
             defb(),
         )
 
@@ -93,6 +93,17 @@ def new(
         crp = FileCipherWrapper(crp, file, offset=15)
 
     return crp
+
+
+def supported_modes() -> typing.Set[_m]:
+    """Lists all modes supported by Camellia cipher of this backend.
+
+    Args:
+        None
+    Returns:
+        set: set of :any:`Modes` object supported by backend.
+    """
+    return set(SUPPORTED)
 
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
