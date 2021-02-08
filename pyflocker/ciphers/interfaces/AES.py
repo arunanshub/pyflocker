@@ -76,7 +76,9 @@ def new(
             AES cipher wrapper from the appropriate backend module.
 
     Raises:
-        NotImplementedError: if backend does not support the given mode.
+        NotImplementedError:
+            if backend does not support the given mode or the mode does not
+            support encryption/decryption of files.
         UnsupportedAlgorithm: if the backend does not support AES.
 
     Note:

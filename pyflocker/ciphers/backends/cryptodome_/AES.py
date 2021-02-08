@@ -182,6 +182,9 @@ def new(
         :any:`BaseSymmetricCipher`: AES cipher.
 
     Raises:
+        NotImplementedError:
+            if the ``mode`` does not support encryption/decryption of files or
+            the mode is not supported by the backend.
 
     Note:
         Any other error that is raised is from the backend itself.
@@ -192,9 +195,13 @@ def new(
         use_hmac = True
 
     if mode not in supported_modes():
-        raise NotImplementedError(f"{mode} not SUPPORTED.")
+        raise NotImplementedError(f"{mode} not supported.")
 
     if mode in modes.special:
+        if file is not None:
+            raise NotImplementedError(
+                f"{mode} does not support encryption/decryption of files."
+            )
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
     elif mode in modes.aead:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
