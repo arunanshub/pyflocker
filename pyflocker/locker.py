@@ -77,6 +77,8 @@ PBKDF2_HMAC = partial(pbkdf2_hmac, hash_name="sha256", iterations=150000)
 
 METADATA = b"CREATED BY: PyFLocker"
 
+EXTENSION = ".pyflk"
+
 _Header = namedtuple("_Header", "magic mode nonce tag metadata salt")
 
 
@@ -86,7 +88,7 @@ def locker(
     encrypting: typing.Optional[bool] = None,
     remove: bool = True,
     *,
-    ext: str = ".pyflk",
+    ext: typing.Optional[str] = None,
     newfile: typing.Optional[str] = None,
     **kwargs,
 ):
@@ -136,6 +138,8 @@ def locker(
     """
     if newfile and ext:
         raise ValueError("newfile and ext are mutually exclusive")
+
+    ext = ext or EXTENSION
 
     # guess encrypting if not provided
     if encrypting is None:
