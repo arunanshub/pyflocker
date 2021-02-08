@@ -6,7 +6,7 @@ from ..backends import load_algorithm as _load_algo
 from ..modes import Modes as _m
 
 
-def supported_modes(backend):
+def supported_modes(backend: _Backends) -> typing.Set[_m]:
     """Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability and hence, varies from backend to backend.
 
@@ -17,7 +17,7 @@ def supported_modes(backend):
     Returns:
         list: list of :any:`Modes` object supported by backend.
     """
-    return list(_load_algo("Camellia", backend).supported)
+    return _load_algo("Camellia", backend).supported_modes()
 
 
 def new(
