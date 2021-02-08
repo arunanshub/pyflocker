@@ -142,6 +142,15 @@ class Hash(base.BaseHash):
         )
 
 
+def algorithms_available() -> typing.Set[str]:
+    """Return the names of the available hash algorithms.
+
+    Returns:
+        set[str]: Names of hash algorithms.
+    """
+    return set(HASHES)
+
+
 def new(
     name: str,
     data: typing.ByteString = b"",

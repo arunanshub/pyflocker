@@ -1,30 +1,35 @@
 """Interface to hashing algorithms."""
 
+import typing
+
+from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
+from ..base import BaseHash as _BaseHash
 
 
-def get_available_hashes(backend=None):
+def algorithms_available(backend: _Backends = None) -> typing.Set[str]:
     """Returns all available hashes supported by backend."""
     if backend is not None:
-        return set(_load_algo("Hash", backend).hashes.keys())
-
-    from ..backends import Backends
+        return _load_algo("Hash", backend).algorithms_available()
 
     algos = set()
-    for bknd in list(Backends):
-        algos.update(set(_load_algo("Hash", bknd).hashes.keys()))
+    for bknd in list(_Backends):
+        algos.update(_load_algo("Hash", bknd).algorithms_available())
     return algos
 
 
-algorithms_available = get_available_hashes
-
-
-def new(hashname, data=b"", digest_size=None, *, backend=None):
+def new(
+    hashname: str,
+    data: typing.ByteString = b"",
+    digest_size: typing.Optional[int] = None,
+    *,
+    backend: _Backends = None,
+) -> _BaseHash:
     """
-    Instantiate a new hash instance `hashname` with initial
-    data `data` (default is empty `bytes`).
+    Instantiate a new hash instance ``hashname`` with initial
+    data ``data`` (default is empty ``bytes``).
     The Hash object created by this function can be used as
-    the `hash` argument to `OAEP` and `MGF1`.
+    the `hash` argument to ``OAEP`` and ``MGF1``.
 
     Args:
         hashname (str): Name of the hashing function to use.
@@ -32,7 +37,7 @@ def new(hashname, data=b"", digest_size=None, *, backend=None):
             Initial data to pass to hashing function.
         digest_size (int):
             The length of the digest from the hash function.
-            Required for `Blake` and `Shake`.
+            Required for ``Blake`` and ``Shake``.
 
     Keyword Arguments:
         backend (:class:`pyflocker.ciphers.backends.Backends`):
