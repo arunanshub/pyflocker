@@ -61,7 +61,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
         # localize variables for better performance
         offset = self._offset
         write = file.write
-        reads = iter(partial(self._file.readinto, buf), 0)
+        reads = iter(partial(self._file.readinto, rbuf), 0)
         update = self._cipher.update_into
 
         for i in reads:
