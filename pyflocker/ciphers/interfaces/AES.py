@@ -12,7 +12,7 @@ from ..modes import aead, special
 globals().update({val.name: val for val in list(_m)})
 
 
-def supported_modes(backend):
+def supported_modes(backend: _Backends) -> typing.Set[_m]:
     """Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability, and hence, varies from backend to backend.
 
@@ -21,7 +21,7 @@ def supported_modes(backend):
             An attribute from :any:`Backends` enum.
 
     Returns:
-        list: list of :any:`Modes` object supported by backend.
+        set: set of :any:`Modes` object supported by backend.
     """
     return _load_algo("AES", backend).supported_modes()
 
