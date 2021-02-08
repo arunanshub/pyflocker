@@ -35,6 +35,7 @@ extensions = [
     "sphinx.ext.viewcode",
     "sphinx.ext.todo",
     "sphinx.ext.napoleon",
+    "sphinx.ext.intersphinx",
 ]
 
 # Add any paths that contain templates here, relative to this directory.
@@ -67,6 +68,7 @@ html_static_path = ["_static"]
 
 
 # -- Extension configuration -------------------------------------------------
+intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 
 # -- Options for todo extension ----------------------------------------------
 
