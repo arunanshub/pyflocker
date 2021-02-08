@@ -2,6 +2,8 @@
 
 import typing
 
+from cryptography import exceptions as bkx
+
 from ... import base, exc
 
 
@@ -86,7 +88,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
             ctx, self._ctx = self._ctx, None
             try:
                 ctx.finalize_with_tag(tag)
-            except ValueError as e:
+            except bkx.InvalidTag as e:
                 raise exc.DecryptionError from e
         else:
             ctx, self._ctx = self._ctx, None
