@@ -6,20 +6,29 @@ files using AES encryption.
 
 import os
 import struct
+from collections import namedtuple
 from functools import partial
 from hashlib import pbkdf2_hmac
 
-from .ciphers import AES, Modes, aead, exc, special
+from .ciphers import AES, exc
+from .ciphers.modes import Modes, aead, special
 
-HEADER_FORMAT = struct.Struct(">I 32s 32s 6x 32s 6x 16s")
+# magic - mode - nonce - tag - metadata - salt
+HEADER_FORMAT = struct.Struct(">I H 16s 32s 32s 32s")
 
-MAGIC = 0xC8E52E4B
+MAGIC = 0xC8E52E4A
+
+PBKDF2_HMAC = partial(pbkdf2_hmac, hash_name="sha256", iterations=150000)
+
+METADATA = b"CREATED BY: PyFLocker"
+
+_Header = namedtuple("_Header", "magic mode nonce tag metadata salt")
 
 
 def locker(
     file,
     password,
-    locking=None,
+    encrypting=None,
     remove=True,
     *,
     ext=None,
@@ -35,19 +44,19 @@ def locker(
         file (str):
             The actual location of the file.
         password (bytes, bytesarray, memoryview):
-            Password to use to encrypt the file. See `lockerf`.
-        locking (bool):
+            Password to use to encrypt/decrypt the file. See ``lockerf``.
+        encrypting (bool):
             Whether the file is being locked (encrypted) or not.
 
-            If `locking` is True, the file is encrypted no matter what
+            If `encrypting` is True, the file is encrypted no matter what
             the extension is.
-            If `locking` is False, the file is decrypted no matter what
+            If `encrypting` is False, the file is decrypted no matter what
             the extension is.
 
-            If `locking` is None (the default), it is guessed from the file
+            If `encrypting` is None (the default), it is guessed from the file
             extension and the file header instead.
 
-            If locking is provided, argument `ext` is ignored.
+            If encrypting is provided, argument `ext` is ignored.
         remove (bool):
             Whether to remove the file after encryption/decryption. Default
             is True.
@@ -70,20 +79,20 @@ def locker(
     # default extension if not provided
     ext = ext or ".pyflk"
 
-    # guess locking if not provided
-    if locking is None:
-        locking = not file.endswith(ext)
+    # guess encrypting if not provided
+    if encrypting is None:
+        encrypting = not file.endswith(ext)
 
     # make newfile name if not provided
     if newfile is None:
-        if locking:
+        if encrypting:
             newfile = file + ext
         else:
             newfile = os.path.splitext(file)[0]
 
     try:
         with open(file, "rb") as infile, open(newfile, "xb") as outfile:
-            lockerf(infile, outfile, password, locking, **kwargs)
+            lockerf(infile, outfile, password, encrypting, **kwargs)
     except (TypeError, exc.DecryptionError):
         # remove invalid file
         os.remove(newfile)
@@ -98,15 +107,14 @@ def lockerf(
     infile,
     outfile,
     password,
-    locking,
+    encrypting,
     *,
-    kdf=None,
-    aes_mode=None,
+    kdf=PBKDF2_HMAC,
+    aes_mode=Modes.MODE_GCM,
     blocksize=16364,
-    metadata=None,
+    metadata=METADATA,
     dklen=32,
     backend=None,
-    **kwargs,
 ):
     """Utility tool for encrypting files.
 
@@ -119,13 +127,14 @@ def lockerf(
 
     1. Password derivation
 
-       The `password` is first derived into a key with PBKDF2-HMAC with
-       32 byte salt, 50000 iterations, 'sha256' as the hash algorithm,
-       although they can be modified by keeping `kdf` as None, and passing
-       the modified values through `kwargs`, except `password` and `salt`
+       The ``password`` is first derived into a key with PBKDF2-HMAC with
+       32 byte salt, 50000 iterations, ``sha256`` as the hash algorithm,
+       although they can be modified by keeping ``kdf`` as None, and passing
+       the modified values through ``kwargs``, except ``password`` and
+       ``salt``.
 
-       If you want to use a different KDF, pass it to `kdf` and pass the
-       remaining arguments through `kwargs`
+       If you want to use a different KDF, pass it to ``kdf`` and pass the
+       remaining arguments through ``kwargs``.
 
     2. Cipher creation
 
@@ -143,8 +152,8 @@ def lockerf(
 
        After completion of the entire operation, the tag created by the
        authenticatior of the cipher is written to the file as a part of
-       `HEADER`. If the file is being decrypted, it is read from the
-       `HEADER` for verifying the file integrity and correct decryption.
+       ``HEADER``. If the file is being decrypted, it is read from the
+       ``HEADER`` for verifying the file integrity and correct decryption.
 
     Note:
         If the cipher mode does not support authentication, HMAC is used.
@@ -157,24 +166,28 @@ def lockerf(
             The file or file-like object to write into.
         password (bytes, bytearray, memoryview):
             The password to use for encrypting the files.
-        locking (bool):
+        encrypting (bool):
             Whether the infile is being encrypted: True; or decrypted: False.
 
     Keyword Arguments:
         kdf (function):
             The key derivation function to use for deriving keys.
-            :func:`hashlib.pbkdf2_hmac` is used with 50000 iterations and
-            `sha256` as the hash algorithm.
+            :func:`hashlib.pbkdf2_hmac` is used with 150000 iterations and
+            ``sha256`` as the hash algorithm.
 
-            Keeping the `kdf` as None, you can adjust the KDF's parameters
-            by passing it to `kwargs`.
+            If a custom ``kdf`` is used, the ``kdf`` must accept 3 arguments,
+            ``password``, ``salt`` and ``dklen``. It is assumed that the
+            other required values are already passed to it. You can use a
+            partial function (``functools.partial``) for that purpose.
         aes_mode (:class:`pyflocker.ciphers.modes.Modes`):
             The AES mode to use for encryption/decryption.
             The mode can be any attribute from :any:`Modes` except those
             which are defined in :obj:`pyflocker.ciphers.modes.special`.
             Defaults to :any:`Modes.MODE_GCM`.
+
+            Specifying this value while decrypting has no effect.
         blocksize (int):
-            The amount of data to read from `infile` in each iteration.
+            The amount of data to read from ``infile`` in each iteration.
             Defalts to 16384.
         metadata (bytes, bytearray, memoryview):
             The metadata to write to the file. It must be up-to 32 bytes.
@@ -194,82 +207,58 @@ def lockerf(
             with.
         NotImplementedError: if the mode is not supported.
     """
-
     if os.path.samefile(infile.fileno(), outfile.fileno()):
         raise ValueError("infile and outfile cannot be the same")
 
     # set defaults
     if aes_mode in special:
-        # for one rounds:
-        # we need gradual encryption ability
-        raise NotImplementedError
+        raise NotImplementedError(f"{aes_mode} is not supported.")
 
-    aes_mode = aes_mode or Modes.MODE_GCM
-    if metadata is None:
-        metadata = b"CREATED BY: PYFLOCKER"
+    if len(metadata) > 32:
+        raise ValueError("maximum metadata length exceeded (limit: 32).")
+
+    if not encrypting:
+        header = _get_header(infile.read(HEADER_FORMAT.size), metadata)
     else:
-        if len(metadata) > 32:
-            raise ValueError("maximum metadata length exceeded")
+        salt = os.urandom(32)
+        nonce = os.urandom(12) if aes_mode == AES.MODE_GCM else os.urandom(16)
+        header = _Header(MAGIC, aes_mode.value, nonce, b"", metadata, salt)
+        outfile.write(HEADER_FORMAT.pack(*header))
 
-    # header extract if decrypting,
-    # else create values.
-    salt, tag, rand = _fetch_header(infile, aes_mode, locking, MAGIC, metadata)
-
-    # password -> key
-    if kdf is None:
-        # defaults to PBKDF2-HMAC
-
-        # set defaults here.
-        _kdf_args = dict(
-            iterations=50000, hash_name="sha256", dklen=_key_length(dklen)
-        )
-
-        # update the values with kwargs
-        # (could have some user supplied values)
-        _kdf_args.update(kwargs)
-
-        kwargs = _kdf_args
-        kdf = partial(pbkdf2_hmac)
-
-    # if kdf given, it is assumed that all the required
-    # arguments except `password, salt` are supplied
-    # through kwargs
-    key = kdf(password=password, salt=salt, **kwargs)
-
-    # init. cipher
-    crp = AES.new(
-        locking,
-        key,
-        aes_mode or Modes.MODE_GCM,
-        rand,
+    cipher = AES.new(
+        encrypting,
+        kdf(
+            password=password,
+            salt=header.salt,
+            dklen=_check_key_length(dklen),
+        ),
+        Modes(header.mode),
+        header.nonce,
         file=infile,
         backend=backend,
     )
-
-    # authenticate header portion
-    crp.authenticate(salt + metadata)
-
-    if locking:
-        header = HEADER_FORMAT.pack(
-            MAGIC,
-            # these parts are unique
-            metadata,
-            salt,
-            tag,
-            rand,
+    cipher.authenticate(
+        struct.pack(
+            ">I 32s 32s 16s",
+            header.magic,  # XXX: MAGIC works just fine; good to be an idiot
+            header.salt,
+            header.metadata,
+            header.nonce,
         )
-        outfile.write(header)
+    )
+    cipher.update_into(outfile, blocksize=blocksize, tag=header.tag)
 
-    # write
-    crp.update_into(outfile, tag, blocksize)
-
-    if locking:
-        # tag position
-        outfile.seek(74)
-        outfile.write(crp.calculate_tag())
+    if encrypting:
+        outfile.seek(struct.calcsize(">I H 16s"))
+        outfile.write(cipher.calculate_tag())
 
 
-def _key_length(n):
+def extract_header_from_file(path, metadata=METADATA):
+    with open(path, "rb") as file:
+        return _get_header(file.read(HEADER_FORMAT.size), metadata)
+
+
+def _check_key_length(n):
     if n in (128, 192, 256):
         return n // 8
     elif n in (16, 24, 32):
@@ -278,41 +267,26 @@ def _key_length(n):
         raise ValueError("invalid key length")
 
 
-def _fetch_header(infile, mode, locking, magic, meta):
-    """Extracts header values. If encrypting file, creates the values"""
+def _get_header(data, metadata=METADATA):
+    try:
+        (
+            magic,
+            mode,
+            nonce,
+            tag,
+            metadata_h,
+            salt,
+        ) = HEADER_FORMAT.unpack(data)
+    except struct.error:
+        raise TypeError("The file format is invalid (Header mismatch).")
 
-    if locking:
-        # different for GCM
-        if mode == Modes.MODE_GCM:
-            rand = os.urandom(12)
-        else:
-            rand = os.urandom(16)
-        salt = os.urandom(32)
-        tag = bytes(32)
-    else:
-        header = infile.read(HEADER_FORMAT.size)
-        try:
-            m, c, salt, tag, rand = HEADER_FORMAT.unpack_from(header, 0)
-        except struct.error:
-            raise TypeError(
-                "Invalid file header format. "
-                "The file is not compatible with "
-                "PyFlocker."
-            )
-        # header check
-        if m != magic or meta != c[: -(32 - len(meta))]:
-            raise TypeError(
-                "invalid file header format. "
-                "The file is not compatible with "
-                "PyFLocker"
-            )
+    if magic != MAGIC or metadata != metadata_h[: len(metadata) - 32]:
+        raise TypeError(
+            "The file format is invalid (Metadata/magic number mismatch)."
+        )
 
-        # get the tag and random part
-        if mode in aead:
-            # tag is 16 bytes
-            tag = tag[:16]
-        if mode == Modes.MODE_GCM:
-            # GCM uses 12 byte nonce
-            rand = rand[:-4]
-
-    return salt, tag, rand
+    if mode == Modes.MODE_GCM.value:
+        nonce = nonce[:12]
+    if Modes(mode) in aead:
+        tag = tag[:16]
+    return _Header(magic, mode, nonce, tag, metadata, salt)
