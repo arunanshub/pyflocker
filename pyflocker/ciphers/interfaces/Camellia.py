@@ -60,7 +60,7 @@ def new(
             has no effect.
 
     Returns:
-        :any:`Cipher`:
+        :any:`BaseSymmetricCipher`:
             Camellia cipher wrapper from the appropriate backend module.
 
     Raises:
