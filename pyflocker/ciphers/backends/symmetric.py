@@ -1,6 +1,7 @@
 """Tools for Symmetric ciphers common to all the backends."""
 
 import hmac
+import typing
 from functools import partial
 
 from .. import base, exc
@@ -12,7 +13,12 @@ class FileCipherWrapper(base.BaseAEADCipher):
     file encryption and decryption facility.
     """
 
-    def __init__(self, cipher: base.BaseAEADCipher, file, offset: int = 0):
+    def __init__(
+        self,
+        cipher: base.BaseAEADCipher,
+        file: typing.BinaryIO,
+        offset: int = 0,
+    ):
         """Initialize a file cipher wrapper.
 
         Args:
@@ -28,28 +34,33 @@ class FileCipherWrapper(base.BaseAEADCipher):
             raise TypeError("cipher must implement BaseAEADCipher interface.")
 
         # the cipher already has an internal context
-        self._cipher = cipher
+        self._ctx = cipher
         self._file = file
         self._tag = None
-        self._encrypting = self._cipher.is_encrypting()
+        self._encrypting = self._ctx.is_encrypting()
         self._offset = offset
 
     def authenticate(self, data):
-        if self._cipher is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
-        return self._cipher.authenticate(data)
+        return self._ctx.authenticate(data)
 
     def is_encrypting(self):
         return self._encrypting
 
     def update(self, blocksize: int = 16384):
-        if self._cipher is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
         if (data := self._file.read(blocksize)) :
-            return self._cipher.update(data)
+            return self._ctx.update(data)
 
-    def update_into(self, file, tag=None, blocksize: int = 16384):
-        if self._cipher is None:
+    def update_into(
+        self,
+        file,
+        tag: typing.ByteString = None,
+        blocksize: int = 16384,
+    ):
+        if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self._encrypting:
             if tag is None:
@@ -62,7 +73,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
         offset = self._offset
         write = file.write
         reads = iter(partial(self._file.readinto, rbuf), 0)
-        update = self._cipher.update_into
+        update = self._ctx.update_into
 
         for i in reads:
             if i < blocksize:
@@ -74,16 +85,16 @@ class FileCipherWrapper(base.BaseAEADCipher):
         self.finalize(tag)
 
     def finalize(self, tag=None):
-        if self._cipher is None:
+        if self._ctx is None:
             raise exc.AlreadyFinalized
 
         try:
-            self._cipher.finalize(tag)
+            self._ctx.finalize(tag)
         finally:
-            self._tag, self._cipher = self._cipher.calculate_tag(), None
+            self._tag, self._ctx = self._ctx.calculate_tag(), None
 
     def calculate_tag(self):
-        if self._cipher is not None:
+        if self._ctx is not None:
             raise exc.NotFinalized("Cipher has already been finalized.")
         return self._tag
 
@@ -97,8 +108,8 @@ class HMACWrapper(base.BaseAEADCipher):
     def __init__(
         self,
         cipher: base.BaseNonAEADCipher,
-        hkey: bytes,
-        rand: bytes,
+        hkey: typing.ByteString,
+        rand: typing.ByteString,
         digestmod: str = "sha256",
         offset: int = 0,
     ):
@@ -175,29 +186,29 @@ class HMACWrapper(base.BaseAEADCipher):
 
 class _EncryptionCtx:
     def __init__(self, cipher: base.BaseNonAEADCipher, auth, offset):
-        self._cipher = cipher
+        self._ctx = cipher
         self._auth = auth
         self._offset = -offset or None
 
     def update(self, data):
-        ctxt = self._cipher.update(data)
+        ctxt = self._ctx.update(data)
         self._auth.update(ctxt)
         return ctxt
 
     def update_into(self, data, out):
-        self._cipher.update_into(data, out)
+        self._ctx.update_into(data, out)
         self._auth.update(out[: self._offset])
 
 
 class _DecryptionCtx:
     def __init__(self, cipher: base.BaseNonAEADCipher, auth):
-        self._cipher = cipher
+        self._ctx = cipher
         self._auth = auth
 
     def update(self, data):
         self._auth.update(data)
-        return self._cipher.update(data)
+        return self._ctx.update(data)
 
     def update_into(self, data, out):
         self._auth.update(data)
-        self._cipher.update_into(data, out)
+        self._ctx.update_into(data, out)
