@@ -171,7 +171,7 @@ def lockerf(
         [typing.ByteString, typing.ByteString, int], bytes
     ] = PBKDF2_HMAC,
     aes_mode: Modes = Modes.MODE_GCM,
-    blocksize: int = 16364,
+    blocksize: int = 16 * 1024,
     metadata: typing.ByteString = METADATA,
     dklen: int = 32,
     backend: _Backends = None,
@@ -226,7 +226,8 @@ def lockerf(
         password (bytes, bytearray, memoryview):
             The password to use for encrypting the files.
         encrypting (bool):
-            Whether the infile is being encrypted: True; or decrypted: False.
+            Whether the ``infile`` is being encrypted: True if encrypting
+            else False.
 
     Keyword Arguments:
         kdf (callable):
