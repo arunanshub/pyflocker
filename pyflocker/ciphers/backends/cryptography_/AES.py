@@ -185,12 +185,16 @@ class _EAX:
 
     def encryptor(self):
         self.__ctx = _EncryptionCtx(
-            self._cipher.encryptor(), self._omac[2], 15
+            self._cipher.encryptor(),
+            _AuthWrapper(self._omac[2]),
+            15,
         )
         return self
 
     def decryptor(self):
-        self.__ctx = _DecryptionCtx(self._cipher.decryptor(), self._omac[2])
+        self.__ctx = _DecryptionCtx(
+            self._cipher.decryptor(), _AuthWrapper(self._omac[2])
+        )
         return self
 
     def update(self, data):
