@@ -112,5 +112,6 @@ def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
         hkey,
         iv_or_nonce,
         digestmod,
+        offset=15,
     )
     return crp
