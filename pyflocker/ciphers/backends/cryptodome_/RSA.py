@@ -1,14 +1,9 @@
-try:
-    from Cryptodome.Cipher import PKCS1_OAEP
-    from Cryptodome.PublicKey import RSA
-    from Cryptodome.Signature import PKCS1_PSS
-except ModuleNotFoundError:
-    from Crypto.PublicKey import RSA
-    from Crypto.Cipher import PKCS1_OAEP
-    from Crypto.Signature import PKCS1_PSS
+from Cryptodome.Cipher import PKCS1_OAEP
+from Cryptodome.PublicKey import RSA
+from Cryptodome.Signature import PKCS1_PSS
 
-from .. import base, exc
-from .._asymmetric import MGF1, OAEP, PSS
+from ... import base, exc
+from ..asymmetric import MGF1, OAEP, PSS
 from ._serialization import encodings, formats, protection_schemes
 from .Hash import Hash
 

@@ -2,7 +2,7 @@ from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import dh
 
-from .. import base
+from ... import base
 from ._serialization import (
     encodings,
     parameter_format,

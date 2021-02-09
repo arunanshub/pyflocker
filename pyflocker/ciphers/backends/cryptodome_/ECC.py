@@ -1,13 +1,8 @@
-try:
-    from Cryptodome.PublicKey import ECC
-    from Cryptodome.Signature import DSS
-except ModuleNotFoundError:
-    from Crypto.PublicKey import ECC
-    from Crypto.Signature import DSS
+from Cryptodome.PublicKey import ECC
+from Cryptodome.Signature import DSS
 
-from .. import base, exc
+from ... import base, exc
 from ._serialization import encodings, formats, protection_schemes
-from .Hash import Hash
 
 _sig_encodings = {
     "binary": "binary",

@@ -10,7 +10,7 @@ from cryptography.hazmat.primitives.asymmetric import (
     x25519,
 )
 
-from .. import base, exc
+from ... import base, exc
 from ._serialization import encodings, private_format, public_format
 from .Hash import Hash
 

@@ -1,5 +1,5 @@
 """Interface to DH key exchange"""
-from .. import Backends
+from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
 
@@ -8,7 +8,7 @@ def _load_dhe(backend):
     return _load_algo("DH", backend)
 
 
-def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):
+def generate(key_size, g=2, *, backend=_Backends.CRYPTOGRAPHY):
     """
     Generate DHE parameter with prime number's bit size `bits` and
     generator `g` (default 2). Recommended size of `bits` > 1024.
@@ -27,7 +27,7 @@ def generate(key_size, g=2, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters(key_size, g)
 
 
-def load_from_parameters(p, g=2, q=None, *, backend=Backends.CRYPTOGRAPHY):
+def load_from_parameters(p, g=2, q=None, *, backend=_Backends.CRYPTOGRAPHY):
     """Create a DHParameter object from the given parameters.
 
     Args:
@@ -45,7 +45,7 @@ def load_from_parameters(p, g=2, q=None, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters.load_from_parameters(p, g, q)
 
 
-def load_parameters(data, *, backend=Backends.CRYPTOGRAPHY):
+def load_parameters(data, *, backend=_Backends.CRYPTOGRAPHY):
     """Deserialize the DH parameters and load a parameter object.
 
     Args:
@@ -61,7 +61,7 @@ def load_parameters(data, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHParameters.load(data)
 
 
-def load_public_key(data, *, backend=Backends.CRYPTOGRAPHY):
+def load_public_key(data, *, backend=_Backends.CRYPTOGRAPHY):
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -78,7 +78,7 @@ def load_public_key(data, *, backend=Backends.CRYPTOGRAPHY):
     return _load_dhe(backend).DHPublicKey.load(data)
 
 
-def load_private_key(data, passphrase=None, *, backend=Backends.CRYPTOGRAPHY):
+def load_private_key(data, passphrase=None, *, backend=_Backends.CRYPTOGRAPHY):
     """Loads the private key and returns a Key interface.
 
     If the private key was not encrypted duting the serialization,
