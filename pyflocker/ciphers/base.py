@@ -21,7 +21,7 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
         bytes object.
 
         Args:
-            data (bytes, bytesarray):
+            data (bytes, bytearray):
                 The bytes-like object to pass to the cipher.
 
         Returns:
