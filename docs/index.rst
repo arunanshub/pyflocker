@@ -156,6 +156,7 @@ Just want to encrypt your file with AES, and even with various available modes?
    :caption: Contents:
 
    pyflocker
+   examples
 
 
 Indices and tables
