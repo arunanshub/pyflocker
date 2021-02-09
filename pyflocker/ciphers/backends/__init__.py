@@ -2,6 +2,8 @@ import enum
 import typing
 from importlib import import_module
 
+from .. import exc
+
 _DEFAULT_BACKEND = None
 
 
@@ -14,7 +16,7 @@ class Backends(enum.Enum):
 
 def load_algorithm(
     name: str, backend: typing.Optional[Backends] = None
-) -> "module":
+) -> typing.types.ModuleType:
     """Load a specific algorithm from the given ``backend``.
 
     Args:
@@ -37,7 +39,7 @@ def load_algorithm(
         ) from e
 
 
-def load_backend(backend=None):
+def load_backend(backend: Backends = None) -> typing.types.ModuleType:
     """Load a backend.
 
     Args:
