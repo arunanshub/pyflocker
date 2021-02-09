@@ -82,7 +82,8 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self.is_encrypting():
-            raise ValueError("tag is required for decryption")
+            if tag is None:
+                raise ValueError("tag is required for decryption")
 
         self._pad_aad()
 
