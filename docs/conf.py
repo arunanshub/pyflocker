@@ -20,7 +20,7 @@ sys.path.insert(0, "..")
 # -- Project information -----------------------------------------------------
 
 project = "PyFLocker"
-copyright = f"{date.today().year}, Arunanshu Biswas"
+copyright = f"2020-{date.today().year}, Arunanshu Biswas"
 author = "Arunanshu Biswas"
 release = "0.2.6"
 

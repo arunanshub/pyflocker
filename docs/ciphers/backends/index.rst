@@ -14,3 +14,12 @@ Implementations
 
    cryptodome_/index
    cryptography_/index
+
+Various tools
+-------------
+
+.. toctree::
+    :maxdepth: 4
+
+    symmetric
+    asymmetric

@@ -28,3 +28,12 @@ Hash functions
    :maxdepth: 4
 
    Hash
+
+Tools
+-----
+
+.. toctree::
+   :maxdepth: 4
+
+   misc
+   symmetric

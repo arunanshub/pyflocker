@@ -1,13 +1,10 @@
-Base Classes, Algorithms and Backends
-=====================================
+``ciphers`` package
+===================
 
 .. automodule:: pyflocker.ciphers
    :members:
    :undoc-members:
    :show-inheritance:
-
-Base classes and exceptions
----------------------------
 
 .. toctree::
    :maxdepth: 4
@@ -15,19 +12,5 @@ Base classes and exceptions
    base
    exc
    modes
-
-Algorithm loaders
------------------
-
-.. toctree::
-   :maxdepth: 4
-
    interfaces/index
-
-Backend of PyFLocker
---------------------
-
-.. toctree::
-   :maxdepth: 4
-
    backends/index
