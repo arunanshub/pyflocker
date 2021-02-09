@@ -2,8 +2,6 @@ import enum
 import typing
 from importlib import import_module
 
-from .. import base, exc
-
 _DEFAULT_BACKEND = None
 
 
@@ -14,7 +12,9 @@ class Backends(enum.Enum):
     CRYPTODOME = "cryptodome"
 
 
-def load_algorithm(name: str, backend: typing.Optional[Backends] = None):
+def load_algorithm(
+    name: str, backend: typing.Optional[Backends] = None
+) -> "module":
     """Load a specific algorithm from the given ``backend``.
 
     Args:

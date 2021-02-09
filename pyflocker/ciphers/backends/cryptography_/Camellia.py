@@ -6,7 +6,6 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.ciphers import modes
 
-from ... import base
 from ...modes import Modes as _m
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key

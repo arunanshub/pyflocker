@@ -6,7 +6,6 @@ from .. import base as _base
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 from ..modes import Modes as _m
-from ..modes import aead, special
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
 globals().update({val.name: val for val in list(_m)})

@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from Cryptodome.Cipher import AES
 
-from ... import base, exc, modes
+from ... import exc, modes
 from ...modes import Modes as _m
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
