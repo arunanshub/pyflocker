@@ -57,7 +57,7 @@ class PSS:
 
     Attributes:
         mgf: A Mask Generation Function. Defaults to MGF1.
-        salt_len: Length of the salt, in bytes.
+        salt_length: Length of the salt, in bytes.
             Length must be greater than 0. Defaults to `None`.
     """
 
