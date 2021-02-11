@@ -138,7 +138,7 @@ class Hash(base.BaseHash):
         """Create a fresh hash object.
 
         See also:
-            :py:func`new` for more information.
+            :py:func:`new` for more information.
         """
         return type(self)(
             self.name,
