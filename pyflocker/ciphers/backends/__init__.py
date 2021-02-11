@@ -74,7 +74,7 @@ def load_backend(backend: Backends = None) -> typing.types.ModuleType:
 
 
 def _import_helper(backend):
-    return import_module(f".{backend.name.lower()}_", __package__)
+    return import_module(f".{backend.name.lower()}_", __spec__.parent)
 
 
 def _find_backend():
