@@ -139,6 +139,11 @@ class Hash(base.BaseHash):
         return self._digest
 
     def new(self, data=b"", *, digest_size=None):
+        """Create a fresh hash object.
+
+        See also:
+            :py:func`new` for more information.
+        """
         return type(self)(
             self.name,
             data,
@@ -160,7 +165,7 @@ def new(
     data: typing.ByteString = b"",
     *,
     digest_size: typing.Optional[int] = None,
-):
+) -> Hash:
     """Instantiate an hash object with given parameters.
 
     Args:
