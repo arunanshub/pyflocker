@@ -220,8 +220,6 @@ def new(
 def supported_modes() -> typing.Set[_m]:
     """Lists all modes supported by AES cipher of this backend.
 
-    Args:
-        None
     Returns:
         set: set of :any:`Modes` object supported by backend.
     """

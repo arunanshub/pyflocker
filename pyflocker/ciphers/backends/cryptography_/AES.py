@@ -277,9 +277,10 @@ def new(
             has no effect.
 
     Important:
-        The following arguments must not be passed if the mode is an AEAD mode:
-          - use_hmac
-          - digestmod
+        The following arguments are ignored if the mode is an AEAD mode:
+
+        - ``use_hmac``
+        - ``digestmod``
 
     Returns:
         :any:`BaseSymmetricCipher`: AES cipher.
@@ -319,8 +320,6 @@ def new(
 def supported_modes() -> typing.Set[_m]:
     """Lists all modes supported by AES cipher of this backend.
 
-    Args:
-        None
     Returns:
         set: set of :any:`Modes` object supported by backend.
     """
