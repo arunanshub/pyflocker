@@ -1,8 +1,7 @@
 from functools import partial
-from typing import MappingProxyType
+from types import MappingProxyType
 
 from Cryptodome.Cipher import PKCS1_OAEP
-from Cryptodome.PublicKey import RSA
 from Cryptodome.Signature import pss
 
 from .. import asymmetric
@@ -55,6 +54,13 @@ def get_PSS(key, padding):
 
 
 class _SaltLengthMaximizer:
+    """
+    Custom sign/verify wrapper over PSS to preserve consistency:
+    pyca/cryptography follows the OpenSSL quirk where the default
+    salt length is maximized and doesn't match with the size of the
+    digest applied to the message.
+    """
+
     def __init__(self, key, padding):
         self._key = key
         self._padding = padding
@@ -86,3 +92,8 @@ PADDINGS = MappingProxyType(
 )
 
 del MappingProxyType
+
+
+def get_padding(padding):
+    """Return the appropriate padding object based on ``padding``."""
+    return PADDINGS[type(padding)]
