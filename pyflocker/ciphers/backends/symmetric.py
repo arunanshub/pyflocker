@@ -56,7 +56,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
     def update_into(
         self,
-        file,
+        file: typing.BinaryIO,
         tag: typing.ByteString = None,
         blocksize: int = 16384,
     ):
@@ -97,6 +97,9 @@ class FileCipherWrapper(base.BaseAEADCipher):
         if self._ctx is not None:
             raise exc.NotFinalized("Cipher has already been finalized.")
         return self._tag
+
+
+StreamCipherWrapper = FileCipherWrapper
 
 
 class HMACWrapper(base.BaseAEADCipher):
