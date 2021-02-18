@@ -1,1 +1,1 @@
-from .interfaces import AES, Camellia, ChaCha20, Hash
+from .interfaces import AES, RSA, Camellia, ChaCha20, Hash
