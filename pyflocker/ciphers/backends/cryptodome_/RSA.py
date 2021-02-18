@@ -6,17 +6,26 @@ from Cryptodome.PublicKey import RSA
 
 from ... import base, exc
 from ..asymmetric import OAEP, PSS
-from ._serialization import encodings, formats, protection_schemes
-from .asymmetric import get_padding
+from .asymmetric import (
+    ENCODINGS,
+    FORMATS,
+    PROTECTION_SCHEMES,
+    get_padding_func,
+)
 
 
 class _RSAKey:
     @property
-    def n(self):
+    def n(self) -> int:
+        """RSA public modulus.
+
+        The number ``n`` is such that ``n == p * q``.
+        """
         return self._key.n
 
     @property
-    def e(self):
+    def e(self) -> int:
+        """RSA public exponent."""
         return self._key.e
 
 
@@ -44,14 +53,6 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         """RSA private exponent."""
         return self._key.d
 
-    @property
-    def u(self) -> int:
-        """Chinese remainder exponent.
-
-        (p ** -1) % q
-        """
-        return self._key.u
-
     def decryptor(self, padding=OAEP()) -> _EncDecContext:
         """Creates a decryption context.
 
@@ -61,7 +62,9 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         Returns:
             _EncDecContext: object for decrypting ciphertexts.
         """
-        return _EncDecContext(True, get_padding(padding)(self._key, padding))
+        return _EncDecContext(
+            True, get_padding_func(padding)(self._key, padding)
+        )
 
     def signer(self, padding=PSS()) -> _SigVerContext:
         """Create a signer context.
@@ -76,7 +79,9 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             If the padding is PSS and ``salt_length`` is None, the salt length
             will be maximized, as in OpenSSL.
         """
-        return _SigVerContext(True, get_padding(padding)(self._key, padding))
+        return _SigVerContext(
+            True, get_padding_func(padding)(self._key, padding)
+        )
 
     def public_key(self) -> RSAPublicKey:
         """Creates a public key from the private key.
@@ -90,7 +95,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.ByteString = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
         *,
         protection: str = None,
     ) -> bytes:
@@ -124,11 +129,11 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
                 protection value is supplied with PKCS1 format.
             KeyError: if the format is invalid or not supported.
         """
-        if encoding not in encodings.keys() ^ {"OpenSSH"}:
+        if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
             raise ValueError("encoding must be PEM or DER")
 
         if protection is not None:
-            if protection not in protection_schemes:
+            if protection not in PROTECTION_SCHEMES:
                 raise ValueError("invalid protection scheme")
 
         if format == "PKCS1":
@@ -142,8 +147,8 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             protection = "PBKDF2WithHMAC-SHA1AndAES256-CBC"
 
         return self._key.export_key(
-            format=encodings[encoding],
-            pkcs=formats[format],
+            format=ENCODINGS[encoding],
+            pkcs=FORMATS[format],
             passphrase=(
                 memoryview(passphrase).tobytes()
                 if passphrase is not None
@@ -156,7 +161,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     def load(
         cls,
         data: typing.ByteString,
-        password: typing.ByteString = None,
+        password: typing.Optional[typing.ByteString] = None,
     ) -> RSAPrivateKey:
         """Loads the private key as `bytes` object and returns the
         Key interface.
@@ -165,12 +170,12 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             data (bytes):
                 The key as bytes object.
             password (bytes, bytearray, memoryview):
-                The password that deserializes the private key. `password`
-                must be a `bytes` object if the key was encrypted while
-                serialization, otherwise `None`.
+                The password that deserializes the private key. ``password``
+                must be a ``bytes`` object if the key was encrypted while
+                serialization, otherwise ``None``.
 
         Returns:
-            :any:`RSAPrivateKey`: `RSAPrivateKey` key object.
+            RSAPrivateKey: The RSA private key.
 
         Raises:
             ValueError: if the key could not be deserialized.
@@ -201,10 +206,11 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
             padding: The padding to use. Defaults to OAEP.
 
         Returns:
-            :any:`RSAEncryptionCtx`:
-                An `RSAEncryptionCtx` encryption context object.
+            _EncDecContext: object for decrypting ciphertexts.
         """
-        return _EncDecContext(False, get_padding(padding)(self._key, padding))
+        return _EncDecContext(
+            False, get_padding_func(padding)(self._key, padding)
+        )
 
     def verifier(self, padding=PSS()) -> _SigVerContext:
         """Creates a verifier context.
@@ -219,7 +225,9 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
             If the padding is PSS and ``salt_length`` is None, the salt length
             will be maximized, as in OpenSSL.
         """
-        return _SigVerContext(False, get_padding(padding)(self._key, padding))
+        return _SigVerContext(
+            False, get_padding_func(padding)(self._key, padding)
+        )
 
     def serialize(self, encoding: str = "PEM") -> bytes:
         """Serialize the private key.
@@ -233,7 +241,7 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
         Raises:
             KeyError: if the encoding is not supported or invalid.
         """
-        return self._key.export_key(format=encodings[encoding])
+        return self._key.export_key(format=ENCODINGS[encoding])
 
     @classmethod
     def load(cls, data: typing.ByteString) -> RSAPublicKey:
@@ -267,9 +275,33 @@ class _EncDecContext:
         self._ctx = ctx
 
     def encrypt(self, data):
+        """Encrypts the plaintext and returns the ciphertext.
+
+        Args:
+            plaintext (bytes, bytearray):
+                The data to encrypt.
+
+        Returns:
+            bytes: encrypted bytes object.
+        """
+        if not self._is_private:
+            raise TypeError("Only private keys can encrypt plaintexts.")
         return self._ctx.encrypt(data)
 
     def decrypt(self, data):
+        """Decrypts the ciphertext and returns the plaintext.
+
+        Args:
+            ciphertext (bytes, bytearray):
+                The ciphertext to decrypt.
+
+        Returns:
+            bytes: The plaintext.
+
+        Raises:
+            DecryptionError: if the decryption was not successful.
+            TypeError: if the key is not a private key.
+        """
         if not self._is_private:
             raise TypeError("Only private keys can decrypt ciphertexts.")
         try:
@@ -284,10 +316,37 @@ class _SigVerContext:
         self._ctx = ctx
 
     def sign(self, msghash):
+        """Return the signature of the message hash.
+
+        Args:
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
+
+        Returns:
+            bytes: signature of the message as bytes object.
+        """
         if not self._is_private:
             raise TypeError("Only private keys can sign messages.")
         return self._ctx.sign(msghash)
 
     def verify(self, msghash, signature):
+        """Verifies the signature of the message hash.
+
+        Args:
+            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
+
+            signature (bytes, bytearray): The signature of the message.
+
+        Returns:
+            None
+
+        Raises:
+            SignatureError: if the signature was incorrect.
+        """
+        if self._is_private:
+            raise TypeError("Only public keys can verify messages.")
         if not self._ctx.verify(msghash, signature):
             raise exc.SignatureError

@@ -91,9 +91,39 @@ PADDINGS = MappingProxyType(
     }
 )
 
-del MappingProxyType
+
+ENCODINGS = MappingProxyType(
+    {
+        "PEM": "PEM",
+        "DER": "DER",
+        "OpenSSH": "OpenSSH",
+    }
+)
+
+FORMATS = MappingProxyType(
+    {
+        "PKCS1": 1,
+        "PKCS8": 8,
+    }
+)
+
+# PKCS8 password derivation mechanisms
+PROTECTION_SCHEMES = frozenset(
+    (
+        "PBKDF2WithHMAC-SHA1AndAES128-CBC",
+        "PBKDF2WithHMAC-SHA1AndAES192-CBC",
+        "PBKDF2WithHMAC-SHA1AndAES256-CBC",
+        "PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC",
+        "scryptAndAES128-CBC",
+        "scryptAndAES192-CBC",
+        "scryptAndAES256-CBC",
+    )
+)
 
 
-def get_padding(padding):
-    """Return the appropriate padding object based on ``padding``."""
+def get_padding_func(padding):
+    """Return the appropriate padding factory function based on ``padding``."""
     return PADDINGS[type(padding)]
+
+
+del MappingProxyType

@@ -1,21 +1,32 @@
+from __future__ import annotations
+
+import sys
+import typing
 from functools import partial
+
+if sys.version_info >= (3, 9):
+    from functools import cache as _cache
+else:
+    from functools import lru_cache
+
+    def _cache(func):
+        return lru_cache(maxsize=None)(func)
+
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives import serialization as ser
-from cryptography.hazmat.primitives.asymmetric import padding as pads
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives.asymmetric import rsa, utils
 
 from ... import base, exc
-from ..asymmetric import MGF1, OAEP, PSS
-from ._serialization import encodings, private_format, public_format
-from .Hash import Hash
-
-paddings = {
-    OAEP: pads.OAEP,
-    MGF1: pads.MGF1,
-    PSS: pads.PSS,
-}
+from ..asymmetric import OAEP, PSS
+from . import Hash
+from .asymmetric import (
+    ENCODINGS,
+    PRIVATE_FORMATS,
+    PUBLIC_FORMATS,
+    get_padding_func,
+)
 
 _supported_encodings = frozenset(
     (
@@ -27,6 +38,7 @@ _supported_encodings = frozenset(
 
 
 class _RSANumbers:
+    @_cache
     def _numbers(self):
         try:
             k = self._key.public_numbers()
@@ -35,76 +47,87 @@ class _RSANumbers:
         return k
 
     @property
-    def e(self):
+    def e(self) -> int:
+        """RSA public exponent."""
         return self._numbers().e
 
     @property
-    def n(self):
+    def n(self) -> int:
+        """RSA public modulus.
+
+        The number ``n`` is such that ``n == p * q``.
+        """
         return self._numbers().n
 
 
 class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
-    def __init__(self, n=None, e=65537, **kwargs):
+    def __init__(self, n: int, e: int = 65537, **kwargs):
         if kwargs:
-            key = kwargs.pop("key")
-            if not isinstance(
-                key,
-                rsa.RSAPrivateKey,
-            ):
-                raise ValueError("The key is not an RSA private key.")
-            self._key = key
+            self._key = kwargs.pop("key")
         else:
-            if n is None:
-                raise ValueError("modulus not provided")
             self._key = rsa.generate_private_key(e, n, defb())
 
         # numbers
         nos = self._key.private_numbers()
         self._p = nos.p
         self._q = nos.q
+        self._d = nos.d
 
     @property
-    def p(self):
+    def p(self) -> int:
+        """First factor of RSA modulus."""
         return self._p
 
     @property
-    def q(self):
+    def q(self) -> int:
+        """Second factor of RSA modulus."""
         return self._q
 
-    def public_key(self):
-        """Creates a public key from the private key
+    @property
+    def d(self) -> int:
+        """The private exponent."""
+        return self._d
+
+    def public_key(self) -> RSAPublicKey:
+        """Creates a public key from the private key.
 
         Returns:
-            :any:`RSAPublicKey`:
-                `RSAPublicKey` interface.
+            RSAPublicKey: The public key.
         """
         return RSAPublicKey(self._key.public_key())
 
-    def decryptor(self, padding=OAEP()):
-        """Creates a decryption context
+    def decryptor(self, padding=OAEP()) -> _EncDecContext:
+        """Creates a decryption context.
 
         Args:
-            padding: The padding to use. Default is `OAEP`.
+            padding: The padding to use. Default is ``OAEP``.
 
         Returns:
-            :any:`RSADecryptionCtx`:
-                `RSADecryptionCtx` object for decrypting ciphertexts.
+            _EncDecContext: object for decrypting ciphertexts.
         """
-        return RSADecryptionCtx(self._key, padding)
+        return _EncDecContext(
+            True, self._key, get_padding_func(padding)(padding)
+        )
 
-    def signer(self, padding=PSS()):
+    def signer(self, padding=PSS()) -> _SigVerContext:
         """Create a signer context.
 
         Args:
-            padding: The padding to use. Default is `PSS`.
+            padding: The padding to use. Default is ``PSS``.
 
         Returns:
-            :any:`RSASignerCtx`:
-                A `RSASignerCtx` object for signing messages.
+            _SigVerContext: object for signing messages.
         """
-        return RSASignerCtx(self._key, padding)
+        return _SigVerContext(
+            True, self._key, get_padding_func(padding)(padding)
+        )
 
-    def serialize(self, encoding="PEM", format="PKCS8", passphrase=None):
+    def serialize(
+        self,
+        encoding: str = "PEM",
+        format: str = "PKCS8",
+        passphrase: typing.Optional[typing.ByteString] = None,
+    ):
         """Serialize the private key.
 
         Args:
@@ -116,32 +139,40 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
                 - OpenSSH (available from pyca/cryptography version >=3.X)
                 - PKCS1 (alias to TraditionalOpenSSL for Cryptodome compat)
             passphrase (bytes, bytearray, memoryview):
-                A bytes-like object to protect the private key.
-                If `passphrase` is None, the private key will
-                be exported in the clear!
+                A bytes-like object to protect the private key. If
+                ``passphrase`` is None, the private key will be exported in the
+                clear!
 
         Returns:
             bytes: The private key as a bytes object.
 
         Raises:
-           KeyError:
-                if the format or encoding is invalid or not supported.
+           ValueError: if the format or encoding is invalid or not supported.
+           TypeError: If the encoding is invalid.
         """
         if encoding not in _supported_encodings ^ {"OpenSSH"}:
             raise TypeError("Encoding must be PEM or DER")
 
-        encd = encodings[encoding]
-        fmt = private_format[format]
+        try:
+            encd = ENCODINGS[encoding]
+            fmt = PRIVATE_FORMATS[format]
+        except KeyError as e:
+            raise ValueError("The encoding or format is invalid.") from e
+
         if passphrase is None:
-            prot = ser.NoEncryption()
+            prot = serialization.NoEncryption()
         else:
-            prot = ser.BestAvailableEncryption(
+            prot = serialization.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
         return self._key.private_bytes(encd, fmt, prot)
 
     @classmethod
-    def load(cls, data, password=None):
+    def load(
+        cls,
+        data: typing.ByteString,
+        password: typing.Optional[typing.ByteString] = None,
+    ):
         """Loads the private key as `bytes` object and returns
         the Key interface.
 
@@ -149,28 +180,26 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             data (bytes, bytearray):
                 The key as bytes object.
             password (bytes, bytearray):
-                The password that deserializes the private key.
-                `password` must be a `bytes` object if the key
-                was encrypted while serialization, otherwise `None`.
+                The password that deserializes the private key. ``password``
+                must be a ``bytes-like`` object if the key was encrypted while
+                serialization, otherwise `None`.
 
         Returns:
-            :any:`RSAPrivateKey`:
-                `RSAPrivateKey` object.
+            RSAPrivateKey: RSA private key.
 
         Raises:
-            ValueError: if the key could  not be deserialized.
+            ValueError: if the key could not be deserialized.
         """
-        if data.startswith(b"-----BEGIN OPENSSH PRIVATE KEY"):
-            loader = ser.load_ssh_private_key
+        fmts = {
+            b"-----BEGIN OPENSSH PRIVATE KEY": serialization.load_ssh_private_key,
+            b"-----": serialization.load_pem_private_key,
+            b"0": serialization.load_der_private_key,
+        }
 
-        elif data.startswith(b"-----"):
-            loader = ser.load_pem_private_key
-
-        elif data[0] == 0x30:
-            loader = ser.load_der_private_key
-
-        else:
-            raise ValueError("incorrect key format")
+        try:
+            loader = fmts[[*filter(data.startswith, fmts)][0]]
+        except IndexError:
+            raise ValueError("Invalid format.")
 
         # type check
         if password is not None:
@@ -182,12 +211,13 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
                 password,
                 defb(),
             )
-            return cls(key=key)
-        except (ValueError, TypeError) as e:
+            if not isinstance(key, rsa.RSAPrivateKey):
+                raise ValueError("The key is not an RSA private key.")
+            return cls(0, key=key)
+        except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
-                "password is missing or incorrect.",
+                "Cannot deserialize key. Either Key format is invalid or "
+                "password is missing or incorrect."
             ) from e
 
 
@@ -195,38 +225,39 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
-        if not isinstance(
-            key,
-            rsa.RSAPublicKey,
-        ):
-            raise ValueError("The key is not an RSA public key.")
         self._key = key
 
-    def encryptor(self, padding=OAEP()):
-        """Creates a encryption context
+    def encryptor(self, padding=OAEP()) -> _EncDecContext:
+        """Creates a encryption context.
 
         Args:
             padding: The padding to use. Defaults to OAEP.
 
         Returns:
-            :any:`RSAEncryptionCtx`:
-                An `RSAEncryptionCtx` object.
+            _EncDecContext: object for decrypting ciphertexts.
         """
-        return RSAEncryptionCtx(self._key, padding)
+        return _EncDecContext(
+            False, self._key, get_padding_func(padding)(padding)
+        )
 
-    def verifier(self, padding=PSS()):
+    def verifier(self, padding=PSS()) -> _EncDecContext:
         """Creates a verifier context.
 
         Args:
             padding: The padding to use. Defaults to ECC.
 
         Returns:
-            :any:`RSAVerifierCtx`:
-                `RSAVerifierCtx` verification context object.
+            _SigVerContext: verifier object for verification.
         """
-        return RSAVerifierCtx(self._key, padding)
+        return _SigVerContext(
+            False, self._key, get_padding_func(padding)(padding)
+        )
 
-    def serialize(self, encoding="PEM", format="SubjectPublicKeyInfo"):
+    def serialize(
+        self,
+        encoding: str = "PEM",
+        format: str = "SubjectPublicKeyInfo",
+    ) -> bytes:
         """Serialize the public key.
 
         Args:
@@ -243,12 +274,12 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         Raises:
             KeyError: if the encoding or format is incorrect or unsupported.
         """
-        encd = encodings[encoding]
-        fmt = public_format[format]
+        encd = ENCODINGS[encoding]
+        fmt = PUBLIC_FORMATS[format]
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
-    def load(cls, data):
+    def load(cls, data: typing.ByteString) -> RSAPublicKey:
         """Loads the public key as `bytes` object and returns
         the Key interface.
 
@@ -257,68 +288,41 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
                 The key as bytes object.
 
         Returns:
-            :any:`RSAPublicKey`:
-                `RSAPublicKey` key object.
+            RSAPublicKey: The RSA public key.
 
         Raises:
             ValueError: if the key could not be deserialized.
         """
-        if data.startswith(b"ssh-rsa "):
-            loader = ser.load_ssh_public_key
+        fmts = {
+            b"ssh-rsa ": serialization.load_ssh_public_key,
+            b"-----": serialization.load_pem_public_key,
+            b"0": serialization.load_der_public_key,
+        }
 
-        elif data.startswith(b"-----"):
-            loader = ser.load_pem_public_key
-
-        elif data[0] == 0x30:
-            loader = ser.load_der_public_key
-
-        else:
-            raise ValueError("incorrect key format")
+        try:
+            loader = fmts[[*filter(data.startswith, fmts)][0]]
+        except IndexError:
+            raise ValueError("Invalid format.")
 
         try:
             key = loader(memoryview(data), defb())
-            return cls(key=key)
-
+            if not isinstance(key, rsa.RSAPublicKey):
+                raise ValueError("The key is not an RSA public key.")
+            return cls(key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Incorrect key format.",
+                "Cannot deserialize key. Either Key format is invalid or "
+                "password is missing or incorrect."
             ) from e
 
 
-def _get_padding(pad):
-    _pad = paddings[pad.__class__]
-    _mgf = paddings[pad.mgf.__class__]  # backend MGF class
-    mgf = _mgf(
-        Hash(
-            pad.mgf.hash.name,
-            digest_size=pad.mgf.hash.digest_size,
-        )._hasher.algorithm
-    )
-    return _pad, mgf
-
-
 class _EncDecContext:
-    def __init__(self, key, padding):
-        pad, mgf = _get_padding(padding)
-        try:
-            enc_or_dec = key.encrypt
-        except AttributeError:
-            enc_or_dec = key.decrypt
+    def __init__(self, is_private, key, padding):
+        self._is_private = is_private
 
-        self._encrypt_or_decrypt = partial(
-            enc_or_dec,
-            padding=pad(
-                mgf,
-                Hash(
-                    padding.hash.name,
-                    digest_size=padding.hash.digest_size,
-                )._hasher.algorithm,
-                padding.label,
-            ),
-        )
+        ctxname = "decrypt" if is_private else "encrypt"
+        self._ctx_func = partial(getattr(key, ctxname), padding=padding)
 
-
-class RSAEncryptionCtx(_EncDecContext):
     def encrypt(self, plaintext):
         """Encrypts the plaintext and returns the ciphertext.
 
@@ -328,11 +332,14 @@ class RSAEncryptionCtx(_EncDecContext):
 
         Returns:
             bytes: encrypted bytes object.
+
+        Raises:
+            TypeError: If the key is a private key.
         """
-        return self._encrypt_or_decrypt(plaintext)
+        if self._is_private:
+            raise TypeError("Only public keys can encrypt plaintexts.")
+        return self._ctx_func(plaintext)
 
-
-class RSADecryptionCtx(_EncDecContext):
     def decrypt(self, ciphertext):
         """Decrypts the ciphertext and returns the plaintext.
 
@@ -341,11 +348,14 @@ class RSADecryptionCtx(_EncDecContext):
                 The ciphertext to decrypt.
 
         Returns:
-            bytes: decrypted plaintext.
+            bytes: The plaintext.
 
         Raises:
             DecryptionError: if the decryption was not successful.
+            TypeError: if the key is not a private key.
         """
+        if not self._is_private:
+            raise TypeError("Only private keys can decrypt ciphertexts.")
         try:
             return self._encrypt_or_decrypt(ciphertext)
         except ValueError as e:
@@ -353,55 +363,33 @@ class RSADecryptionCtx(_EncDecContext):
 
 
 class _SigVerContext:
-    def __init__(self, key, padding):
-        pad, mgf = _get_padding(padding)
-        salt_len = (
-            padding.salt_len
-            if padding.salt_len is not None
-            else pad.MAX_LENGTH
-        )
+    def __init__(self, is_private, key, padding):
+        self._is_private = is_private
 
-        try:
-            sig_ver = key.sign
-        except AttributeError:
-            sig_ver = key.verify
+        ctxname = "sign" if is_private else "verify"
+        self._ctx_func = partial(getattr(key, ctxname), padding=padding)
 
-        self._sign_or_verify = partial(
-            sig_ver,
-            padding=pad(
-                mgf,
-                salt_len,
-            ),
-        )
-
-
-class RSASignerCtx(_SigVerContext):
     def sign(self, msghash):
         """Return the signature of the message hash.
 
         Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
+            msghash (:any:`BaseHash`):
                 It must be a :any:`BaseHash` object, used to digest the
                 message to sign.
 
         Returns:
             bytes: signature of the message as bytes object.
-        """
-        if isinstance(msghash, Hash):
-            hashalgo = msghash._hasher.algorithm
-        else:
-            hashalgo = Hash(
-                msghash.name,
-                digest_size=msghash.digest_size,
-            )._hasher.algorithm
 
-        return self._sign_or_verify(
-            msghash.digest(),
-            algorithm=utils.Prehashed(hashalgo),
+        Raises:
+            TypeError: If the key is not a private key.
+        """
+        if not self._is_private:
+            raise TypeError("Only private keys can sign messages.")
+        return self._ctx_func(
+            data=msghash.digest(),
+            algorithm=utils.Prehashed(Hash._get_hash_algorithm(msghash)),
         )
 
-
-class RSAVerifierCtx(_SigVerContext):
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
@@ -410,28 +398,22 @@ class RSAVerifierCtx(_SigVerContext):
                 It must be a :any:`BaseHash` object, used to digest the
                 message to sign.
 
-            signature (bytes, bytearray):
-                signature must be a `bytes` or `bytes-like` object.
+            signature (bytes, bytearray): The signature of the message.
 
         Returns:
             None
 
         Raises:
-            SignatureError: if the `signature` was incorrect.
+            SignatureError: if the signature was incorrect.
+            TypeError: If the key is a private key.
         """
-        if isinstance(msghash, Hash):
-            hashalgo = msghash._hasher.algorithm
-        else:
-            hashalgo = Hash(
-                msghash.name,
-                digest_size=msghash.digest_size,
-            )._hasher.algorithm
-
+        if self._is_private:
+            raise TypeError("Only public keys can verify messages.")
         try:
-            return self._sign_or_verify(
-                signature,
-                msghash.digest(),
-                algorithm=utils.Prehashed(hashalgo),
+            return self._ctx_func(
+                signature=signature,
+                data=msghash.digest(),
+                algorithm=utils.Prehashed(Hash._get_hash_algorithm(msghash)),
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
