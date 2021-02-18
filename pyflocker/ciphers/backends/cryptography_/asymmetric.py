@@ -70,19 +70,22 @@ ENCODINGS = MappingProxyType(
     }
 )
 
+
+try:
+    _fmt = dict(OpenSSH=serial.PrivateFormat.OpenSSH)
+except AttributeError:
+    _fmt = dict()
+
 PRIVATE_FORMATS = MappingProxyType(
     {
         "PKCS8": serial.PrivateFormat.PKCS8,
         "TraditionalOpenSSL": serial.PrivateFormat.TraditionalOpenSSL,
         "Raw": serial.PrivateFormat.Raw,
         "PKCS1": serial.PrivateFormat.TraditionalOpenSSL,  # compat with Cryptodome
+        **_fmt,
     }
 )
 
-try:
-    PRIVATE_FORMATS["OpenSSH"] = serial.PrivateFormat.OpenSSH
-except AttributeError:
-    pass
 
 PUBLIC_FORMATS = MappingProxyType(
     {
@@ -101,9 +104,9 @@ PARAMETER_FORMATS = MappingProxyType(
     }
 )
 
-del MappingProxyType
+del MappingProxyType, _fmt
 
 
-def get_padding(padding):
+def get_padding_func(padding):
     """Return the appropriate padding factory function based on ``padding``."""
     return PADDINGS[type(padding)]
