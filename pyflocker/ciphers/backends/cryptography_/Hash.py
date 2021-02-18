@@ -177,3 +177,14 @@ def new(
     """
 
     return Hash(name, data, digest_size=digest_size)
+
+
+def _get_hash_algorithm(hashfunc):
+    """
+    Get the cryptography backend specific ``hash algorithm`` object from
+    the given hash ``hashfunc``.
+    """
+    return new(
+        hashfunc.name,
+        digest_size=hashfunc.digest_size,
+    )._ctx.algorithm
