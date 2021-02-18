@@ -127,7 +127,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         encoding: str = "PEM",
         format: str = "PKCS8",
         passphrase: typing.Optional[typing.ByteString] = None,
-    ):
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
