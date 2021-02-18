@@ -1,7 +1,7 @@
 from types import MappingProxyType
 
-from cryptography.hazmat.primitives.asymmetric import padding as padding_
 from cryptography.hazmat.primitives import serialization as serial
+from cryptography.hazmat.primitives.asymmetric import padding as padding_
 
 from .. import asymmetric
 from . import Hash
