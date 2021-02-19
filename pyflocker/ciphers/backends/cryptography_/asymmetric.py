@@ -11,7 +11,6 @@ def get_OAEP(padding):
     """Construct a pyca/cryptography specific OAEP object.
 
     Args:
-        key: Public/Private key (from the Cryptodome backend).
         padding (OAEP): An OAEP object.
 
     Returns:
@@ -36,7 +35,6 @@ def get_PSS(padding):
     """Construct a pyca/cryptography specific PSS object.
 
     Args:
-        key: Public/Private key (from the Cryptodome backend).
         padding (PSS): A PSS object.
 
     Returns:
