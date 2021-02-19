@@ -173,7 +173,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         data: typing.ByteString,
         password: typing.Optional[typing.ByteString] = None,
     ):
-        """Loads the private key as `bytes` object and returns
+        """Loads the private key as ``bytes`` object and returns
         the Key interface.
 
         Args:
@@ -182,13 +182,16 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             password (bytes, bytearray):
                 The password that deserializes the private key. ``password``
                 must be a ``bytes-like`` object if the key was encrypted while
-                serialization, otherwise `None`.
+                serialization, otherwise ``None``.
 
         Returns:
             RSAPrivateKey: RSA private key.
 
         Raises:
             ValueError: if the key could not be deserialized.
+            TypeError:
+                if the key is encrypted and password is not given or key is not
+                encrypted but the password is given.
         """
         fmts = {
             b"-----BEGIN OPENSSH PRIVATE KEY": serialization.load_ssh_private_key,
@@ -199,18 +202,14 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         try:
             loader = fmts[[*filter(data.startswith, fmts)][0]]
         except IndexError:
-            raise ValueError("Invalid format.")
+            raise ValueError("Invalid format.") from None
 
         # type check
         if password is not None:
             password = memoryview(password)
 
         try:
-            key = loader(
-                memoryview(data),
-                password,
-                defb(),
-            )
+            key = loader(memoryview(data), password, defb())
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
             return cls(0, key=key)
@@ -219,12 +218,19 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
                 "Cannot deserialize key. Either Key format is invalid or "
                 "password is missing or incorrect."
             ) from e
+        except TypeError as e:
+            raise TypeError(
+                "The key is encrypted but the password is not given or the"
+                " key is not encrypted but the password is given"
+            ) from e
 
 
 class RSAPublicKey(_RSANumbers, base.BasePublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
+        if not isinstance(key, rsa.RSAPublicKey):
+            raise ValueError("The key is not an RSA public key.")
         self._key = key
 
     def encryptor(self, padding=OAEP()) -> _EncDecContext:
@@ -280,7 +286,7 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
 
     @classmethod
     def load(cls, data: typing.ByteString) -> RSAPublicKey:
-        """Loads the public key as `bytes` object and returns
+        """Loads the public key as ``bytes`` object and returns
         the Key interface.
 
         Args:
@@ -302,17 +308,13 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         try:
             loader = fmts[[*filter(data.startswith, fmts)][0]]
         except IndexError:
-            raise ValueError("Invalid format.")
+            raise ValueError("Invalid format.") from None
 
         try:
-            key = loader(memoryview(data), defb())
-            if not isinstance(key, rsa.RSAPublicKey):
-                raise ValueError("The key is not an RSA public key.")
-            return cls(key)
+            return cls(loader(memoryview(data), defb()))
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect."
+                "Cannot deserialize key. The key format might be invalid."
             ) from e
 
 
