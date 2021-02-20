@@ -1,50 +1,43 @@
+from __future__ import annotations
+
+import typing
+
 from Cryptodome.PublicKey import ECC
-from Cryptodome.Signature import DSS
 
 from ... import base, exc
-from ._serialization import encodings, formats, protection_schemes
+from .asymmetric import ENCODINGS, FORMATS, PROTECTION_SCHEMES, get_DSS
 
-_sig_encodings = {
-    "binary": "binary",
-    "der": "der",
-}
-
-_sig_modes = {
-    "fips-186-3": "fips-186-3",
-    "deterministic-rfc6979": "deterministic-rfc6979",
-}
-
-curves = {k: k for k in ECC._curves}
+CURVES = {k: k for k in ECC._curves}
 
 
 class ECCPrivateKey(base.BasePrivateKey):
-    """Represents ECC private key."""
+    """ECC private key."""
 
-    def __init__(self, curve=None, **kwargs):
+    def __init__(self, curve: str, **kwargs):
         if kwargs:
             self._key = kwargs.pop("key")
             return
-        self._key = ECC.generate(curve=curves[curve])
+        try:
+            self._key = ECC.generate(curve=CURVES[curve])
+        except KeyError as e:
+            raise ValueError(f"Invalid curve: {curve}") from e
 
-    def public_key(self):
+    def public_key(self) -> ECCPublicKey:
         """Creates a public key from the private key
 
-        Args:
-            None
-
         Returns:
-            :any:`ECCPublicKey`: ECCPublicKey interface.
+            ECCPublicKey: A public key.
         """
         return ECCPublicKey(self._key.public_key())
 
     def serialize(
         self,
-        encoding="PEM",
-        format="PKCS8",
-        passphrase=None,
+        encoding: str = "PEM",
+        format: str = "PKCS8",
+        passphrase: typing.Optional[typing.ByteString] = None,
         *,
-        protection=None,
-    ):
+        protection: typing.Optional[str] = None,
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
@@ -52,13 +45,13 @@ class ECCPrivateKey(base.BasePrivateKey):
             format (str): PKCS8 (default) or PKCS1.
             passphrase (bytes, bytearray, memoryview):
                 A bytes-like object to protect the private key. If
-                `passphrase` is None, the private key will be exported
+                ``passphrase`` is None, the private key will be exported
                 in the clear!
 
         Keyword Arguments:
             protection (str):
                 The protection scheme to use. If password is provided
-                and protection is None, 'PBKDF2WithHMAC-SHA1AndAES256-CBC'
+                and protection is None, ``PBKDF2WithHMAC-SHA1AndAES256-CBC``
                 is used.
 
         Returns:
@@ -66,22 +59,25 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         Raises:
             ValueError:
-                If the encoding is incorrect or, if DER is used with PKCS1
-                or protection value is supplied with PKCS1 format.
+                If the encoding is incorrect or,
+                if DER is used with PKCS1 or,
+                protection value is supplied with PKCS1 format or,
+                password is empty when protection value is supplied.
             KeyError: if the format is invalid or not supported.
+            TypeError:
+                if the password is not a bytes-like object when protection
+                is supplied.
         """
-        if encoding not in encodings.keys() ^ {"OpenSSH"}:
+        if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
             raise TypeError("encoding must be PEM or DER")
 
-        if format not in formats:
-            raise KeyError("invalid format")
-
-        prot = {}
+        if format not in FORMATS:
+            raise ValueError("invalid format")
 
         if protection is not None:
             if format == "PKCS1":
                 raise TypeError("protection is meaningful only for PKCS8")
-            if protection not in protection_schemes:
+            if protection not in PROTECTION_SCHEMES:
                 raise ValueError("invalid protection scheme")
             # use a curated encryption choice and not DES-EDE3-CBC
             prot = dict(protection="PBKDF2WithHMAC-SHA1AndAES256-CBC")
@@ -90,13 +86,14 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         if passphrase is not None:
             # type checking of key
-            passphrase = memoryview(passphrase).tobytes()
+            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
+                raise TypeError("password must be a bytes-like object.")
             # check length afterwards
             if not passphrase:
                 raise ValueError("passphrase cannot be empty bytes")
 
         key = self._key.export_key(
-            format=encodings[encoding],
+            format=ENCODINGS[encoding],
             use_pkcs8=(format == "PKCS8"),
             passphrase=passphrase,
             **prot,
@@ -105,35 +102,41 @@ class ECCPrivateKey(base.BasePrivateKey):
             return key
         return key.encode("utf-8")
 
-    def signer(self, *, mode="fips-186-3", encoding="binary"):
+    def signer(self, *, mode: str = "fips-186-3", encoding: str = "binary"):
         """Create a signer context.
 
         Keyword Arguments:
-            mode (str): The signature generation mode. It can be:
+            mode (str):
+                The signature generation mode. It can be:
 
                 - 'fips-186-3' (default)
                 - 'deterministic-rfc6979'
-            encoding (str): How the signature is encoded. It can be:
+            encoding (str):
+                How the signature is encoded. It can be:
 
                 - 'binary'
                 - 'der'
 
         Returns:
-            :any:`ECCSignerCtx`: An ECCSignerCtx object for signing messages.
+            _SigVerContext: An object for signing messages.
 
         Raises:
-            KeyError: if the mode or encoding is invalid or not supported.
+            ValueError: if the mode or encoding is invalid or not supported.
         """
-        return ECCSignerCtx(self._key, mode=mode, encoding=encoding)
+        return _SigVerContext(True, get_DSS(self._key, mode, encoding))
 
-    def exchange(self, peer_public_key):
+    def exchange(self, peer_public_key: typing.ByteString) -> bytes:
         raise NotImplementedError(
             "key exchange is currently not supported by the backend."
         )
 
     @classmethod
-    def load(cls, data, passphrase=None):
-        """Loads the private key as `bytes` object and returns the Key
+    def load(
+        cls,
+        data: typing.ByteString,
+        passphrase: typing.Optional[typing.ByteString] = None,
+    ):
+        """Loads the private key as binary object and returns the Key
         interface.
 
         Args:
@@ -141,11 +144,11 @@ class ECCPrivateKey(base.BasePrivateKey):
                 The key as bytes object.
             password (bytes, bytearray, memoryview):
                 The password that deserializes the private key.
-                `password` must be a `bytes` object if the key
-                was encrypted while serialization, otherwise `None`.
+                ``password`` must be a ``bytes`` object if the key
+                was encrypted while serialization, otherwise ``None``.
 
         Returns:
-            :any:`ECCPrivateKey`:  `ECCPrivateKey` object.
+            ECCPrivateKey: An ECC private key.
 
         Raises:
             ValueError: if the key could not be deserialized.
@@ -154,7 +157,7 @@ class ECCPrivateKey(base.BasePrivateKey):
             key = ECC.import_key(data, passphrase)
             if not key.has_private():
                 raise ValueError("The key is not a private key")
-            return cls(key=key)
+            return cls(None, key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. "
@@ -169,7 +172,7 @@ class ECCPublicKey(base.BasePublicKey):
     def __init__(self, key):
         self._key = key
 
-    def serialize(self, encoding="PEM", *, compress=False):
+    def serialize(self, encoding: str = "PEM", *, compress: bool = False):
         """Serialize the private key.
 
         Args:
@@ -187,47 +190,50 @@ class ECCPublicKey(base.BasePublicKey):
         Raises:
             KeyError: if the encoding is not supported or invalid.
         """
-        key = self._key.export_key(
-            format=encodings[encoding],
-            compress=compress,
-        )
+        try:
+            key = self._key.export_key(
+                format=ENCODINGS[encoding],
+                compress=compress,
+            )
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding: {encoding}")
         if isinstance(key, bytes):
             return key
         return key.encode()
 
-    def verifier(self, *, mode="fips-186-3", encoding="binary"):
-        """Create a signer context.
+    def verifier(self, *, mode: str = "fips-186-3", encoding: str = "binary"):
+        """Create a DSS verifier context.
 
         Args:
-            mode: The signature generation mode. It can be:
+            mode:
+                The signature generation mode. It can be:
 
                 - 'fips-186-3' (default)
                 - 'deterministic-rfc6979'
-            encoding: How the signature is encoded. It can be:
+            encoding:
+                How the signature is encoded. It can be:
 
                 - 'binary'
                 - 'der'
 
         Returns:
-            :any:`ECCVerifierCtx`:
-                A `ECCVerifierCtx` object for verifying messages.
+            _SigVerContext: A verifier object.
 
         Raises:
             KeyError: if the mode or encoding is invalid or not supported.
         """
-        return ECCVerifierCtx(self._key, mode=mode, encoding=encoding)
+        return _SigVerContext(False, get_DSS(self._key, mode, encoding))
 
     @classmethod
-    def load(cls, data):
-        """Loads the public key as `bytes` object and returns the Key
-        interface.
+    def load(cls, data: typing.ByteString):
+        """Loads the public key as binary object and returns the Key object.
 
         Args:
-            data (bytes):
+            data (bytes, bytearray):
                 The key as bytes object.
 
         Returns:
-            :any:`ECCPublicKey`: `ECCPublicKey` object.
+            ECCPublicKey: An ECC public key.
 
         Raises:
             ValueError: if the key could not be deserialized.
@@ -239,62 +245,132 @@ class ECCPublicKey(base.BasePublicKey):
             return cls(key=key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
+                "Cannot deserialize key. Either Key format is invalid or "
                 "password is missing or incorrect.",
             ) from e
 
 
 class _SigVerContext:
-    def __init__(self, key, *, mode="fips-186-3", encoding="der"):
-        self._sig = DSS.new(
-            key,
-            mode=_sig_modes[mode],
-            encoding=_sig_encodings[encoding],
-        )
-
-
-class ECCSignerCtx(_SigVerContext):
-    """Signing context for ECC private key."""
+    def __init__(self, is_private, ctx):
+        self._is_private = is_private
+        self._ctx = ctx
 
     def sign(self, msghash):
         """Return the signature of the message hash.
 
         Args:
             msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                `msghash` must be an instance of :any:`BaseHash`.
-                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new`
-                function's documentation.
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
 
         Returns:
             bytes: signature of the message as bytes object.
+
+        Raises:
+            TypeError: if the key is a public key.
         """
-        return self._sig.sign(msghash)
-
-
-class ECCVerifierCtx(_SigVerContext):
-    """Verification context for ECC public key."""
+        if not self._is_private:
+            raise TypeError("Only private keys can sign messages.")
+        return self._ctx.sign(msghash)
 
     def verify(self, msghash, signature):
         """Verifies the signature of the message hash.
 
         Args:
             msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                `msghash` must be an instance of :any:`BaseHash`.
-                Refer to :func:`pyflocker.ciphers.interfaces.Hash.new`
-                function's documentation.
-            signature (bytes):
-                signature must be a `bytes` or `bytes-like` object.
+                It must be a :any:`BaseHash` object, used to digest the
+                message to sign.
+            signature (bytes, bytearray):
+                signature must be a ``bytes`` or ``bytes-like`` object.
 
         Returns:
             None
 
         Raises:
-            TypeError: if the `msghash` object is not from the same
-                backend.
-            SignatureError: if the `signature` was incorrect.
+            TypeError: if the key is a private key.
+            SignatureError: if the signature was incorrect.
         """
+        if self._is_private:
+            raise TypeError("Only public keys can verify messages.")
         try:
-            self._sig.verify(msghash, signature)
+            self._ctx.verify(msghash, signature)
         except ValueError as e:
             raise exc.SignatureError from e
+
+
+def generate(curve: str) -> ECCPrivateKey:
+    """
+    Generate a private key with given curve ``curve``.
+
+    Args:
+        curve (str): The name of the curve to use.
+
+    Returns:
+        ECCPrivateKey: An ECC private key.
+
+    Raises:
+        ValueError: if the curve the name of the curve is invalid.
+    """
+    return ECCPrivateKey(curve)
+
+
+def load_public_key(data: typing.ByteString, *, edwards: bool = True):
+    """Loads the public key and returns a Key interface.
+
+    Args:
+        data (bytes, bytearray):
+            The public key (a bytes-like object) to deserialize.
+
+    Keyword Arguments:
+        edwards (bool, NoneType):
+            Whether the ``Raw`` encoded key of length 32 bytes
+            must be imported as an ``Ed25519`` key or ``X25519`` key.
+
+            If ``True``, the key will be imported as an ``Ed25519`` key,
+            otherwise an ``X25519`` key.
+
+            This argument is ignored for all other serialized key types.
+
+    Returns:
+        ECCPublicKey: An ECC public key.
+    """
+    return ECCPublicKey.load(data, edwards=edwards)
+
+
+def load_private_key(
+    data: typing.ByteString,
+    passphrase: typing.Optional[typing.ByteString] = None,
+    *,
+    edwards: bool = True,
+) -> ECCPrivateKey:
+    """Loads the private key and returns a Key interface.
+
+    If the private key was not encrypted duting the serialization,
+    ``passphrase`` must be ``None``, otherwise it must be a ``bytes-like``
+    object.
+
+    Args:
+        data (bytes, bytearray):
+            The private key (a bytes-like object) to deserialize.
+        password (bytes, bytearray):
+            The password (in bytes) that was used to encrypt the
+            private key. `None` if the key was not encrypted.
+
+    Keyword Arguments:
+        edwards (bool, NoneType):
+            Whether the ``Raw`` encoded key of length 32 bytes
+            must be imported as an ``Ed25519`` key or ``X25519`` key.
+
+            If ``True``, the key will be imported as an ``Ed25519`` key,
+            otherwise an ``X25519`` key.
+
+            This argument is ignored for all other serialized key types.
+
+    Returns:
+        ECCPrivateKey: An ECC private key.
+    """
+    return ECCPrivateKey.load(
+        data,
+        passphrase,
+        edwards=edwards,
+    )
