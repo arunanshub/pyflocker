@@ -38,7 +38,6 @@ _supported_encodings = frozenset(
 
 
 class _RSANumbers:
-    @_cache
     def _numbers(self):
         try:
             k = self._key.public_numbers()
@@ -47,11 +46,13 @@ class _RSANumbers:
         return k
 
     @property
+    @_cache
     def e(self) -> int:
         """RSA public exponent."""
         return self._numbers().e
 
     @property
+    @_cache
     def n(self) -> int:
         """RSA public modulus.
 
