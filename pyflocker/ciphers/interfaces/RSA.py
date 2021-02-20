@@ -33,7 +33,7 @@ def generate(
     Returns:
         BasePrivateKey: The RSA private key.
     """
-    return _load_rsa_cpr(backend).RSAPrivateKey(bits, e)
+    return _load_rsa_cpr(backend).generate(bits, e)
 
 
 def load_public_key(
@@ -54,7 +54,7 @@ def load_public_key(
     Returns:
         BasePublicKey: The RSA public key.
     """
-    return _load_rsa_cpr(backend).RSAPublicKey.load(data)
+    return _load_rsa_cpr(backend).load_public_key(data)
 
 
 def load_private_key(
@@ -82,4 +82,4 @@ def load_private_key(
     Returns:
         BasePrivateKey: The RSA private key.
     """
-    return _load_rsa_cpr(backend).RSAPrivateKey.load(data, passphrase)
+    return _load_rsa_cpr(backend).load_private_key(data, passphrase)
