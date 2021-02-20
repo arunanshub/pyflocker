@@ -195,8 +195,8 @@ class ECCPublicKey(base.BasePublicKey):
                 format=ENCODINGS[encoding],
                 compress=compress,
             )
-        except KeyError as e:
-            raise ValueError(f"Invalid encoding: {encoding}")
+        except KeyError:
+            raise ValueError(f"Invalid encoding: {encoding}") from None
         if isinstance(key, bytes):
             return key
         return key.encode()
