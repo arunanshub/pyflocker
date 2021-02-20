@@ -166,7 +166,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         """
         try:
             encoding_ = ENCODINGS[encoding]
-            format_ = PUBLIC_FORMATS[format]
+            format_ = PRIVATE_FORMATS[format]
         except KeyError as e:
             raise ValueError("The encoding or format is invalid.") from e
 
