@@ -5,6 +5,7 @@ from types import MappingProxyType
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
+from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import (
     ec,
@@ -176,9 +177,9 @@ class ECCPrivateKey(base.BasePrivateKey):
         if passphrase is None:
             protection = ser.NoEncryption()
         else:
-            if not isinstance(password, (bytes, bytearray, memoryview)):
-                raise TypeError("password must be a bytes-like object.")
-            protection = ser.BestAvailableEncryption(password)
+            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
+                raise TypeError("passphrase must be a bytes-like object.")
+            protection = ser.BestAvailableEncryption(passphrase)
         return self._key.private_bytes(encoding_, format_, protection)
 
     def exchange(
@@ -299,7 +300,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         try:
             loader = fmts[[*filter(data.startswith, fmts)][0]]
         except IndexError:
-            loader = self._get_raw_ecc_loader(data, edwards)
+            loader = cls._get_raw_ecc_loader(data, edwards)
 
         # type check
         if password is not None:
@@ -459,7 +460,7 @@ class ECCPublicKey(base.BasePublicKey):
         try:
             loader = fmts[[*filter(data.startswith, fmts)][0]]
         except IndexError:
-            loader = self._get_raw_ecc_loader(data, edwards)
+            loader = cls._get_raw_ecc_loader(data, edwards)
 
         try:
             key = loader(memoryview(data), defb())
