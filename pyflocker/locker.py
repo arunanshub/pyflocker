@@ -36,6 +36,18 @@ Note:
 Parts of Header
 ~~~~~~~~~~~~~~~
 
+The header can be represented as a C struct:
+
+.. code-block:: c
+
+    typedef struct {
+        unsigned int magic;
+        unsigned short mode;
+        char nonce[16];
+        char tag[32];
+        char metadata[32];
+    } Header;
+
 - Magic number (``unsigned int``):
     A unique number to identify the filetype.
 
