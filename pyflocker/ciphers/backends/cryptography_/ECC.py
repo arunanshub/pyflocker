@@ -111,10 +111,13 @@ class ECCPrivateKey(base.BasePrivateKey):
         if kwargs:
             self._key = kwargs.pop("key")
             return
-        if curve not in SPECIAL_CURVES:
-            self._key = ec.generate_private_key(CURVES[curve], defb())
-            return
-        self._key = SPECIAL_CURVES[curve].generate()
+        try:
+            if curve not in SPECIAL_CURVES:
+                self._key = ec.generate_private_key(CURVES[curve], defb())
+                return
+            self._key = SPECIAL_CURVES[curve].generate()
+        except KeyError as e:
+            raise ValueError(f"Invalid curve: {curve}") from e
 
     def public_key(self) -> ECCPublicKey:
         """Creates a public key from the private key.
@@ -180,18 +183,18 @@ class ECCPrivateKey(base.BasePrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.Union[typing.ByteString, ECCPublicKey],
+        peer_public_key: typing.ByteString,
         algorithm: str = "ECDH",
     ):
         """Perform a key exchange.
 
         Args:
             peer_public_key (bytes-like, :any:`ECCPublicKey`):
-                The public key from the other party. It can be a
-                :any:`ECCPublicKey` object or a serialized :any:`ECCPublicKey`.
+                The public key from the other party. It must be a serialized
+                :any:`ECCPublicKey` object.
             algorithm (str):
                 The algorithm to use to perform the exchange.
-                Only ECDH is avaliable.
+                Only ECDH is avaliable. Ignored for X* keys.
 
         Returns:
             bytes: Shared key as bytes object.
@@ -205,8 +208,10 @@ class ECCPrivateKey(base.BasePrivateKey):
                 "Edwards curves don't suport key exchange."
             )
 
-        if isinstance(peer_public_key, (bytes, bytearray, memoryview)):
-            peer_public_key = ECCPublicKey.load(peer_public_key)
+        if not isinstance(peer_public_key, (bytes, bytearray, memoryview)):
+            raise TypeError("peer_public_key must be a bytes-like object.")
+
+        peer_public_key = ECCPublicKey.load(peer_public_key)
 
         # X* key
         if isinstance(self._key, (*EXCHANGE_CURVES.values(),)):
@@ -225,6 +230,7 @@ class ECCPrivateKey(base.BasePrivateKey):
             algorithm (str):
                 The algorithm to use for signing. Currently ECDSA is only
                 available.
+                Ignored from Ed* keys.
 
         Returns:
             _SigVerContext: A signer object.
@@ -253,7 +259,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Loads the private key as `bytes` object and returns a key object.
 
         Args:
-            data (bytes, bytearray, memoryview):
+            data (bytes, bytearray):
                 The key as a ``bytes-like`` object.
             password (bytes, bytearray, memoryview, None):
                 The password that deserializes the private key.
@@ -457,7 +463,7 @@ class ECCPublicKey(base.BasePublicKey):
 
         try:
             key = loader(memoryview(data), defb())
-            return cls(None, key=key)
+            return cls(key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Incorrect key format.",
@@ -548,3 +554,81 @@ class _SigVerContext:
             )
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
+
+
+def generate(curve: str) -> ECCPrivateKey:
+    """
+    Generate a private key with given curve ``curve``.
+
+    Args:
+        curve (str): The name of the curve to use.
+
+    Returns:
+        ECCPrivateKey: An ECC private key.
+
+    Raises:
+        ValueError: if the curve the name of the curve is invalid.
+    """
+    return ECCPrivateKey(curve)
+
+
+def load_public_key(data: typing.ByteString, *, edwards: bool = True):
+    """Loads the public key and returns a Key interface.
+
+    Args:
+        data (bytes, bytearray):
+            The public key (a bytes-like object) to deserialize.
+
+    Keyword Arguments:
+        edwards (bool, NoneType):
+            Whether the ``Raw`` encoded key of length 32 bytes
+            must be imported as an ``Ed25519`` key or ``X25519`` key.
+
+            If ``True``, the key will be imported as an ``Ed25519`` key,
+            otherwise an ``X25519`` key.
+
+            This argument is ignored for all other serialized key types.
+
+    Returns:
+        ECCPublicKey: An ECC public key.
+    """
+    return ECCPublicKey.load(data, edwards=edwards)
+
+
+def load_private_key(
+    data: typing.ByteString,
+    passphrase: typing.Optional[typing.ByteString] = None,
+    *,
+    edwards: bool = True,
+) -> ECCPrivateKey:
+    """Loads the private key and returns a Key interface.
+
+    If the private key was not encrypted duting the serialization,
+    ``passphrase`` must be ``None``, otherwise it must be a ``bytes-like``
+    object.
+
+    Args:
+        data (bytes, bytearray):
+            The private key (a bytes-like object) to deserialize.
+        password (bytes, bytearray):
+            The password (in bytes) that was used to encrypt the
+            private key. `None` if the key was not encrypted.
+
+    Keyword Arguments:
+        edwards (bool, NoneType):
+            Whether the ``Raw`` encoded key of length 32 bytes
+            must be imported as an ``Ed25519`` key or ``X25519`` key.
+
+            If ``True``, the key will be imported as an ``Ed25519`` key,
+            otherwise an ``X25519`` key.
+
+            This argument is ignored for all other serialized key types.
+
+    Returns:
+        ECCPrivateKey: An ECC private key.
+    """
+    return ECCPrivateKey.load(
+        data,
+        passphrase,
+        edwards=edwards,
+    )

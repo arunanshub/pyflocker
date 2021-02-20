@@ -12,7 +12,7 @@ def _load_ecc_cpr(backend):
 
 def generate(curve: str, *, backend: typing.Optional[_Backends] = None):
     """
-    Generate a private key with given curve `curve`.
+    Generate a private key with given curve ``curve``.
 
     Args:
         curve (str): The name of the curve to use.
@@ -22,14 +22,14 @@ def generate(curve: str, *, backend: typing.Optional[_Backends] = None):
             The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        :any:`BasePrivateKey`: An `ECCPrivateKey` interface.
+        BasePrivateKey: An ECC private key.
 
     Raises:
-        KeyError:
+        ValueError:
             if the curve is not supported by the backend or the name of the
             curve is invalid.
     """
-    return _load_ecc_cpr(backend).ECCPrivateKey(curve)
+    return _load_ecc_cpr(backend).generate(curve)
 
 
 def load_public_key(
@@ -55,13 +55,13 @@ def load_public_key(
             The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        :any:`BasePublicKey`: An `ECCPublicKey` interface.
+        BasePublicKey: An ECC public key.
     """
     kwargs = dict()
     if len(data) == 32:
         if backend == _Backends.CRYPTOGRAPHY:
             kwargs = dict(edwards=edwards)
-    return _load_ecc_cpr(backend).ECCPublicKey.load(data, **kwargs)
+    return _load_ecc_cpr(backend).load_public_key(data, **kwargs)
 
 
 def load_private_key(
@@ -100,7 +100,7 @@ def load_private_key(
     if len(data) == 32:
         if backend == _Backends.CRYPTOGRAPHY:
             kwargs = dict(edwards=edwards)
-    return _load_ecc_cpr(backend).ECCPrivateKey.load(
+    return _load_ecc_cpr(backend).load_private_key(
         data,
         passphrase,
         **kwargs,
