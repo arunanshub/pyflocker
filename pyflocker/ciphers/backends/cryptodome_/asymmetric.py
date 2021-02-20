@@ -2,7 +2,7 @@ from functools import partial
 from types import MappingProxyType
 
 from Cryptodome.Cipher import PKCS1_OAEP
-from Cryptodome.Signature import pss
+from Cryptodome.Signature import DSS, pss
 
 from .. import asymmetric
 
@@ -51,6 +51,38 @@ def get_PSS(key, padding):
         mask_func=mgf,
         salt_bytes=padding.salt_length,
     )
+
+
+def get_DSS(key, mode, encoding):
+    """Construct a Cryptodome specific DSS object.
+
+    Args:
+        key: The private/public key from Cryptodome backend.
+        mode (str):
+            The mode can be:
+
+            - 'fips-186-3'
+            - 'deterministic-rfc6979'
+        encoding:
+            How the signature is encoded. Values are:
+
+            - 'binary'
+            - 'der'
+
+    Returns:
+        DSS object: DSS object from Cryptodome backend.
+
+    Raises:
+        ValueError: if the mode or encoding is invalid.
+    """
+    try:
+        return DSS.new(
+            key,
+            mode=DSS_MODES[mode],
+            encoding=DSS_ENCODINGS[encoding],
+        )
+    except KeyError as e:
+        raise ValueError(f"The mode or encoding is invalid: {e.args}")
 
 
 class _SaltLengthMaximizer:
@@ -118,6 +150,21 @@ PROTECTION_SCHEMES = frozenset(
         "scryptAndAES192-CBC",
         "scryptAndAES256-CBC",
     )
+)
+
+
+DSS_ENCODINGS = MappingProxyType(
+    {
+        "binary": "binary",
+        "der": "der",
+    }
+)
+
+DSS_MODES = MappingProxyType(
+    {
+        "fips-186-3": "fips-186-3",
+        "deterministic-rfc6979": "deterministic-rfc6979",
+    }
 )
 
 
