@@ -5,8 +5,8 @@ class DecryptionError(Exception):
     """
     Can be raised in two cases:
 
-     - AEAD ciphers failed to verify the decryption.
-     - Asymmetric ciphers (RSA) failed to decrypt the data.
+    - AEAD ciphers failed to verify the decryption.
+    - Asymmetric ciphers (RSA) failed to decrypt the data.
     """
 
     pass
