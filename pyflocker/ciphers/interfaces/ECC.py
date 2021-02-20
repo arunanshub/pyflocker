@@ -1,4 +1,5 @@
 """Interface to ECC signature algorithm and key-exchange."""
+import typing
 
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
@@ -9,7 +10,7 @@ def _load_ecc_cpr(backend):
     return _load_algo("ECC", backend)
 
 
-def generate(curve, *, backend=None):
+def generate(curve: str, *, backend: typing.Optional[_Backends] = None):
     """
     Generate a private key with given curve `curve`.
 
@@ -31,7 +32,12 @@ def generate(curve, *, backend=None):
     return _load_ecc_cpr(backend).ECCPrivateKey(curve)
 
 
-def load_public_key(data, *, edwards=None, backend=None):
+def load_public_key(
+    data: typing.ByteString,
+    *,
+    edwards: bool = True,
+    backend: typing.Optional[_Backends] = None,
+):
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -53,11 +59,18 @@ def load_public_key(data, *, edwards=None, backend=None):
     """
     kwargs = dict()
     if len(data) == 32:
-        kwargs = dict(edwards=edwards)
+        if backend == _Backends.CRYPTOGRAPHY:
+            kwargs = dict(edwards=edwards)
     return _load_ecc_cpr(backend).ECCPublicKey.load(data, **kwargs)
 
 
-def load_private_key(data, passphrase=None, *, edwards=None, backend=None):
+def load_private_key(
+    data: typing.ByteString,
+    passphrase: typing.Optional[typing.ByteString] = None,
+    *,
+    edwards: bool = True,
+    backend: typing.Optional[_Backends] = None,
+):
     """Loads the private key and returns a Key interface.
 
     If the private key was not encrypted duting the serialization,
