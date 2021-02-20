@@ -35,7 +35,7 @@ def load_algorithm(
         return import_module(f".{name}", _backend.__name__)
     except ImportError as e:
         raise exc.UnsupportedAlgorithm(
-            f"{name} not implemented by backend {backend}."
+            f"{name} is not implemented by backend {backend}."
         ) from e
 
 
