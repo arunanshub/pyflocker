@@ -210,6 +210,10 @@ class BaseHash(metaclass=ABCMeta):
             str: Name of hash function.
         """
 
+    @abstractmethod
+    def new(self, data=b"", *args, **kwargs) -> BaseHash:
+        """Create a fresh hash object."""
+
     def __repr__(self) -> str:
         return f"<{type(self).__name__} '{self.name}' at {hex(id(self))}>"
 
