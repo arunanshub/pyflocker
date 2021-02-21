@@ -135,7 +135,7 @@ class DHParameters:
             q (int): p subgroup order value. Defaults to ``None``.
 
         Returns:
-            :any:`DHParameters`: DHParameters object.
+            DHParameters: DHParameters object.
         """
         param_nos = dh.DHParameterNumbers(p, g, q)
         return cls(None, parameter=param_nos.parameters(defb()))
@@ -166,7 +166,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         """Create a public key from the private key.
 
         Returns:
-            :any:`DHPublicKey`: `DHPublicKey` object.
+            DHPublicKey: A public key object.
         """
         return DHPublicKey(self._key.public_key())
 
@@ -174,12 +174,15 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         """Perform a key exchange.
 
         Args:
-            peer_public_key (bytes, :any:`DHPublicKey`):
+            peer_public_key (bytes, bytearray):
                 The peer public key can be a bytes or a :any:`DHPublicKey`
                 object.
 
         Returns:
             bytes: A shared key.
+
+        Raises:
+            TypeError: if ``peer_public_key`` is not a bytes-like object.
         """
         if not isinstance(peer_public_key, (bytes, bytearray, memoryview)):
             raise TypeError("peer_public_key must be a bytes-like object.")
