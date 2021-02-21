@@ -51,5 +51,5 @@ def new(
         key,
         nonce,
         file=file,
-        use_poly1305=True,
+        use_poly1305=use_poly1305,
     )
