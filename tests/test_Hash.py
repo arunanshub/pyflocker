@@ -2,7 +2,8 @@ from itertools import combinations_with_replacement
 
 import pytest
 
-from pyflocker.ciphers import Backends, Hash, exc
+from pyflocker.ciphers import Hash, exc
+from pyflocker.ciphers.backends import Backends
 
 _BLOCK_SIZE_DIFFERS = [
     "blake2s",
@@ -11,7 +12,7 @@ _BLOCK_SIZE_DIFFERS = [
 
 
 def create_hash(algo, data, *, backend, **kwargs):
-    if algo not in Hash.get_available_hashes(backend):
+    if algo not in Hash.algorithms_available(backend):
         return pytest.skip(f"{backend.name} does not support {algo}")
     return Hash.new(algo, data, backend=backend, **kwargs)
 
@@ -51,7 +52,7 @@ class _TestHashBase:
 
 @pytest.mark.parametrize(
     "algo",
-    Hash.get_available_hashes()
+    Hash.algorithms_available()
     ^ set(("blake2b", "blake2s", "shake128", "shake256")),  # noqa: W503
 )
 @pytest.mark.parametrize(

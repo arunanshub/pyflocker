@@ -1,106 +1,144 @@
-import os
+import io
 
 import pytest
 
-from pyflocker import Backends
 from pyflocker.ciphers import exc
+from pyflocker.ciphers.backends import Backends
 
 
-def _create_buffer(length, extend, backend):
+def _create_buffer(length, offset, backend):
     if backend == Backends.CRYPTOGRAPHY:
-        buf = memoryview(bytearray(length + (extend or 0)))
-        return buf
+        return memoryview(bytearray(length + offset))
     return memoryview(bytearray(length))
 
 
-@pytest.mark.parametrize("authlen", [0, 64])
 class BaseSymmetric:
-    def test_update_into(
-        self, cipher, backend1, backend2, authlen, *, extend=15
+    @staticmethod
+    def _get_cipher(cipher, backend1, backend2):
+        try:
+            enc = cipher(encrypting=True, backend=backend1)
+        except exc.UnsupportedAlgorithm:
+            pytest.skip(f"Unsupported by {backend1}")
+
+        try:
+            dec = cipher(encrypting=False, backend=backend2)
+        except exc.UnsupportedAlgorithm:
+            pytest.skip(f"Unsupported by {backend2}")
+        return enc, dec
+
+    @staticmethod
+    def _test_finalize(enc, dec):
+        for i in enc, dec:
+            with pytest.raises(exc.AlreadyFinalized):
+                i.finalize()
+
+    @staticmethod
+    def _finalizer(enc, dec):
+        enc.finalize(), dec.finalize()
+
+    def test_update(self, cipher, backend1, backend2):
+        enc, dec = self._get_cipher(cipher, backend1, backend2)
+        data = bytes(64)
+        ctxt = enc.update(data)
+        ptxt = dec.update(ctxt)
+        self._finalizer(enc, dec)
+        assert data == ptxt
+        self._test_finalize(enc, dec)
+
+    def test_update_into(self, cipher, backend1, backend2, *, offset):
+        # offset value is specified by the subclass
+        enc, dec = self._get_cipher(cipher, backend1, backend2)
+        readbuf = memoryview(bytearray(64))
+        in_ = _create_buffer(64, offset, backend1)
+        out = _create_buffer(64, offset, backend2)
+
+        try:
+            enc.update_into(readbuf, in_)
+        except NotImplementedError:
+            pytest.skip(f"update_into not supported by {enc}")
+        try:
+            dec.update_into(in_[: len(readbuf)], out)
+        except NotImplementedError:
+            pytest.skip(f"update_into not supported by {dec}")
+        self._finalizer(enc, dec)
+
+        assert out.tobytes()[: len(readbuf)] == readbuf.tobytes()
+        self._test_finalize(enc, dec)
+
+
+class BaseSymmetricAEAD(BaseSymmetric):
+    @staticmethod
+    def _finalizer(enc, dec):
+        enc.finalize()
+        dec.finalize(enc.calculate_tag())
+
+    def test_update_with_auth(self, cipher, backend1, backend2):
+        enc, dec = self._get_cipher(cipher, backend1, backend2)
+
+        auth, data = bytes(64), bytes(64)
+
+        enc.authenticate(auth)
+        dec.authenticate(auth)
+
+        ctxt = enc.update(data)
+        ptxt = dec.update(ctxt)
+
+        self._finalizer(enc, dec)
+        assert data == ptxt
+        self._test_finalize(enc, dec)
+
+    def test_update_into_with_auth(
+        self,
+        cipher,
+        backend1,
+        backend2,
+        *,
+        offset,
     ):
-        rbuf = memoryview(bytearray(16384))
+        # offset value is specified by the subclass
+        enc, dec = self._get_cipher(cipher, backend1, backend2)
+        auth = bytes(64)
+        enc.authenticate(auth)
+        dec.authenticate(auth)
 
-        enc = cipher(True, backend=backend1)
-        dec = cipher(False, backend=backend2)
-
-        wbuf = _create_buffer(len(rbuf), extend, backend1)
-        test = _create_buffer(len(rbuf), extend, backend2)
+        readbuf = memoryview(bytearray(64))
+        in_ = _create_buffer(64, offset, backend1)
+        out = _create_buffer(64, offset, backend2)
 
         try:
-            enc.authenticate(bytes(authlen))
+            enc.update_into(readbuf, in_)
         except NotImplementedError:
-            assert enc._auth is None
-
-        enc.update_into(rbuf, wbuf)
-        enc.finalize()
-
-        if extend is not None:
-            wbuf = wbuf[
-                : (-extend if backend1 == Backends.CRYPTOGRAPHY else None)
-            ]
-
+            pytest.skip(f"update_into not supported by {enc}")
         try:
-            dec.authenticate(bytes(authlen))
+            dec.update_into(in_[: len(readbuf)], out)
         except NotImplementedError:
-            assert dec._auth is None
+            pytest.skip(f"update_into not supported by {dec}")
 
-        dec.update_into(wbuf, test)
-        try:
-            dec.finalize(enc.calculate_tag())
-        except NotImplementedError:
-            assert enc._auth is None
+        self._finalizer(enc, dec)
+        assert out.tobytes()[: len(readbuf)] == readbuf.tobytes()
+        self._test_finalize(enc, dec)
 
-        if extend is not None:
-            test = test[
-                : (-extend if backend2 == Backends.CRYPTOGRAPHY else None)
-            ]
-
-        assert test.tobytes() == rbuf.tobytes()
-
-    def test_update(self, cipher, backend1, backend2, authlen):
-        enc = cipher(True, backend=backend1)
-        dec = cipher(False, backend=backend2)
-
-        for crp in [enc, dec]:
-            try:
-                crp.authenticate(bytes(authlen))
-            except NotImplementedError:
-                assert crp._auth is None
-
-        data = bytes(32)
-        assert dec.update(enc.update(data)) == data
-
-        enc.finalize()
-        try:
-            dec.finalize(enc.calculate_tag())
-        except NotImplementedError:
-            assert enc._auth is None
-
-    def test_write_into_file_buffer(self, cipher, backend1, backend2, authlen):
-        import io
-
-        f1 = io.BytesIO(bytes(16384))
-        f2 = io.BytesIO()
-        f3 = io.BytesIO()
-        try:
-            enc = cipher(True, file=f1, backend=backend1)
-            dec = cipher(False, file=f2, backend=backend2)
-        except TypeError:
-            # some ciphers don't require mode -- ChaCha20
-            mode = cipher.keywords.get("mode") or cipher
-            pytest.skip(
-                f"{mode} does not support writing into file-like objects"
-            )
-
-        enc.authenticate(bytes(authlen))
-        dec.authenticate(bytes(authlen))
-
-        enc.update_into(f2, blocksize=1024)
-        f2.seek(0)
+    def test_update_into_file_buffer(self, cipher, backend1, backend2):
+        read = io.BytesIO(bytes(16384))
+        in_ = io.BytesIO()
+        out = io.BytesIO()
+        auth = bytes(64)
 
         try:
-            dec.update_into(f3, blocksize=2048, tag=enc.calculate_tag())
-        except exc.DecryptionError:
-            pytest.fail("Authentication check failed")
+            enc = cipher(encrypting=True, file=read, backend=backend1)
+        except exc.UnsupportedAlgorithm:
+            pytest.skip(f"Unsupported by {backend1}")
 
-        assert f3.getvalue() == f1.getvalue()
+        enc.authenticate(auth)
+        enc.update_into(in_, blocksize=1024)
+        in_.seek(0)
+
+        try:
+            dec = cipher(encrypting=False, file=in_, backend=backend2)
+        except exc.UnsupportedAlgorithm:
+            pytest.skip(f"Unsupported by {backend2}")
+
+        dec.authenticate(auth)
+        dec.update_into(out, blocksize=1024, tag=enc.calculate_tag())
+
+        assert read.getvalue() == out.getvalue()
