@@ -22,7 +22,7 @@ or
 
 # Introduction
 
-PyFLocker aims to be a highly portable and easy of use cryptographic library.
+PyFLocker aims to be a highly stable and easy of use cryptographic library.
 Before you read on, check if you agree to at least one of these points:
 
 - [`PyCryptodome(x)`][pycrypto] and [`pyca/cryptography`][pyca] have
@@ -51,7 +51,7 @@ Before you read on, check if you agree to at least one of these points:
 
 PyFLocker uses well established libraries as its backends and expands upon them.
 This gives you the ultimate ability to cherry-pick the primitives from a specific
-backend without having to worry about backend's interface, as PyFLocker handles it
+backend without having to worry about backend itself, as PyFLocker handles it
 for you.
 
 You can find more information in the [documentation][docs].
@@ -64,8 +64,16 @@ PyFLocker provides you a seamless interface to both the backends, and switching
 is very easy:
 
 ```python
-from pyflocker.ciphers import AES, Backends
-enc = AES.new(True, key, AES.MODE_GCM, nonce, backend=Backends.CRYPTOGRAPHY)
+import os
+from pyflocker.ciphers import AES, RSA, ECC
+from pyflocker.ciphers.backends import Backends
+
+key, nonce = os.urandom(32), os.urandom(16)
+
+# Multiple backends - same API
+enc = AES.new(True, key, AES.MODE_EAX, nonce, backend=Backends.CRYPTOGRAPHY)
+rpriv = RSA.new(2048, backend=Backends.CRYPTODOME)
+epriv = ECC.new("x25519", backend=Backend.CRYPTOGRAPHY)
 ```
 
 Backend loading is done internally, and if a backend is explicitly specified,
@@ -79,7 +87,8 @@ PyFLocker provides reasonable defaults wherever possible:
 from pyflocker.ciphers import RSA
 priv = RSA.generate(2048)
 with open("private_key.pem", "xb") as f:
-    f.write(priv.serialize())
+    key = priv.serialize(password=b"random-chimp-event")
+    f.write(key)
 ```
 
 Don't believe me, try to do the same operation with [pyca/cryptography][pyca_vs_self],
@@ -93,7 +102,8 @@ This is often a related problem when it comes to encryption, but think no more!
 
 ```python
 import os
-from pyflocker.ciphers import AES, Backends
+from pyflocker.ciphers import AES
+from pyflocker.ciphers.backends import Backends
 
 key, nonce = os.urandom(32), os.urandom(16)
 f1 = open("MySecretData.txt", "rb")
@@ -128,6 +138,8 @@ locker(
 )
 # file stored as MySuperSecretFile.txt.pyflk
 ```
+
+Find more examples [here][examples].
 
 # License
 
