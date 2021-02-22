@@ -98,7 +98,7 @@ class DHParameters:
                 The parameters as an encoded bytes object.
 
         Returns:
-            DHParameters: `DHParameters` object.
+            DHParameters: DH parameter object.
         """
         fmts = {
             b"-----BEGIN DH PARAMETERS": ser.load_pem_parameters,
@@ -211,7 +211,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
         Raises:
             ValueError: if the encoding or format is invalid.
-            TypeError: passphrase must be a bytes-like object.
+            TypeError: if the passphrase is not a bytes-like object.
         """
         if passphrase is None:
             prot = ser.NoEncryption()
@@ -226,7 +226,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
                 prot,
             )
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}")
+            raise ValueError(f"Invalid encoding or format: {e.args}") from e
 
     @property
     @_cache
@@ -252,6 +252,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
 
         Raises:
             ValueError: If the key could not be deserialized.
+            TypeError: If passphrase is not a bytes-like object.
         """
         fmts = {
             b"-----": ser.load_pem_private_key,
@@ -275,10 +276,16 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
                 defb(),
             )
             return cls(None, key=key)
-        except (ValueError, TypeError) as e:
+        except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect.",
+                "password is incorrect."
+            ) from e
+        except TypeError as e:
+            raise ValueError(
+                "The key is encrypted but the password is not given or the"
+                " key is not encrypted but the password is given."
+                " Cannot deserialize the key."
             ) from e
 
 

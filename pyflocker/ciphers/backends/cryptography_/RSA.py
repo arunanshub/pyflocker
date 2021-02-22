@@ -213,7 +213,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect."
+                "password is incorrect."
             ) from e
         except TypeError as e:
             raise ValueError(
