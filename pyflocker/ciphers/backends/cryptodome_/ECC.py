@@ -314,7 +314,7 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(data: typing.ByteString, *, edwards: bool = True):
+def load_public_key(data: typing.ByteString):
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -324,7 +324,7 @@ def load_public_key(data: typing.ByteString, *, edwards: bool = True):
     Returns:
         ECCPublicKey: An ECC public key.
     """
-    return ECCPublicKey.load(data, edwards=edwards)
+    return ECCPublicKey.load(data)
 
 
 def load_private_key(
@@ -347,8 +347,4 @@ def load_private_key(
     Returns:
         ECCPrivateKey: An ECC private key.
     """
-    return ECCPrivateKey.load(
-        data,
-        passphrase,
-        edwards=edwards,
-    )
+    return ECCPrivateKey.load(data, passphrase)

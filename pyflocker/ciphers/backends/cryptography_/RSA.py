@@ -15,7 +15,7 @@ else:
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import rsa, utils
 
 from ... import base, exc
@@ -149,10 +149,9 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
 
         Raises:
            ValueError: if the format or encoding is invalid or not supported.
-           TypeError: If the encoding is invalid.
         """
         if encoding not in _supported_encodings ^ {"OpenSSH"}:
-            raise TypeError("Encoding must be PEM or DER")
+            raise ValueError("Encoding must be PEM or DER")
 
         try:
             encd = ENCODINGS[encoding]
@@ -161,9 +160,9 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             raise ValueError("The encoding or format is invalid.") from e
 
         if passphrase is None:
-            prot = serialization.NoEncryption()
+            prot = ser.NoEncryption()
         else:
-            prot = serialization.BestAvailableEncryption(
+            prot = ser.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
         return self._key.private_bytes(encd, fmt, prot)
@@ -190,14 +189,11 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
 
         Raises:
             ValueError: if the key could not be deserialized.
-            TypeError:
-                if the key is encrypted and password is not given or key is not
-                encrypted but the password is given.
         """
         fmts = {
-            b"-----BEGIN OPENSSH PRIVATE KEY": serialization.load_ssh_private_key,
-            b"-----": serialization.load_pem_private_key,
-            b"0": serialization.load_der_private_key,
+            b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
+            b"-----": ser.load_pem_private_key,
+            b"0": ser.load_der_private_key,
         }
 
         try:
@@ -220,9 +216,10 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
                 "password is missing or incorrect."
             ) from e
         except TypeError as e:
-            raise TypeError(
+            raise ValueError(
                 "The key is encrypted but the password is not given or the"
-                " key is not encrypted but the password is given"
+                " key is not encrypted but the password is given."
+                " Cannot deserialize the key."
             ) from e
 
 
@@ -281,8 +278,11 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
         Raises:
             KeyError: if the encoding or format is incorrect or unsupported.
         """
-        encd = ENCODINGS[encoding]
-        fmt = PUBLIC_FORMATS[format]
+        try:
+            encd = ENCODINGS[encoding]
+            fmt = PUBLIC_FORMATS[format]
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding or format: {e.args}")
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
@@ -301,9 +301,9 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             ValueError: if the key could not be deserialized.
         """
         fmts = {
-            b"ssh-rsa ": serialization.load_ssh_public_key,
-            b"-----": serialization.load_pem_public_key,
-            b"0": serialization.load_der_public_key,
+            b"ssh-rsa ": ser.load_ssh_public_key,
+            b"-----": ser.load_pem_public_key,
+            b"0": ser.load_der_public_key,
         }
 
         try:

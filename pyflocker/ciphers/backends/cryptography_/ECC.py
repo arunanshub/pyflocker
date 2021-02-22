@@ -5,7 +5,6 @@ from types import MappingProxyType
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives import serialization
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import (
     ec,
@@ -282,9 +281,7 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         Raises:
             ValueError: if the key could not be deserialized.
-            TypeError:
-                if the key is encrypted but the password is not given or the
-                key is not encrypted but the password is given.
+            TypeError: if password is not a bytes object.
         """
         # type check
         if password is not None:
@@ -292,9 +289,9 @@ class ECCPrivateKey(base.BasePrivateKey):
                 raise TypeError("password must be a bytes object.")
 
         fmts = {
-            b"-----BEGIN OPENSSH PRIVATE KEY": serialization.load_ssh_private_key,
-            b"-----": serialization.load_pem_private_key,
-            b"0": serialization.load_der_private_key,
+            b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
+            b"-----": ser.load_pem_private_key,
+            b"0": ser.load_der_private_key,
         }
 
         try:
@@ -320,9 +317,10 @@ class ECCPrivateKey(base.BasePrivateKey):
                 "password is missing or incorrect."
             ) from e
         except TypeError as e:
-            raise TypeError(
+            raise ValueError(
                 "The key is encrypted but the password is not given or the"
-                " key is not encrypted but the password is given"
+                " key is not encrypted but the password is given."
+                " Cannot deserialize the key."
             ) from e
 
     @staticmethod
@@ -428,7 +426,7 @@ class ECCPublicKey(base.BasePublicKey):
 
     @classmethod
     def load(cls, data: typing.ByteString, *, edwards: bool = True):
-        """Loads the public key as `bytes` object and returns
+        """Loads the public key as ``bytes`` object and returns
         the Key interface.
 
         Args:
