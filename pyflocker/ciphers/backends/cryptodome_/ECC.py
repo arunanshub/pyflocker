@@ -142,8 +142,8 @@ class ECCPrivateKey(base.BasePrivateKey):
         Args:
             data (bytes):
                 The key as bytes object.
-            password (bytes, bytearray, memoryview):
-                The password that deserializes the private key.
+            passphrase (bytes, bytearray, memoryview):
+                The passphrase that deserializes the private key.
                 ``password`` must be a ``bytes`` object if the key
                 was encrypted while serialization, otherwise ``None``.
 
@@ -208,13 +208,13 @@ class ECCPublicKey(base.BasePublicKey):
             mode:
                 The signature generation mode. It can be:
 
-                - 'fips-186-3' (default)
-                - 'deterministic-rfc6979'
+                - ``fips-186-3`` (default)
+                - ``deterministic-rfc6979``
             encoding:
                 How the signature is encoded. It can be:
 
-                - 'binary'
-                - 'der'
+                - ``binary``
+                - ``der``
 
         Returns:
             _SigVerContext: A verifier object.
@@ -321,16 +321,6 @@ def load_public_key(data: typing.ByteString, *, edwards: bool = True):
         data (bytes, bytearray):
             The public key (a bytes-like object) to deserialize.
 
-    Keyword Arguments:
-        edwards (bool, NoneType):
-            Whether the ``Raw`` encoded key of length 32 bytes
-            must be imported as an ``Ed25519`` key or ``X25519`` key.
-
-            If ``True``, the key will be imported as an ``Ed25519`` key,
-            otherwise an ``X25519`` key.
-
-            This argument is ignored for all other serialized key types.
-
     Returns:
         ECCPublicKey: An ECC public key.
     """
@@ -340,8 +330,6 @@ def load_public_key(data: typing.ByteString, *, edwards: bool = True):
 def load_private_key(
     data: typing.ByteString,
     passphrase: typing.Optional[typing.ByteString] = None,
-    *,
-    edwards: bool = True,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
@@ -352,19 +340,9 @@ def load_private_key(
     Args:
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        password (bytes, bytearray):
-            The password (in bytes) that was used to encrypt the
+        passphrase (bytes, bytearray):
+            The passphrase (in bytes) that was used to encrypt the
             private key. `None` if the key was not encrypted.
-
-    Keyword Arguments:
-        edwards (bool, NoneType):
-            Whether the ``Raw`` encoded key of length 32 bytes
-            must be imported as an ``Ed25519`` key or ``X25519`` key.
-
-            If ``True``, the key will be imported as an ``Ed25519`` key,
-            otherwise an ``X25519`` key.
-
-            This argument is ignored for all other serialized key types.
 
     Returns:
         ECCPrivateKey: An ECC private key.
