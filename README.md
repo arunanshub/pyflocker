@@ -109,10 +109,10 @@ key, nonce = os.urandom(32), os.urandom(16)
 f1 = open("MySecretData.txt", "rb")
 f2 = open("MySecretData.txt.enc", "xb")
 enc = AES.new(
-	True,
-	key,
-	AES.MODE_EAX,
-	nonce,
+    True,
+    key,
+    AES.MODE_EAX,
+    nonce,
     backend=Backends.CRYPTOGRAPHY,
     file=f1,
 )
@@ -132,9 +132,9 @@ from pyflocker.ciphers import AES
 
 password = b"no not this"
 locker(
-	"./MySuperSecretFile.txt",
-	password,
-	aes_mode=AES.MODE_CTR,  # default is AES-GCM-256
+    "./MySuperSecretFile.txt",
+    password,
+    aes_mode=AES.MODE_CTR,  # default is AES-GCM-256
 )
 # file stored as MySuperSecretFile.txt.pyflk
 ```
