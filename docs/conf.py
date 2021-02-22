@@ -22,7 +22,7 @@ sys.path.insert(0, "..")
 project = "PyFLocker"
 copyright = f"2020-{date.today().year}, Arunanshu Biswas"
 author = "Arunanshu Biswas"
-release = "0.2.6"
+release = "0.3.0"
 
 
 # -- General configuration ---------------------------------------------------

@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 
 setup(
     name="PyFLocker",
-    version="0.2.6",
+    version="0.3.0",
     author="Arunanshu Biswas",
     author_email="mydellpc07@gmail.com",
     packages=find_packages(exclude=["tests"]),
@@ -20,7 +20,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Security :: Cryptography",
     ],
-    python_requires=">=3.7",
+    python_requires=">=3.8",
     install_requires=[
         "cryptography",
         # for best case: we don't want python to
