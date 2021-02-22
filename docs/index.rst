@@ -7,7 +7,7 @@ Welcome to PyFLocker's documentation!
 =====================================
 
 Installation
-++++++++++++
+------------
 
 Use ``pip`` or ``pip3`` to install PyFLocker
 
