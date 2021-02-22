@@ -101,26 +101,14 @@ class TestAEAD(BaseSymmetricAEAD):
 
 
 @pytest.mark.parametrize(
-    ["backend1", "backend2"],
-    list(product(Backends, repeat=2)),
-)
-@pytest.mark.parametrize(
-    "key_length",
-    [32],
-)
-@pytest.mark.parametrize(
-    "mode",
-    modes.special,
-)
-@pytest.mark.parametrize(
     "use_hmac",
     [True],
 )
 @pytest.mark.parametrize(
-    "iv_length",
-    [13],
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
 )
-class TestAEADOneShot(BaseSymmetricAEAD):
+class _TestAEADOneShot(BaseSymmetricAEAD):
     @staticmethod
     def _assert_update(enc, dec, data):
         ctxt = enc.update(data)
@@ -175,3 +163,51 @@ class TestAEADOneShot(BaseSymmetricAEAD):
     def test_update_into_file_buffer(self, cipher, backend1, backend2):
         with pytest.raises(NotImplementedError):
             super().test_update_into_file_buffer(cipher, backend1, backend2)
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [modes.Modes.MODE_SIV],
+)
+@pytest.mark.parametrize(
+    "key_length",
+    _LENGTH_SPECIAL_SIV,
+)
+@pytest.mark.parametrize(
+    "iv_length",
+    [8, 16],
+)
+class TestAEADOneShotSIV(_TestAEADOneShot):
+    pass
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [modes.Modes.MODE_CCM],
+)
+@pytest.mark.parametrize(
+    "key_length",
+    _LENGTH_NORMAL,
+)
+@pytest.mark.parametrize(
+    "iv_length",
+    list(range(7, 14)),
+)
+class TestAEADOneShotCCM(_TestAEADOneShot):
+    pass
+
+
+@pytest.mark.parametrize(
+    "mode",
+    [modes.Modes.MODE_OCB],
+)
+@pytest.mark.parametrize(
+    "key_length",
+    _LENGTH_NORMAL,
+)
+@pytest.mark.parametrize(
+    "iv_length",
+    list(range(7, 16)),
+)
+class TestAEADOneShotOCB(_TestAEADOneShot):
+    pass
