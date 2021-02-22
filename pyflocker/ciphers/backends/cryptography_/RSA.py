@@ -360,7 +360,7 @@ class _EncDecContext:
         if not self._is_private:
             raise TypeError("Only private keys can decrypt ciphertexts.")
         try:
-            return self._encrypt_or_decrypt(ciphertext)
+            return self._ctx_func(ciphertext)
         except ValueError as e:
             raise exc.DecryptionError from e
 

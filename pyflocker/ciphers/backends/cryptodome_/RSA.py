@@ -284,8 +284,8 @@ class _EncDecContext:
         Returns:
             bytes: encrypted bytes object.
         """
-        if not self._is_private:
-            raise TypeError("Only private keys can encrypt plaintexts.")
+        if self._is_private:
+            raise TypeError("Only public keys can encrypt plaintexts.")
         return self._ctx.encrypt(data)
 
     def decrypt(self, data):
