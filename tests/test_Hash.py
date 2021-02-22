@@ -1,5 +1,5 @@
 import os
-from itertools import combinations_with_replacement, product
+from itertools import product
 
 import pytest
 
