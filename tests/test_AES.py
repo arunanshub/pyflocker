@@ -100,5 +100,78 @@ class TestAEAD(BaseSymmetricAEAD):
         )
 
 
-class TestAEADOneShot:
-    pass
+@pytest.mark.parametrize(
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
+)
+@pytest.mark.parametrize(
+    "key_length",
+    [32],
+)
+@pytest.mark.parametrize(
+    "mode",
+    modes.special,
+)
+@pytest.mark.parametrize(
+    "use_hmac",
+    [True],
+)
+@pytest.mark.parametrize(
+    "iv_length",
+    [13],
+)
+class TestAEADOneShot(BaseSymmetricAEAD):
+    @staticmethod
+    def _assert_update(enc, dec, data):
+        ctxt = enc.update(data)
+        ptxt = dec.update(ctxt, enc.calculate_tag())
+        assert ptxt == data
+
+    @staticmethod
+    def _assert_update_into(enc, dec, readbuf, in_, out):
+        try:
+            enc.update_into(readbuf, in_)
+        except NotImplementedError:
+            pytest.skip(f"update_into not supported by {enc.mode}")
+        except TypeError:
+            assert enc.mode == modes.Modes.MODE_OCB
+            pytest.skip(
+                f"{enc.mode} does not suport writing into mutable buffers."
+            )
+
+        try:
+            dec.update_into(in_[: len(readbuf)], out, enc.calculate_tag())
+        except NotImplementedError:
+            pytest.skip(f"update_into not supported by {dec.mode}")
+        except TypeError:
+            assert dec.mode == modes.Modes.MODE_OCB
+            pytest.skip(
+                f"{dec.mode} does not suport writing into mutable buffers."
+            )
+
+        assert out[: len(readbuf)].tobytes() == readbuf.tobytes()
+
+    @staticmethod
+    def _finalizer(enc, dec):
+        # one shot ciphers are finalized on their first call to update(_into)
+        pass
+
+    def test_update_into(self, cipher, backend1, backend2):
+        return super().test_update_into(cipher, backend1, backend2, offset=15)
+
+    def test_update_into_with_auth(
+        self,
+        cipher,
+        backend1,
+        backend2,
+    ):
+        return super().test_update_into_with_auth(
+            cipher,
+            backend1,
+            backend2,
+            offset=15,
+        )
+
+    def test_update_into_file_buffer(self, cipher, backend1, backend2):
+        with pytest.raises(NotImplementedError):
+            super().test_update_into_file_buffer(cipher, backend1, backend2)
