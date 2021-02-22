@@ -11,7 +11,7 @@ from itertools import product
 
 import pytest
 
-from pyflocker.ciphers import AES, exc, modes
+from pyflocker.ciphers import AES, modes
 from pyflocker.ciphers.backends import Backends
 
 from .base import BaseSymmetric, BaseSymmetricAEAD
