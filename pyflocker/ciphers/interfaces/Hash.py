@@ -23,7 +23,7 @@ def new(
     data: typing.ByteString = b"",
     digest_size: typing.Optional[int] = None,
     *,
-    backend: _Backends = None,
+    backend: typing.Optional[_Backends] = None,
 ) -> _BaseHash:
     """
     Instantiate a new hash instance ``hashname`` with initial
@@ -40,7 +40,7 @@ def new(
             Required for ``Blake`` and ``Shake``.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
+        backend (:class:`pyflocker.ciphers.backends.Backends`, None):
             The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
