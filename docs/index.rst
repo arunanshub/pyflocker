@@ -57,8 +57,6 @@ This gives you the ultimate ability to cherry-pick the primitives from a specifi
 backend without having to worry about backend itself, as PyFLocker handles it
 for you.
 
-You can find more information in the `documentation`_.
-
 Features
 --------
 
