@@ -125,9 +125,9 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
 
         Raises:
             ValueError:
-                If the encoding is incorrect or, if DER is used with PKCS1 or
+                If the encoding or format is incorrect or,
+                if DER is used with PKCS1 or,
                 protection value is supplied with PKCS1 format.
-            KeyError: if the format is invalid or not supported.
         """
         if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
             raise ValueError("encoding must be PEM or DER")
@@ -146,16 +146,19 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             # use a curated encryption choice and not DES-EDE3-CBC
             protection = "PBKDF2WithHMAC-SHA1AndAES256-CBC"
 
-        return self._key.export_key(
-            format=ENCODINGS[encoding],
-            pkcs=FORMATS[format],
-            passphrase=(
-                memoryview(passphrase).tobytes()
-                if passphrase is not None
-                else None
-            ),
-            protection=protection,
-        )
+        try:
+            return self._key.export_key(
+                format=ENCODINGS[encoding],
+                pkcs=FORMATS[format],
+                passphrase=(
+                    memoryview(passphrase).tobytes()
+                    if passphrase is not None
+                    else None
+                ),
+                protection=protection,
+            )
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding or format: {e.args}")
 
     @classmethod
     def load(
@@ -187,9 +190,8 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             return cls(None, key=key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
-                "password is missing or incorrect.",
+                "Cannot deserialize key. Either Key format is invalid or "
+                "password is missing or incorrect."
             ) from e
 
 

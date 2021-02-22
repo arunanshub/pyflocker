@@ -92,12 +92,16 @@ class ECCPrivateKey(base.BasePrivateKey):
             if not passphrase:
                 raise ValueError("passphrase cannot be empty bytes")
 
-        key = self._key.export_key(
-            format=ENCODINGS[encoding],
-            use_pkcs8=(format == "PKCS8"),
-            passphrase=passphrase,
-            **prot,
-        )
+        try:
+            key = self._key.export_key(
+                format=ENCODINGS[encoding],
+                use_pkcs8=(format == "PKCS8"),
+                passphrase=passphrase,
+                **prot,
+            )
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding: {e.args}") from e
+
         if isinstance(key, bytes):
             return key
         return key.encode("utf-8")
@@ -109,13 +113,13 @@ class ECCPrivateKey(base.BasePrivateKey):
             mode (str):
                 The signature generation mode. It can be:
 
-                - 'fips-186-3' (default)
-                - 'deterministic-rfc6979'
+                - "fips-186-3" (default)
+                - "deterministic-rfc6979"
             encoding (str):
                 How the signature is encoded. It can be:
 
-                - 'binary'
-                - 'der'
+                - "binary"
+                - "der"
 
         Returns:
             _SigVerContext: An object for signing messages.
@@ -160,9 +164,8 @@ class ECCPrivateKey(base.BasePrivateKey):
             return cls(None, key=key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. "
-                "Either Key format is invalid or "
-                "password is missing or incorrect.",
+                "Cannot deserialize key. Either Key format is invalid "
+                "or password is missing or incorrect."
             ) from e
 
 
@@ -188,15 +191,15 @@ class ECCPublicKey(base.BasePublicKey):
             bytes: The serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding is not supported or invalid.
+            ValueError: if the encoding is not supported or invalid.
         """
         try:
             key = self._key.export_key(
                 format=ENCODINGS[encoding],
                 compress=compress,
             )
-        except KeyError:
-            raise ValueError(f"Invalid encoding: {encoding}") from None
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding: {e.args}") from e
         if isinstance(key, bytes):
             return key
         return key.encode()
@@ -208,19 +211,19 @@ class ECCPublicKey(base.BasePublicKey):
             mode:
                 The signature generation mode. It can be:
 
-                - ``fips-186-3`` (default)
-                - ``deterministic-rfc6979``
+                - "fips-186-3" (default)
+                - "deterministic-rfc6979"
             encoding:
                 How the signature is encoded. It can be:
 
-                - ``binary``
-                - ``der``
+                - "binary"
+                - "der"
 
         Returns:
             _SigVerContext: A verifier object.
 
         Raises:
-            KeyError: if the mode or encoding is invalid or not supported.
+            ValueError: if the mode or encoding is invalid or not supported.
         """
         return _SigVerContext(False, get_DSS(self._key, mode, encoding))
 
@@ -246,7 +249,7 @@ class ECCPublicKey(base.BasePublicKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect.",
+                "password is missing or incorrect."
             ) from e
 
 
