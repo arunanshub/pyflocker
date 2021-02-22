@@ -23,15 +23,17 @@ or
 
 
 Introduction
-++++++++++++
+------------
 
 PyFLocker aims to be a highly portable and easy of use cryptographic library.
 Before you read on, check if you agree to at least one of these points:
 
-- `PyCryptodome(x)`_ and `pyca/cryptography`_ have **very different** public interfaces,
-  which makes remembering all the imports very difficult, and leaves you reading docs under deadline.
-- Although pycryptodome(x) is easy to use, it is not as fast as pyca/cryptography.
-- The interface of pyca/cryptography is very difficult to use, let alone remember the import:
+- `PyCryptodome(x)`_ and `pyca/cryptography`_ have **very different** public
+  interfaces, which makes remembering all the imports very difficult, and leaves
+  you reading docs under deadline.
+
+- The interface of pyca/cryptography is very difficult to use, let alone remember
+  the import:
 
   .. code-block:: python
 
@@ -41,60 +43,49 @@ Before you read on, check if you agree to at least one of these points:
        from cryptography.hazmat.backends import default_backend
        # and so on...
 
-- You wish that only if pyca/cryptography would have been as easy to use as Pycryptodome(x), it would
-  have made life more easy.
-- You sometimes think that the file locking script you wrote were faster somehow and played with both
-  backends very well, but you weren't sure what to do.
+- You wish that only if pyca/cryptography would have been as easy to use as
+  Pycryptodome(x), it would have made life more easy.
 
-  - And all the other solutions (and nonsolutions!) on the internet just confuses you more!
+- You sometimes think that the file locking script you wrote were faster somehow
+  and played with both backends very well, but you weren't sure what to do.
 
-Look no more, you have arrived at the right destination!
+  - And all the other solutions (and nonsolutions!) on the internet just confuses
+    you more!
 
--------
-
-PS: At least, those were my points which irritated me when I first used those libraries :)
-
-Usage Overview
-++++++++++++++
-
-How is it different?
---------------------
-
-``PyFLocker`` takes a very different approach. Instead of writing the cryptographic
-primitives from scratch, ``PyFLocker`` uses well established libraries as its
-backends and expands upon them.
-
+PyFLocker uses well established libraries as its backends and expands upon them.
 This gives you the ultimate ability to cherry-pick the primitives from a specific
-backend without having to worry about backend's interface, as ``PyFLocker`` handles
-it for you. And you, as a developer, have to focus on a single API, and the rest
-is handled internally.
+backend without having to worry about backend itself, as PyFLocker handles it
+for you.
 
-Read on to know more!
+You can find more information in the `documentation`_.
 
--------
+Features
+--------
 
 Not a "Yet Another Cryptographic Library"
------------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-PyFLocker provides you a seamless interface to both the backends, and switching is very easy:
-
-.. code-block:: python
-
-    from pyflocker.ciphers import AES, Backends
-    enc = AES.new(True, key, AES.MODE_GCM, nonce, backend=Backends.CRYPTOGRAPHY)
-
-Want only a single backend throughout your code?
+PyFLocker provides you a seamless interface to both the backends, and switching
+is very easy:
 
 .. code-block:: python
 
-    from pyflocker import set_default_backend, Backends
-    set_default_backend(Backends.CRYPTODOME)
+    import os
+    from pyflocker.ciphers import AES, RSA, ECC
+    from pyflocker.ciphers.backends import Backends
 
+    key, nonce = os.urandom(32), os.urandom(16)
 
--------
+    # Multiple backends - same API
+    enc = AES.new(True, key, AES.MODE_EAX, nonce, backend=Backends.CRYPTOGRAPHY)
+    rpriv = RSA.new(2048, backend=Backends.CRYPTODOME)
+    epriv = ECC.new("x25519", backend=Backend.CRYPTOGRAPHY)
+
+Backend loading is done internally, and if a backend is explicitly specified,
+that is used as the default.
 
 Ease of Use
------------
+~~~~~~~~~~~
 
 PyFLocker provides reasonable defaults wherever possible:
 
@@ -102,38 +93,46 @@ PyFLocker provides reasonable defaults wherever possible:
 
     from pyflocker.ciphers import RSA
     priv = RSA.generate(2048)
-    with open('private_key.pem', 'xb') as f:
-        f.write(priv.serialize())
+    with open("private_key.pem", "xb") as f:
+        key = priv.serialize(password=b"random-chimp-event")
+        f.write(key)
 
 Don't believe me, try to do the `same operation with pyca/cryptography`__,
 or just any other initialization.
 
 __ https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa.html#key-serialization
 
-In short, the interface is very fluid and easy on developer's mind.
-
--------
+In short, the API is very stable, clear and easy on developer's mind.
 
 Writing into file or file like objects
---------------------------------------
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 This is often a related problem when it comes to encryption, but think no more!
 
 .. code-block:: python
 
-    from pyflocker.ciphers import AES, Backends
-    # ... (key, nonce) already made
-    f1 = open('MySecretData.txt', 'rb')
-    f2 = open('MySecretData.txt.enc', 'xb')
-    enc = AES.new(True, key, AES.MODE_EAX, nonce,
-        backend=Backends.CRYPTOGRAPHY, file=f1)
+    import os
+    from pyflocker.ciphers import AES
+    from pyflocker.ciphers.backends import Backends
+
+    key, nonce = os.urandom(32), os.urandom(16)
+    f1 = open("MySecretData.txt", "rb")
+    f2 = open("MySecretData.txt.enc", "xb")
+    enc = AES.new(
+        True,
+        key,
+        AES.MODE_EAX,
+        nonce,
+        backend=Backends.CRYPTOGRAPHY,
+        file=f1,
+    )
     enc.update_into(f2)
     tag = enc.calculate_tag()
 
 You can also use ``BytesIO`` in place of file objects.
 
 Directly encrypting files
-~~~~~~~~~~~~~~~~~~~~~~~~~
++++++++++++++++++++++++++
 
 Just want to encrypt your file with AES, and even with various available modes?
 
@@ -142,8 +141,12 @@ Just want to encrypt your file with AES, and even with various available modes?
     from pyflocker.locker import locker
     from pyflocker.ciphers import AES
 
-    passwd = b'no not this'
-    locker('./MySuperSecretFile.txt', passwd, aes_mode=AES.MODE_CFB)  # default is AES-GCM-256
+    password = b"no not this"
+    locker(
+        "./MySuperSecretFile.txt",
+        password,
+        aes_mode=AES.MODE_CTR,  # default is AES-GCM-256
+    )
     # file stored as MySuperSecretFile.txt.pyflk
 
 
@@ -157,7 +160,6 @@ Just want to encrypt your file with AES, and even with various available modes?
 
    pyflocker
    examples
-
 
 Indices and tables
 ==================

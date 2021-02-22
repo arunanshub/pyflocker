@@ -91,7 +91,7 @@ with open("private_key.pem", "xb") as f:
     f.write(key)
 ```
 
-Don't believe me, try to do the same operation with [pyca/cryptography][pyca_vs_self],
+Don't believe me, try to do the [same operation with `pyca/cryptography`][pyca_vs_self],
 or just any other initialization.
 
 In short, the API is very stable, clear and easy on developer's mind.
