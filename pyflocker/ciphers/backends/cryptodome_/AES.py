@@ -58,10 +58,16 @@ class AEAD(AEADCipherTemplate):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
+        self._mode = mode
         # creating a context is relatively expensive here
         self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
 
 class NonAEAD(NonAEADCipherTemplate):
@@ -74,11 +80,17 @@ class NonAEAD(NonAEADCipherTemplate):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
+        self._mode = mode
 
         # creating a context is relatively expensive here
         self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
 
 class AEADOneShot(AEAD):
@@ -96,6 +108,11 @@ class AEADOneShot(AEAD):
 
         # creating a context is relatively expensive here
         self._update_func = self._get_update_func(encrypting, self._cipher)
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
     @staticmethod
     def _get_update_func(encrypting, cipher):

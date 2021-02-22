@@ -45,6 +45,7 @@ class AEAD(AEADCipherTemplate):
         self._encrypting = encrypting
         self._updated = False
         self._tag = None
+        self._mode = mode
 
         cipher = _aes_cipher(key, mode, nonce)
         # cryptography already provides a context
@@ -52,11 +53,17 @@ class AEAD(AEADCipherTemplate):
             self._ctx = cipher.encryptor()
         else:
             self._ctx = cipher.decryptor()
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
 
 class NonAEAD(NonAEADCipherTemplate):
     def __init__(self, encrypting, key, mode, nonce):
         self._encrypting = encrypting
+        self._mode = mode
 
         cipher = _aes_cipher(key, mode, nonce)
         # cryptography already provides a context
@@ -64,12 +71,18 @@ class NonAEAD(NonAEADCipherTemplate):
             self._ctx = cipher.encryptor()
         else:
             self._ctx = cipher.decryptor()
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
 
 class AEADOneShot(base.BaseAEADCipher):
     def __init__(self, encrypting, key, mode, nonce):
         cipher = _aes_cipher(key, mode, nonce)
 
+        self._mode = mode
         self._encrypting = encrypting
         self._aad = b""
         self._tag = None
@@ -78,6 +91,11 @@ class AEADOneShot(base.BaseAEADCipher):
 
         self._raise_on_tag_err = False
         self._tag_length = 16
+
+    @property
+    def mode(self) -> _m:
+        """The AES mode."""
+        return self._mode
 
     def authenticate(self, data):
         if self._update_func is None:
