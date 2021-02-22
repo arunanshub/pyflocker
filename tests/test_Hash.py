@@ -1,140 +1,151 @@
-from itertools import combinations_with_replacement
+import os
+from itertools import combinations_with_replacement, product
 
 import pytest
 
 from pyflocker.ciphers import Hash, exc
 from pyflocker.ciphers.backends import Backends
 
-_BLOCK_SIZE_DIFFERS = [
-    "blake2s",
+# shake* & blake* => variable digest size
+# sha3_*, shake* => no block size
+
+_HASHES = Hash.algorithms_available() ^ {
     "blake2b",
-]
+    "blake2s",
+    "shake128",
+    "shake256",
+}
+_SHAKE_HASHES = {
+    "shake128",
+    "shake256",
+}
+_BLAKE_HASHES = {
+    "blake2b",
+    "blake2s",
+}
 
 
-def create_hash(algo, data, *, backend, **kwargs):
-    if algo not in Hash.algorithms_available(backend):
-        return pytest.skip(f"{backend.name} does not support {algo}")
-    return Hash.new(algo, data, backend=backend, **kwargs)
+@pytest.fixture
+def hashfunc(name, digest_size, backend1, backend2):
+    try:
+        h1 = Hash.new(name, digest_size=digest_size, backend=backend1)
+    except KeyError:
+        assert name not in Hash.algorithms_available(backend1)
+        pytest.skip(f"{name} not supported by {backend1}")
+    except ValueError:
+        assert backend1 == Backends.CRYPTOGRAPHY
+        pytest.skip(
+            f"{backend1} does not support variable digest size for {name}."
+        )
+
+    try:
+        h2 = Hash.new(name, digest_size=digest_size, backend=backend2)
+    except KeyError:
+        assert name not in Hash.algorithms_available(backend2)
+        pytest.skip(f"{name} not supported by {backend2}")
+    except ValueError:
+        assert backend2 == Backends.CRYPTOGRAPHY
+        pytest.skip(
+            f"{backend2} does not support variable digest size for {name}."
+        )
+    return h1, h2
 
 
-class _TestHashBase:
-    def test_same_hash(self, algo, backend1, backend2, **kwargs):
-        data = bytes(1024)
-        h1 = create_hash(algo, data, backend=backend1, **kwargs)
-        h2 = create_hash(algo, data, backend=backend2, **kwargs)
-
-        assert h1.digest_size == h2.digest_size
-        assert h1.name == h2.name
-        if algo not in _BLOCK_SIZE_DIFFERS:
-            assert h1.block_size == h2.block_size
-
-        h1.update(data)
-        h2.update(data)
-
-        assert h1.digest() == h2.digest()
-        try:
-            assert h1.oid == h2.oid
-        except AttributeError:
-            assert algo in ("blake2b", "blake2s")
-            assert kwargs["digest_size"] not in (20, 32, 48, 64)
-
+def _assert_finalized(hash1, hash2):
+    for h in hash1, hash2:
         with pytest.raises(exc.AlreadyFinalized):
-            h1.update(data)
-        with pytest.raises(exc.AlreadyFinalized):
-            h1.copy()
-        with pytest.raises(exc.AlreadyFinalized):
-            h2.update(data)
-        with pytest.raises(exc.AlreadyFinalized):
-            h2.copy()
-
-        assert h1.new().digest() == h2.new().digest()
+            h.update(b"monke")
 
 
 @pytest.mark.parametrize(
-    "algo",
-    Hash.algorithms_available()
-    ^ set(("blake2b", "blake2s", "shake128", "shake256")),  # noqa: W503
+    "name",
+    _HASHES,
 )
 @pytest.mark.parametrize(
-    # all possible backend values -- both same and crossed
-    "backend1, backend2",
-    list(combinations_with_replacement(list(Backends), 2)),
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
 )
-class TestHash(_TestHashBase):
-    pass
+@pytest.mark.parametrize(
+    "datalen",
+    [0, 64, 128],
+)
+@pytest.mark.parametrize(
+    "digest_size",
+    [None],
+)
+def test_same_hash(hashfunc, backend1, backend2, datalen):
+    h1, h2 = hashfunc
+    data = os.urandom(datalen)
+    h1.update(data)
+    h2.update(data)
+    assert h1.digest() == h2.digest()
+    _assert_finalized(h1, h2)
+
+
+def _hash_var_digest_size(hashfunc, backend1, backend2, datalen):
+    h1, h2 = hashfunc
+    data = os.urandom(datalen)
+    h1.update(data)
+    h2.update(data)
+    assert h1.digest() == h2.digest()
+    _assert_finalized(h1, h2)
 
 
 @pytest.mark.parametrize(
-    # all possible backend values -- both same and crossed
-    "backend1, backend2",
-    list(combinations_with_replacement(list(Backends), 2)),
+    "name",
+    _SHAKE_HASHES,
 )
-class TestHashExtra:
-    @pytest.mark.parametrize(
-        "algo",
-        ("shake128", "shake256"),
-    )
-    @pytest.mark.parametrize(
-        "digest_size",
-        list(range(4, 512)),
-    )
-    def test_same_hash_shake(self, algo, digest_size, backend1, backend2):
-        _TestHashBase().test_same_hash(
-            algo, backend1, backend2, digest_size=digest_size
-        )
+@pytest.mark.parametrize(
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
+)
+@pytest.mark.parametrize(
+    "datalen",
+    [0, 64, 128],
+)
+@pytest.mark.parametrize(
+    "digest_size",
+    list(range(1, 65)),
+)
+def test_same_hash_shake(hashfunc, backend1, backend2, datalen):
+    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
 
-    @pytest.mark.parametrize(
-        "algo",
-        ["blake2s"],
-    )
-    @pytest.mark.parametrize(
-        "digest_size",
-        range(1, 33),
-    )
-    def test_same_hash_blake2s(self, algo, digest_size, backend1, backend2):
-        if digest_size != 32 and any(
-            b == Backends.CRYPTOGRAPHY for b in [backend1, backend2]
-        ):
-            with pytest.raises(ValueError):
-                _TestHashBase().test_same_hash(
-                    algo,
-                    backend1,
-                    backend2,
-                    digest_size=digest_size,
-                )
-            return
 
-        _TestHashBase().test_same_hash(
-            algo,
-            backend1,
-            backend2,
-            digest_size=digest_size,
-        )
+@pytest.mark.parametrize(
+    "name",
+    ["blake2b"],
+)
+@pytest.mark.parametrize(
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
+)
+@pytest.mark.parametrize(
+    "datalen",
+    [0, 64, 128],
+)
+@pytest.mark.parametrize(
+    "digest_size",
+    list(range(1, 65)),
+)
+def test_same_hash_blake2b(hashfunc, backend1, backend2, datalen):
+    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
 
-    @pytest.mark.parametrize(
-        "algo",
-        ["blake2b"],
-    )
-    @pytest.mark.parametrize(
-        "digest_size",
-        range(1, 65),
-    )
-    def test_same_hash_blake2b(self, algo, digest_size, backend1, backend2):
-        if digest_size != 64 and any(
-            b == Backends.CRYPTOGRAPHY for b in [backend1, backend2]
-        ):
-            with pytest.raises(ValueError):
-                _TestHashBase().test_same_hash(
-                    algo,
-                    backend1,
-                    backend2,
-                    digest_size=digest_size,
-                )
-            return
 
-        _TestHashBase().test_same_hash(
-            algo,
-            backend1,
-            backend2,
-            digest_size=digest_size,
-        )
+@pytest.mark.parametrize(
+    "name",
+    ["blake2s"],
+)
+@pytest.mark.parametrize(
+    ["backend1", "backend2"],
+    list(product(Backends, repeat=2)),
+)
+@pytest.mark.parametrize(
+    "datalen",
+    [0, 64, 128],
+)
+@pytest.mark.parametrize(
+    "digest_size",
+    list(range(1, 33)),
+)
+def test_same_hash_blake2s(hashfunc, backend1, backend2, datalen):
+    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
