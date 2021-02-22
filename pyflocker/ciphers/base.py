@@ -72,7 +72,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
 
     @abstractmethod
     def authenticate(self, data: typing.ByteString) -> None:
-        """Authenticates part of the message that get deliverd as is, without
+        """Authenticates part of the message that get delivered as is, without
         any encryption.
 
         Args:
