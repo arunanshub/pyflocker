@@ -48,7 +48,20 @@ class FileCipherWrapper(base.BaseAEADCipher):
     def is_encrypting(self):
         return self._encrypting
 
-    def update(self, blocksize: int = 16384):
+    def update(self, blocksize: int = 16384) -> bytes:
+        """
+        Reads at most ``blocksize`` bytes from ``file``, passes through the
+        cipher and returns the cipher's output.
+
+        Args:
+            blocksize (int): Maximum amount of data to read in a single call.
+
+        Returns:
+            bytes: Encrypted or decrypted data.
+
+        Raises:
+            AlreadyFinalized: if the cipher has been finalized.
+        """
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if (data := self._file.read(blocksize)) :
@@ -57,9 +70,29 @@ class FileCipherWrapper(base.BaseAEADCipher):
     def update_into(
         self,
         file: typing.BinaryIO,
-        tag: typing.ByteString = None,
+        tag: typing.Optional[typing.ByteString] = None,
         blocksize: int = 16384,
-    ):
+    ) -> None:
+        """
+        Read from ``infile``, pass through cipher and write the output of the
+        cipher to ``file``. Use this method if you want to encrypt/decrypt the
+        ``infile`` and write its output to ``outfile``.
+
+        This method is very fast
+        (compared to :py:meth:`FileCipherWrapper.update`) because no
+        intermediate copies of data are made during the entire operation.
+
+        Args:
+            file (filelike): File to write the output of the cipher into.
+            tag (bytes-like, None):
+                The tag to verify decryption. If the file is being decrypted,
+                this must be passed.
+            blocksize (int): Maximum amount of data to read in a single call.
+
+        Raises:
+            AlreadyFinalized: if the cipher has been finalized.
+            ValueError: if the file is being decrypted and tag is not supplied.
+        """
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self._encrypting:
