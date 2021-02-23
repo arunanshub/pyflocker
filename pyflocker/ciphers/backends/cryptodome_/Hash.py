@@ -57,6 +57,15 @@ del MappingProxyType
 
 
 class Hash(base.BaseHash):
+    __slots__ = (
+        "_name",
+        "_digest",
+        "_ctx",
+        "_digest_size",
+        "_block_size",
+        "_oid",
+    )
+
     def __init__(self, name, data=b"", *, digest_size=None):
         self._ctx = self._construct_hash(name, data, digest_size)
         self._name = name
