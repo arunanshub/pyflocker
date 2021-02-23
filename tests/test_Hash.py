@@ -79,6 +79,7 @@ def test_same_hash(hashfunc, backend1, backend2, datalen):
     h1.update(data)
     h2.update(data)
     assert h1.digest() == h2.digest()
+    assert h1.hexdigest() == h2.hexdigest()
     _assert_finalized(h1, h2)
 
 
@@ -88,6 +89,7 @@ def _hash_var_digest_size(hashfunc, backend1, backend2, datalen):
     h1.update(data)
     h2.update(data)
     assert h1.digest() == h2.digest()
+    assert h1.hexdigest() == h2.hexdigest()
     _assert_finalized(h1, h2)
 
 
