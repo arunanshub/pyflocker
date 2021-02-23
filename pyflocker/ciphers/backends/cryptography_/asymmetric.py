@@ -79,7 +79,8 @@ PRIVATE_FORMATS = MappingProxyType(
         "PKCS8": serial.PrivateFormat.PKCS8,
         "TraditionalOpenSSL": serial.PrivateFormat.TraditionalOpenSSL,
         "Raw": serial.PrivateFormat.Raw,
-        "PKCS1": serial.PrivateFormat.TraditionalOpenSSL,  # compat with Cryptodome
+        # PKCS1 name compat with Cryptodome
+        "PKCS1": serial.PrivateFormat.TraditionalOpenSSL,
         **_fmt,
     }
 )

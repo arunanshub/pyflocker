@@ -37,7 +37,7 @@ def new(
 
     Returns:
         :any:`BaseSymmetricCipher`:
-            ChaCha20(Poly1305) cipher wrapper from the appropriate backend module.
+            ChaCha20(Poly1305) cipher from the appropriate backend module.
 
     Raises:
         NotImplementedError: if backend does not support that mode.

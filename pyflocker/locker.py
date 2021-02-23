@@ -123,8 +123,8 @@ def locker(
             If ``encrypting`` is False, the file is decrypted no matter what
             the extension is.
 
-            If ``encrypting`` is None (the default), it is guessed from the file
-            extension and the file header instead.
+            If ``encrypting`` is None (the default), it is guessed from the
+            file extension and the file header instead.
 
             If encrypting is provided, argument ``ext`` is ignored.
         remove (bool):
