@@ -72,7 +72,7 @@ def load_private_key(
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
         passphrase (bytes, bytearray):
-            The password that was used to encrypt the private key.
+            The passphrase that was used to encrypt the private key.
             ``None`` if the private key was not encrypted.
 
     Keyword Arguments:

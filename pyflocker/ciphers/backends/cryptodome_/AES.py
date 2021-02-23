@@ -195,7 +195,7 @@ def new(
         - ``digestmod``
 
     Returns:
-        :any:`BaseSymmetricCipher`: AES cipher.
+        Union[BaseAEADCipher, BaseNonAEADCipher]: AES cipher.
 
     Raises:
         NotImplementedError:

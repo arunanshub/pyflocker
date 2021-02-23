@@ -164,7 +164,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     def load(
         cls,
         data: typing.ByteString,
-        password: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
     ) -> RSAPrivateKey:
         """Loads the private key as `bytes` object and returns the
         Key interface.
@@ -172,8 +172,8 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         Args:
             data (bytes):
                 The key as bytes object.
-            password (bytes, bytearray, memoryview):
-                The password that deserializes the private key. ``password``
+            passphrase (bytes, bytearray, memoryview):
+                The passphrase that deserializes the private key. ``passphrase``
                 must be a ``bytes`` object if the key was encrypted while
                 serialization, otherwise ``None``.
 
@@ -184,14 +184,14 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             ValueError: if the key could not be deserialized.
         """
         try:
-            key = RSA.import_key(data, password)
+            key = RSA.import_key(data, passphrase)
             if not key.has_private():
                 raise ValueError("The key is not a private key")
             return cls(None, key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect."
+                "passphrase is missing or incorrect."
             ) from e
 
 
@@ -396,7 +396,7 @@ def load_private_key(
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
         passphrase (bytes, bytearray):
-            The password that was used to encrypt the private key.
+            The passphrase that was used to encrypt the private key.
             ``None`` if the private key was not encrypted.
 
     Returns:

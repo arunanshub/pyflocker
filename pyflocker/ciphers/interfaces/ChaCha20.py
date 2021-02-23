@@ -36,12 +36,8 @@ def new(
             The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        :any:`BaseSymmetricCipher`:
+        BaseSymmetricCipher:
             ChaCha20(Poly1305) cipher from the appropriate backend module.
-
-    Raises:
-        NotImplementedError: if backend does not support that mode.
-        ModuleNotFoundError: if the backend is not found.
 
     Note:
         Any other error that is raised is from the backend itself.

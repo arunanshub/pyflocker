@@ -71,7 +71,7 @@ def new(
         - ``digestmod``
 
     Returns:
-        :any:`BaseSymmetricCipher`:
+        BaseSymmetricCipher:
             AES cipher wrapper from the appropriate backend module.
 
     Raises:

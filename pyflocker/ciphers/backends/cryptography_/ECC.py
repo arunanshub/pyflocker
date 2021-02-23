@@ -165,7 +165,7 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         Raises:
            ValueError: if the format or encoding is invalid or not supported.
-           TypeError: if the password is not a ``bytes-like`` object.
+           TypeError: if the passphrase is not a ``bytes-like`` object.
         """
         try:
             encoding_ = ENCODINGS[encoding]
@@ -252,7 +252,7 @@ class ECCPrivateKey(base.BasePrivateKey):
     def load(
         cls,
         data: typing.ByteString,
-        password: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
         *,
         edwards: bool = True,
     ):
@@ -261,9 +261,9 @@ class ECCPrivateKey(base.BasePrivateKey):
         Args:
             data (bytes, bytearray):
                 The key as a ``bytes-like`` object.
-            password (bytes, bytearray, memoryview, None):
-                The password that deserializes the private key.
-                ``password`` must be a ``bytes-like`` object if the key
+            passphrase (bytes, bytearray, memoryview, None):
+                The passphrase that deserializes the private key.
+                ``passphrase`` must be a ``bytes-like`` object if the key
                 was encrypted while serialization, otherwise ``None``.
 
         Keyword Arguments:
@@ -281,12 +281,12 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         Raises:
             ValueError: if the key could not be deserialized.
-            TypeError: if password is not a bytes object.
+            TypeError: if passphrase is not a bytes object.
         """
         # type check
-        if password is not None:
-            if not isinstance(password, (bytes, bytearray, memoryview)):
-                raise TypeError("password must be a bytes object.")
+        if passphrase is not None:
+            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
+                raise TypeError("passphrase must be a bytes object.")
 
         fmts = {
             b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
@@ -300,12 +300,12 @@ class ECCPrivateKey(base.BasePrivateKey):
             loader = cls._get_raw_ecc_loader(data, edwards)
 
         # type check
-        if password is not None:
-            if not isinstance(password, (bytes, bytearray, memoryview)):
-                raise TypeError("password must be a bytes-like object.")
+        if passphrase is not None:
+            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
+                raise TypeError("passphrase must be a bytes-like object.")
 
         try:
-            key = loader(memoryview(data), password, defb())
+            key = loader(memoryview(data), passphrase, defb())
             if not isinstance(
                 key, (ec.EllipticCurvePrivateKey, *SPECIAL_CURVES.values())
             ):
@@ -314,12 +314,12 @@ class ECCPrivateKey(base.BasePrivateKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is incorrect."
+                "passphrase is incorrect."
             ) from e
         except TypeError as e:
             raise ValueError(
-                "The key is encrypted but the password is not given or the"
-                " key is not encrypted but the password is given."
+                "The key is encrypted but the passphrase is not given or the"
+                " key is not encrypted but the passphrase is given."
                 " Cannot deserialize the key."
             ) from e
 
@@ -609,8 +609,8 @@ def load_private_key(
     Args:
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        password (bytes, bytearray):
-            The password (in bytes) that was used to encrypt the
+        passphrase (bytes, bytearray):
+            The passphrase (in bytes) that was used to encrypt the
             private key. `None` if the key was not encrypted.
 
     Keyword Arguments:

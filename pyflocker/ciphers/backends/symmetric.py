@@ -23,12 +23,12 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
         Args:
             cipher (:any:`base.BaseAEADCipher`):
-                A cipher that supports `BaseAEADCipher` interface.
+                A cipher that supports :py:class:`BaseAEADCipher` interface.
             file (filelike):
                 A file or file-like object.
             offset (int):
-                The difference between the length of `in` buffer and
-                `out` buffer in `update_into` method of a BaseAEADCipher.
+                The difference between the length of ``in`` buffer and
+                ``out`` buffer in ``update_into`` method of a BaseAEADCipher.
         """
         if not isinstance(cipher, base.BaseAEADCipher):
             raise TypeError("cipher must implement BaseAEADCipher interface.")

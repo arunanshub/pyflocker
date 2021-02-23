@@ -171,7 +171,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
     def load(
         cls,
         data: typing.ByteString,
-        password: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
     ):
         """Loads the private key as ``bytes`` object and returns
         the Key interface.
@@ -179,8 +179,8 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         Args:
             data (bytes, bytearray):
                 The key as bytes object.
-            password (bytes, bytearray):
-                The password that deserializes the private key. ``password``
+            passphrase (bytes, bytearray):
+                The passphrase that deserializes the private key. ``passphrase``
                 must be a ``bytes-like`` object if the key was encrypted while
                 serialization, otherwise ``None``.
 
@@ -202,23 +202,23 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             raise ValueError("Invalid format.") from None
 
         # type check
-        if password is not None:
-            password = memoryview(password)
+        if passphrase is not None:
+            passphrase = memoryview(passphrase)
 
         try:
-            key = loader(memoryview(data), password, defb())
+            key = loader(memoryview(data), passphrase, defb())
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
             return cls(0, key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is incorrect."
+                "passphrase is incorrect."
             ) from e
         except TypeError as e:
             raise ValueError(
-                "The key is encrypted but the password is not given or the"
-                " key is not encrypted but the password is given."
+                "The key is encrypted but the passphrase is not given or the"
+                " key is not encrypted but the passphrase is given."
                 " Cannot deserialize the key."
             ) from e
 
@@ -464,7 +464,7 @@ def load_private_key(
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
         passphrase (bytes, bytearray):
-            The password that was used to encrypt the private key.
+            The passphrase that was used to encrypt the private key.
             ``None`` if the private key was not encrypted.
 
     Returns:

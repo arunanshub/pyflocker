@@ -50,7 +50,7 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         Keyword Arguments:
             protection (str):
-                The protection scheme to use. If password is provided
+                The protection scheme to use. If passphrase is provided
                 and protection is None, ``PBKDF2WithHMAC-SHA1AndAES256-CBC``
                 is used.
 
@@ -62,10 +62,10 @@ class ECCPrivateKey(base.BasePrivateKey):
                 If the encoding is incorrect or,
                 if DER is used with PKCS1 or,
                 protection value is supplied with PKCS1 format or,
-                password is empty when protection value is supplied.
+                passphrase is empty when protection value is supplied.
             KeyError: if the format is invalid or not supported.
             TypeError:
-                if the password is not a bytes-like object when protection
+                if the passphrase is not a bytes-like object when protection
                 is supplied.
         """
         if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
@@ -87,7 +87,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         if passphrase is not None:
             # type checking of key
             if not isinstance(passphrase, (bytes, bytearray, memoryview)):
-                raise TypeError("password must be a bytes-like object.")
+                raise TypeError("passphrase must be a bytes-like object.")
             # check length afterwards
             if not passphrase:
                 raise ValueError("passphrase cannot be empty bytes")
@@ -148,7 +148,7 @@ class ECCPrivateKey(base.BasePrivateKey):
                 The key as bytes object.
             passphrase (bytes, bytearray, memoryview):
                 The passphrase that deserializes the private key.
-                ``password`` must be a ``bytes`` object if the key
+                ``passphrase`` must be a ``bytes`` object if the key
                 was encrypted while serialization, otherwise ``None``.
 
         Returns:
@@ -165,7 +165,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid "
-                "or password is missing or incorrect."
+                "or passphrase is missing or incorrect."
             ) from e
 
 
@@ -249,7 +249,7 @@ class ECCPublicKey(base.BasePublicKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect."
+                "passphrase is missing or incorrect."
             ) from e
 
 

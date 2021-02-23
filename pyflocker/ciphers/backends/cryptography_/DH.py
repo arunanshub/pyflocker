@@ -117,7 +117,7 @@ class DHParameters:
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is missing or incorrect."
+                "passphrase is missing or incorrect."
             ) from e
 
     @classmethod
@@ -279,12 +279,12 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "password is incorrect."
+                "passphrase is incorrect."
             ) from e
         except TypeError as e:
             raise ValueError(
-                "The key is encrypted but the password is not given or the"
-                " key is not encrypted but the password is given."
+                "The key is encrypted but the passphrase is not given or the"
+                " key is not encrypted but the passphrase is given."
                 " Cannot deserialize the key."
             ) from e
 
@@ -435,8 +435,8 @@ def load_private_key(
     Args:
         data (bytes, bytearray):
             The private key (a bytes-like object) to deserialize.
-        password (bytes, bytearray):
-            The password (in bytes) that was used to encrypt the
+        passphrase (bytes, bytearray):
+            The passphrase (in bytes) that was used to encrypt the
             private key.`None` if the key was not encrypted.
 
     Keyword Arguments:

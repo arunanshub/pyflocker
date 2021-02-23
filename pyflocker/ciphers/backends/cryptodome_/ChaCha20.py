@@ -59,7 +59,7 @@ def new(
         file (filelike): The source file to read from.
 
     Returns:
-        :any:`BaseSymmetricCipher`:
+        Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
             ChaCha20(-Poly1305) cipher wrapper object.
 
     Note:

@@ -232,15 +232,15 @@ class BasePrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def serialize(
         self,
-        password: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
         *args,
         **kwargs,
     ) -> bytes:
         """Serialize the private key into a bytes object.
 
         Args:
-            password (bytes, bytearray, memoryview):
-                The password to use to protect (encrypt) the key.
+            passphrase (bytes, bytearray, memoryview):
+                The passphrase to use to protect (encrypt) the key.
 
         Returns:
             bytes: The binary representation of the key.
@@ -250,15 +250,15 @@ class BasePrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def load(
         cls,
-        password: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[typing.ByteString] = None,
         *args,
         **kwargs,
     ) -> BasePrivateKey:
         """Load (or deserialize) the key into a key object.
 
         Args:
-            password (bytes):
-                The password to decrypt the private key. Without a password,
+            passphrase (bytes):
+                The passphrase to decrypt the private key. Without a passphrase,
                 the key is not encrypted.
 
         Returns:

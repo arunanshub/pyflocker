@@ -48,13 +48,13 @@ def new(
 
     Keyword Arguments:
         file (filelike):
-            The source file to read from. If `file` is specified
-            and the `mode` is not an AEAD mode, HMAC is always used.
+            The source file to read from. If ``file`` is specified
+            and the ``mode`` is not an AEAD mode, HMAC is always used.
         backend (:class:`pyflocker.ciphers.backends.Backends`):
             The backend to use. It must be a value from :any:`Backends`.
         hashed (bool):
             Should the cipher use HMAC as authentication or not.
-            (Default: `False`)
+            (Default: ``False``)
         digestmod (str, BaseHash):
             The algorithm to use for HMAC. Defaults to ``sha256``.
             Specifying this value without setting ``use_hmac`` to True
@@ -67,7 +67,7 @@ def new(
         - ``digestmod``
 
     Returns:
-        :any:`BaseSymmetricCipher`:
+        BaseSymmetricCipher:
             Camellia cipher wrapper from the appropriate backend module.
 
     Raises:

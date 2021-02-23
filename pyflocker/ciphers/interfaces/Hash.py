@@ -47,7 +47,7 @@ def new(
         BaseHash: A Hash interface with the given hashing algorithm.
 
     Raises:
-        KeyError: if the hashing function is not supported.
+        KeyError: if the hashing function is not supported or invalid.
     """
     return _load_algo("Hash", backend).new(
         hashname,

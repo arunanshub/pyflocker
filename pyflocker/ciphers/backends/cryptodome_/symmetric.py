@@ -10,8 +10,9 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
     Template class to provide the default behavior if BaseNonAEADCipher.
 
     Subclasses need to provide:
-        - `_encrypting`
-        - `_update_func`
+
+    - ``_encrypting``
+    - ``_update_func``
     """
 
     # these are *not* class variables
@@ -43,9 +44,10 @@ class AEADCipherTemplate(base.BaseAEADCipher):
     Template class to provide the default behavior if BaseAEADCipher.
 
     Subclasses need to provide the following attributes:
-        - `_encrypting`
-        - `_update_func`
-        - `_cipher`
+
+    - ``_encrypting``
+    - ``_update_func``
+    - ``_cipher``
     """
 
     # these are *not* class variables
