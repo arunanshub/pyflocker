@@ -1,4 +1,4 @@
-"""Tools for Symmetric ciphers common to all the backends."""
+"""Tools for asymmetric ciphers common to all the backends."""
 
 import typing
 from dataclasses import dataclass, field
@@ -40,9 +40,9 @@ class OAEP:
         mgf: Mask Generation Function. Defaults to MGF1.
         hashfunc:
             A :any:`BaseHash` object. Defaults to 'sha256'.
-            Can be created from `pyflocker.ciphers.interfaces.Hash.new`
+            Can be created from :func:`pyflocker.ciphers.interfaces.Hash.new`
             function.
-        label: A label to apply to this encryption. Defaults to `None`.
+        label: A label to apply to this encryption. Defaults to ``None``.
     """
 
     mgf: MGF1 = field(default_factory=MGF1)
@@ -57,8 +57,9 @@ class PSS:
 
     Attributes:
         mgf: A Mask Generation Function. Defaults to MGF1.
-        salt_length: Length of the salt, in bytes.
-            Length must be greater than 0. Defaults to `None`.
+        salt_length:
+            Length of the salt, in bytes.
+            Length must be greater than 0. Defaults to ``None``.
     """
 
     mgf: MGF1 = field(default_factory=MGF1)

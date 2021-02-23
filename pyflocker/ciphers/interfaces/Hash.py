@@ -44,7 +44,7 @@ def new(
             The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        :any:`BaseHash`: A Hash interface with the given hashing algorithm.
+        BaseHash: A Hash interface with the given hashing algorithm.
 
     Raises:
         KeyError: if the hashing function is not supported.
