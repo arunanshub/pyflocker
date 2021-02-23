@@ -7,6 +7,8 @@ from abc import ABCMeta, abstractmethod
 
 
 class BaseSymmetricCipher(metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def is_encrypting(self) -> bool:
         """Whether the cipher is encrypting or not.
@@ -54,6 +56,8 @@ class BaseNonAEADCipher(BaseSymmetricCipher):
     and the wrappers must provide authentication support.
     """
 
+    __slots__ = ()
+
     @abstractmethod
     def finalize(self) -> None:
         """Finalizes and closes the cipher.
@@ -69,6 +73,8 @@ class BaseAEADCipher(BaseSymmetricCipher):
     Custom cipher wrappers that provide AEAD functionality to NonAEAD
     ciphers must derive from this.
     """
+
+    __slots__ = ()
 
     @abstractmethod
     def authenticate(self, data: typing.ByteString) -> None:
@@ -115,6 +121,8 @@ class BaseHash(metaclass=ABCMeta):
 
     Custom MACs must use this interface.
     """
+
+    __slots__ = ()
 
     @property
     @abstractmethod
@@ -219,6 +227,8 @@ class BaseHash(metaclass=ABCMeta):
 
 
 class BasePrivateKey(metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def serialize(
         self,
@@ -257,6 +267,8 @@ class BasePrivateKey(metaclass=ABCMeta):
 
 
 class BasePublicKey(metaclass=ABCMeta):
+    __slots__ = ()
+
     @abstractmethod
     def serialize(
         self,
