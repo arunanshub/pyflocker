@@ -1,6 +1,7 @@
 """Interface to Camellia cipher"""
 import typing
 
+from .. import base as _base
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 from ..modes import Modes as _m
@@ -26,10 +27,10 @@ def new(
     mode: _m,
     iv_or_nonce: typing.ByteString,
     *,
+    use_hmac: bool = False,
+    digestmod: [str, _base.BaseHash] = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
-    use_hmac: bool = False,
-    digestmod: str = "sha256",
 ):
     """Instantiate a new Camellia cipher wrapper object.
 
@@ -54,10 +55,16 @@ def new(
         hashed (bool):
             Should the cipher use HMAC as authentication or not.
             (Default: `False`)
-        digestmod (str):
-            The algorithm to use for `HMAC`. Defaults to `sha256`.
-            Specifying this value without setting `hashed` to True
+        digestmod (str, BaseHash):
+            The algorithm to use for HMAC. Defaults to ``sha256``.
+            Specifying this value without setting ``use_hmac`` to True
             has no effect.
+
+    Important:
+        The following arguments are ignored if the mode is an AEAD mode:
+
+        - ``use_hmac``
+        - ``digestmod``
 
     Returns:
         :any:`BaseSymmetricCipher`:

@@ -32,7 +32,7 @@ def new(
     iv_or_nonce: typing.ByteString,
     *,
     use_hmac: bool = False,
-    digestmod: str = "sha256",
+    digestmod: [str, _base.BaseHash] = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
     backend: typing.Optional[_Backends] = None,
 ) -> typing.Union[_base.BaseNonAEADCipher, _base.BaseAEADCipher]:
@@ -59,7 +59,7 @@ def new(
         use_hmac (bool):
             Should the cipher use HMAC as authentication or not, if it does
             not support AEAD. (Default: False)
-        digestmod (str):
+        digestmod (str, BaseHash):
             The algorithm to use for HMAC. Defaults to ``sha256``.
             Specifying this value without setting ``use_hmac`` to True
             has no effect.

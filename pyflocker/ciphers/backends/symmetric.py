@@ -146,12 +146,15 @@ class HMACWrapper(base.BaseAEADCipher):
         cipher: base.BaseNonAEADCipher,
         hkey: typing.ByteString,
         rand: typing.ByteString,
-        digestmod: str = "sha256",
+        digestmod: typing.Union[str, base.BaseHash] = "sha256",
         offset: int = 0,
     ):
         if not isinstance(cipher, base.BaseNonAEADCipher):
             raise TypeError("Only NonAEAD ciphers can be wrapped.")
 
+        if isinstance(digestmod, base.BaseHash):
+            # always use a fresh hash object.
+            digestmod = digestmod.new()
         self._auth = hmac.new(hkey, digestmod=digestmod)
 
         self._auth.update(rand)

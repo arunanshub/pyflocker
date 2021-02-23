@@ -9,13 +9,15 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
+from ...base import BaseHash
 from .Hash import HASHES as _hashes
+from .Hash import _get_hash_algorithm
 
 
 def derive_hkdf_key(
     master_key: typing.ByteString,
     dklen: int,
-    hashalgo: str,
+    hashalgo: typing.Union[str, BaseHash],
     salt: typing.ByteString,
     cipher_ctx: typing.ByteString = b"enc-key",
     auth_ctx: typing.ByteString = b"auth-key",
@@ -25,7 +27,7 @@ def derive_hkdf_key(
     Args:
         master_key (bytes): The key used to derive the keys from.
         dklen (int): Desired lenth of the derived key.
-        hashalgo (str): The name of the hash algorithm.
+        hashalgo (str, BaseHash): The name of the hash algorithm.
         salt (bytes): The salt to use.
         cipher_ctx (bytes): Context for cipher.
         auth_ctx (bytes): Context for HMAC.
@@ -33,15 +35,23 @@ def derive_hkdf_key(
     Returns:
         tuple[bytes, bytes]: A pair of *cipher key* and *MAC key*.
     """
+    if isinstance(hashalgo, str):
+        hash_ = _hashes[hashalgo]()
+    elif isinstance(hashalgo, BaseHash):
+        hash_ = _get_hash_algorithm(hashalgo)
+    else:
+        raise TypeError(
+            "hashalgo must be a str or an object implementing BaseHash."
+        )
+
     key = HKDF(
-        _hashes[hashalgo](),
+        hash_,
         dklen,
         salt,
         cipher_ctx,
         defb(),
     ).derive(master_key)
 
-    hash_ = _hashes[hashalgo]()
     hkey = HKDF(
         hash_,
         hash_.digest_size,

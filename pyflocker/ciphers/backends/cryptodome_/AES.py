@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from Cryptodome.Cipher import AES
 
-from ... import exc, modes
+from ... import base, exc, modes
 from ...modes import Modes as _m
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
@@ -161,7 +161,7 @@ def new(
     *,
     file: typing.Optional[typing.BinaryIO] = None,
     use_hmac: bool = False,
-    digestmod: str = "sha256",
+    digestmod: [str, base.BaseHash] = "sha256",
 ) -> typing.Union[AEAD, NonAEAD, AEADOneShot, FileCipherWrapper, HMACWrapper]:
     """Create a new backend specific AES cipher.
 
@@ -171,22 +171,21 @@ def new(
         key (bytes, bytearray, memoryview):
             The key for the cipher.
         mode (:any:`Modes`):
-            The mode to use for AES cipher. All backends may not support
-            that particular mode.
+            The mode to use for AES cipher.
         iv_or_nonce (bytes, bytearray, memoryview):
             The Initialization Vector or Nonce for the cipher. It must not be
             repeated with the same key.
 
     Keyword Arguments:
         file (filelike):
-            The source file to read from. If `file` is specified
-            and the `mode` is not an AEAD mode, HMAC is always used.
+            The source file to read from. If ``file`` is specified
+            and the ``mode`` is not an AEAD mode, HMAC is always used.
         use_hmac (bool):
             Should the cipher use HMAC as authentication or not,
             if it does not support AEAD. (Default: False)
-        digestmod (str):
-            The algorithm to use for HMAC. Defaults to `sha256`.
-            Specifying this value without setting `hashed` to True
+        digestmod (str, BaseHash):
+            The algorithm to use for HMAC. Defaults to ``sha256``.
+            Specifying this value without setting ``use_hmac`` to True
             has no effect.
 
     Important:

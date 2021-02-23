@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.ciphers import modes
 
+from ... import base
 from ...modes import Modes as _m
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
@@ -44,7 +45,7 @@ def new(
     *,
     file: typing.Optional[typing.BinaryIO] = None,
     use_hmac: bool = False,
-    digestmod: str = "sha256",
+    digestmod: [str, base.BaseHash] = "sha256",
 ) -> typing.Union[Camellia, FileCipherWrapper, HMACWrapper]:
     """Instantiate a new Camellia cipher wrapper object.
 
@@ -67,14 +68,19 @@ def new(
         use_hmac (bool):
             Should the cipher use HMAC as authentication or not.
             (Default: `False`)
-        digestmod (str):
-            The algorithm to use for `HMAC`. Defaults to `sha256`.
-            Specifying this value without setting `use_hmac` to True
+        digestmod (str, BaseHash):
+            The algorithm to use for ``HMAC``. Defaults to ``sha256``.
+            Specifying this value without setting ``use_hmac`` to True
             has no effect.
 
+    Important:
+        The following arguments are ignored if the mode is an AEAD mode:
+
+        - ``use_hmac``
+        - ``digestmod``
+
     Returns:
-        :any:`BaseSymmetricCipher`:
-            Camellia cipher.
+        Camellia: Camellia cipher.
 
     Note:
         Any other error that is raised is from the backend itself.
