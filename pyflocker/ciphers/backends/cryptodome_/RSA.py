@@ -158,7 +158,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
                 protection=protection,
             )
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}")
+            raise ValueError(f"Invalid encoding or format: {e.args}") from e
 
     @classmethod
     def load(

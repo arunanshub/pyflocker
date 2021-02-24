@@ -192,7 +192,9 @@ class _EAX:
         Maintains compatibility across pyca/cryptography style
         cipher instances.
         """
-        return self._cipher._ctx
+        if self.__ctx:
+            return self.__ctx._ctx
+        return None
 
     def authenticate_additional_data(self, data):
         if self.__ctx is None:

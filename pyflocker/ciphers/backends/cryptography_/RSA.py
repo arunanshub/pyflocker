@@ -282,7 +282,7 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             encd = ENCODINGS[encoding]
             fmt = PUBLIC_FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}")
+            raise ValueError(f"Invalid encoding or format: {e.args}") from e
         return self._key.public_bytes(encd, fmt)
 
     @classmethod

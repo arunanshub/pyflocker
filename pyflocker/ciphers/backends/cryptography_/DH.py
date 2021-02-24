@@ -148,7 +148,7 @@ class _DHKey:
         Returns:
             DHParameters: The DH parameter object.
         """
-        return DHParameters(parameter=self._key.parameters())
+        return DHParameters(None, parameter=self._key.parameters())
 
     @property
     def key_size(self) -> int:
@@ -215,10 +215,11 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         """
         if passphrase is None:
             prot = ser.NoEncryption()
-
         else:
             if not isinstance(passphrase, (bytes, bytearray, memoryview)):
                 raise TypeError("passphrase must be a bytes-like object.")
+            prot = ser.BestAvailableEncryption(passphrase)
+
         try:
             return self._key.private_bytes(
                 ENCODINGS[encoding],
@@ -275,7 +276,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
                 passphrase,
                 defb(),
             )
-            return cls(None, key=key)
+            return cls(key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
