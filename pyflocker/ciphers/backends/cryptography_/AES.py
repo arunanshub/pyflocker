@@ -145,6 +145,8 @@ class AEADOneShot(base.BaseAEADCipher):
 class _AuthWrapper:
     """Wrapper class for objects that do not support memoryview objects."""
 
+    __slots__ = ("_auth",)
+
     def __init__(self, auth):
         self._auth = auth
 
@@ -157,6 +159,17 @@ class _AuthWrapper:
 
 class _EAX:
     """AES-EAX adapter for pyca/cryptography."""
+
+    __slots__ = (
+        "_mac_len",
+        "_omac",
+        "_auth",
+        "_omac_cache",
+        "_cipher",
+        "_updated",
+        "__ctx",
+        "__tag",
+    )
 
     def __init__(self, key, nonce, mac_len=16):
         self._mac_len = mac_len
