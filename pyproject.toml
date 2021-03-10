@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "pyflocker"
-version = "0.3.0"
+version = "0.3.1"
 description = "Python Cryptographic (File Locking) Library"
 authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
 license = "MIT"
