@@ -319,6 +319,7 @@ def lockerf(
         header.nonce,
         file=infile,
         backend=backend,
+        tag_length=None,
     )
     cipher.authenticate(
         struct.pack(

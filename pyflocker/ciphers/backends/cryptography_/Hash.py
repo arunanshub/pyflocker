@@ -21,8 +21,8 @@ HASHES = MappingProxyType(
         "sha512_256": h.SHA512_256,
         "shake128": h.SHAKE128,
         "shake256": h.SHAKE256,
-        "blake2b": h.BLAKE2b,
-        "blake2s": h.BLAKE2s,
+        "blake2b": lambda digest_size=64: h.BLAKE2b(digest_size),
+        "blake2s": lambda digest_size=32: h.BLAKE2s(digest_size),
     }
 )
 

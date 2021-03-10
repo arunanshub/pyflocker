@@ -281,7 +281,8 @@ def new(
     *,
     file: typing.Optional[typing.BinaryIO] = None,
     use_hmac: bool = False,
-    digestmod: [str, base.BaseHash] = "sha256",
+    tag_length: typing.Optional[int] = 16,
+    digestmod: typing.Union[str, base.BaseHash] = "sha256",
 ) -> typing.Union[AEAD, NonAEAD, FileCipherWrapper, HMACWrapper]:
     """Create a new backend specific AES cipher.
 
@@ -339,7 +340,14 @@ def new(
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
     else:
         if use_hmac:
-            crp = _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod)
+            crp = _wrap_hmac(
+                encrypting,
+                key,
+                mode,
+                iv_or_nonce,
+                digestmod,
+                tag_length,
+            )
         else:
             crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
 
@@ -372,13 +380,14 @@ def _aes_cipher(key, mode, nonce_or_iv):
     return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv), defb())
 
 
-def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
+def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     crp = HMACWrapper(
         NonAEAD(encrypting, ckey, mode, iv_or_nonce),
         hkey,
         iv_or_nonce,
         digestmod,
+        tag_length=tag_length,
         offset=15,
     )
     return crp

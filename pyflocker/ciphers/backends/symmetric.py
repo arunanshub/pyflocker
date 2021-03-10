@@ -148,6 +148,7 @@ class HMACWrapper(base.BaseAEADCipher):
         rand: typing.ByteString,
         digestmod: typing.Union[str, base.BaseHash] = "sha256",
         offset: int = 0,
+        tag_length: typing.Optional[int] = 16,
     ):
         if not isinstance(cipher, base.BaseNonAEADCipher):
             raise TypeError("Only NonAEAD ciphers can be wrapped.")
@@ -163,6 +164,11 @@ class HMACWrapper(base.BaseAEADCipher):
         self._encrypting = cipher.is_encrypting()
         self._len_aad, self._len_ct = 0, 0
         self._updated = False
+        self._tag = None
+
+        self._tag_length = (
+            self._auth.digest_size if tag_length is None else tag_length
+        )
 
     def is_encrypting(self):
         return self._encrypting
@@ -189,8 +195,8 @@ class HMACWrapper(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
-        self._len_ct += len(data)
         self._ctx.update_into(data, out)
+        self._len_ct += len(data)
 
     def finalize(self, tag=None):
         if self._ctx is None:
@@ -199,6 +205,10 @@ class HMACWrapper(base.BaseAEADCipher):
         if not self.is_encrypting():
             if tag is None:
                 raise ValueError("tag is required for decryption")
+            if len(tag) != self._tag_length:
+                raise ValueError(
+                    f"Invalid tag length: (required {self._tag_length})"
+                )
 
         self._auth.update(self._len_aad.to_bytes(8, "little"))
         self._auth.update(self._len_ct.to_bytes(8, "little"))
@@ -206,7 +216,10 @@ class HMACWrapper(base.BaseAEADCipher):
         self._ctx = None
 
         if not self._encrypting:
-            if not hmac.compare_digest(self._auth.digest(), tag):
+            if not hmac.compare_digest(
+                self._auth.digest()[: self._tag_length],
+                tag,
+            ):
                 raise exc.DecryptionError
 
     def calculate_tag(self):
@@ -214,7 +227,7 @@ class HMACWrapper(base.BaseAEADCipher):
             raise exc.NotFinalized
 
         if self.is_encrypting():
-            return self._auth.digest()
+            return self._auth.digest()[: self._tag_length]
 
     @staticmethod
     def _get_mac_ctx(cipher: base.BaseNonAEADCipher, auth, offset):

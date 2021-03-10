@@ -43,9 +43,10 @@ def new(
     mode: _m,
     iv_or_nonce: typing.ByteString,
     *,
-    file: typing.Optional[typing.BinaryIO] = None,
     use_hmac: bool = False,
+    tag_length: typing.Optional[int] = 16,
     digestmod: [str, base.BaseHash] = "sha256",
+    file: typing.Optional[typing.BinaryIO] = None,
 ) -> typing.Union[Camellia, FileCipherWrapper, HMACWrapper]:
     """Instantiate a new Camellia cipher wrapper object.
 
@@ -62,21 +63,27 @@ def new(
             repeated with the same key.
 
     Keyword Arguments:
-        file (filelike):
-            The source file to read from.
-            HMAC is always used when file is supplied.
         use_hmac (bool):
             Should the cipher use HMAC as authentication or not.
-            (Default: `False`)
+            (Default: ``False``)
+        tag_length (int, None):
+            Length of HMAC tag. By default, a *16 byte tag* is generated.
+            If ``tag_length`` is ``None``, a *non-truncated* tag is generated.
+            Length of non-truncated tag depends on the digest size of the
+            underlying hash algorithm used by HMAC.
         digestmod (str, BaseHash):
-            The algorithm to use for ``HMAC``. Defaults to ``sha256``.
+            The algorithm to use for HMAC. Defaults to ``sha256``.
             Specifying this value without setting ``use_hmac`` to True
             has no effect.
+        file (filelike):
+            The source file to read from. If ``file`` is specified
+            and the ``mode`` is not an AEAD mode, HMAC is always used.
 
     Important:
         The following arguments are ignored if the mode is an AEAD mode:
 
         - ``use_hmac``
+        - ``tag_length``
         - ``digestmod``
 
     Returns:
@@ -90,7 +97,14 @@ def new(
         use_hmac = True
 
     if use_hmac:
-        crp = _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod)
+        crp = _wrap_hmac(
+            encrypting,
+            key,
+            mode,
+            iv_or_nonce,
+            digestmod,
+            tag_length,
+        )
     else:
         crp = Camellia(encrypting, key, mode, iv_or_nonce)
 
@@ -109,13 +123,14 @@ def supported_modes() -> typing.Set[_m]:
     return set(SUPPORTED)
 
 
-def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod):
+def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     crp = HMACWrapper(
         Camellia(encrypting, ckey, mode, iv_or_nonce),
         hkey,
         iv_or_nonce,
         digestmod,
+        tag_length=tag_length,
         offset=15,
     )
     return crp
