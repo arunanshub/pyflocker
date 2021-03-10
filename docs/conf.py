@@ -15,14 +15,14 @@ import sys
 from datetime import date
 
 sys.path.insert(0, "..")
-
+from pyflocker import __version__
 
 # -- Project information -----------------------------------------------------
 
 project = "PyFLocker"
 copyright = f"2020-{date.today().year}, Arunanshu Biswas"
 author = "Arunanshu Biswas"
-release = "0.3.0"
+release = __version__
 
 
 # -- General configuration ---------------------------------------------------
