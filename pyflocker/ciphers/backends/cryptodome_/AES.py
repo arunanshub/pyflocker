@@ -182,8 +182,8 @@ def new(
             Should the cipher use HMAC as authentication or not,
             if it does not support AEAD. (Default: False)
         tag_length (int, None):
-            Length of HMAC tag. By default, a *16 byte tag* is generated.
-            If ``tag_length`` is ``None``, a *non-truncated* tag is generated.
+            Length of HMAC tag. By default, a **16 byte tag** is generated. If
+            ``tag_length`` is ``None``, a **non-truncated** tag is generated.
             Length of non-truncated tag depends on the digest size of the
             underlying hash algorithm used by HMAC.
         digestmod (str, BaseHash):

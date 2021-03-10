@@ -279,10 +279,10 @@ def new(
     mode: _m,
     iv_or_nonce: typing.ByteString,
     *,
-    file: typing.Optional[typing.BinaryIO] = None,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
+    file: typing.Optional[typing.BinaryIO] = None,
 ) -> typing.Union[AEAD, NonAEAD, FileCipherWrapper, HMACWrapper]:
     """Create a new backend specific AES cipher.
 
@@ -298,16 +298,21 @@ def new(
             repeated with the same key.
 
     Keyword Arguments:
-        file (filelike):
-            The source file to read from. If `file` is specified
-            and the `mode` is not an AEAD mode, HMAC is always used.
         use_hmac (bool):
             Should the cipher use HMAC as authentication or not,
             if it does not support AEAD. (Default: False)
+        tag_length (int, None):
+            Length of HMAC tag. By default, a **16 byte tag** is generated. If
+            ``tag_length`` is ``None``, a **non-truncated** tag is generated.
+            Length of non-truncated tag depends on the digest size of the
+            underlying hash algorithm used by HMAC.
         digestmod (str, BaseHash):
             The algorithm to use for HMAC. Defaults to ``sha256``.
             Specifying this value without setting ``use_hmac`` to True
             has no effect.
+        file (filelike):
+            The source file to read from. If `file` is specified
+            and the `mode` is not an AEAD mode, HMAC is always used.
 
     Important:
         The following arguments are ignored if the mode is an AEAD mode:
