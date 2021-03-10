@@ -192,10 +192,14 @@ Next, we will read the data from ``somedata.txt`` and encrypt it.
 
     with open("encrypted.bin", "wb") as file:
         file.write(
-            enc_session_key,
-            nonce,
-            tag,
-            ciphertext,
+            b"".join(
+                (
+                    enc_session_key,
+                    nonce,
+                    tag,
+                    ciphertext,
+                )
+            )
         )
 
 Decryption
