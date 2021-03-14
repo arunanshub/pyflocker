@@ -81,7 +81,7 @@ class Hash(base.BaseHash):
     def _construct_hash(name, data=b"", digest_size=None):
         hash_ = HASHES[name]
 
-        if digest_size is None and name in VAR_DIGEST_SIZE:  # pragma: no cover
+        if digest_size is None and name in XOFS:  # pragma: no cover
             raise ValueError("value of digest-size is required")
 
         if name in VAR_DIGEST_SIZE ^ XOFS:

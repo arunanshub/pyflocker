@@ -21,8 +21,8 @@ HASHES = MappingProxyType(
         "sha512_256": h.SHA512_256,
         "shake128": h.SHAKE128,
         "shake256": h.SHAKE256,
-        "blake2b": lambda digest_size=64: h.BLAKE2b(digest_size),
-        "blake2s": lambda digest_size=32: h.BLAKE2s(digest_size),
+        "blake2b": lambda digest_size=None: h.BLAKE2b(digest_size or 64),
+        "blake2s": lambda digest_size=None: h.BLAKE2s(digest_size or 32),
     }
 )
 
@@ -35,6 +35,12 @@ VAR_DIGEST_SIZE = frozenset(
     )
 )
 
+XOFS = frozenset(
+    (
+        "shake128",
+        "shake256",
+    )
+)
 
 # the ASN.1 Object IDs
 OIDS = MappingProxyType(
@@ -73,7 +79,7 @@ class Hash(base.BaseHash):
     @staticmethod
     def _construct_hash(name, data=b"", digest_size=None):
         if name in VAR_DIGEST_SIZE:
-            if digest_size is None:  # pragma: no cover
+            if digest_size is None and name in XOFS:  # pragma: no cover
                 raise ValueError("value of digest-size is required")
             hash_ = h.Hash(HASHES[name](digest_size), defb())
         else:

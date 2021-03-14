@@ -37,7 +37,7 @@ def new(
             Initial data to pass to hashing function.
         digest_size (int):
             The length of the digest from the hash function.
-            Required for ``Blake`` and ``Shake``.
+            Required for ``Shake``.
 
     Keyword Arguments:
         backend (:class:`pyflocker.ciphers.backends.Backends`, None):
