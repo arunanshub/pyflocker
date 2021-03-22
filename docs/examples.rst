@@ -255,5 +255,5 @@ encrypted session key and use it to decrypt the encrypted file (here
 .. _ChaCha20: https://en.wikipedia.org/wiki/Salsa20#ChaCha_variant
 .. _AES: https://en.wikipedia.org/wiki/Advanced_Encryption_Standard
 .. _RSA: https://en.wikipedia.org/wiki/RSA_(cryptosystem)
-.. _CTR:
+.. _CTR: https://en.m.wikipedia.org/wiki/Block_cipher_mode_of_operation#CTR
 .. _HMAC: https://en.wikipedia.org/wiki/HMAC
