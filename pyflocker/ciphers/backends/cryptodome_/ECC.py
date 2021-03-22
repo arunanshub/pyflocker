@@ -106,7 +106,9 @@ class ECCPrivateKey(base.BasePrivateKey):
             return key
         return key.encode("utf-8")
 
-    def signer(self, *, mode: str = "fips-186-3", encoding: str = "binary"):
+    def signer(
+        self, *, mode: str = "fips-186-3", encoding: str = "binary"
+    ) -> _SigVerContext:
         """Create a signer context.
 
         Keyword Arguments:
@@ -139,7 +141,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         cls,
         data: typing.ByteString,
         passphrase: typing.Optional[typing.ByteString] = None,
-    ):
+    ) -> ECCPrivateKey:
         """Loads the private key as binary object and returns the Key
         interface.
 
@@ -175,7 +177,9 @@ class ECCPublicKey(base.BasePublicKey):
     def __init__(self, key):
         self._key = key
 
-    def serialize(self, encoding: str = "PEM", *, compress: bool = False):
+    def serialize(
+        self, encoding: str = "PEM", *, compress: bool = False
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
@@ -204,7 +208,9 @@ class ECCPublicKey(base.BasePublicKey):
             return key
         return key.encode()
 
-    def verifier(self, *, mode: str = "fips-186-3", encoding: str = "binary"):
+    def verifier(
+        self, *, mode: str = "fips-186-3", encoding: str = "binary"
+    ) -> _SigVerContext:
         """Create a DSS verifier context.
 
         Args:
@@ -228,7 +234,7 @@ class ECCPublicKey(base.BasePublicKey):
         return _SigVerContext(False, get_DSS(self._key, mode, encoding))
 
     @classmethod
-    def load(cls, data: typing.ByteString):
+    def load(cls, data: typing.ByteString) -> ECCPublicKey:
         """Loads the public key as binary object and returns the Key object.
 
         Args:
@@ -317,7 +323,7 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(data: typing.ByteString):
+def load_public_key(data: typing.ByteString) -> ECCPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:

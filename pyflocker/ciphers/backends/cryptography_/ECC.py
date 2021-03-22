@@ -132,7 +132,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         encoding: str = "PEM",
         format: str = "PKCS8",
         passphrase: typing.Optional[typing.ByteString] = None,
-    ):
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
@@ -185,7 +185,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         self,
         peer_public_key: typing.ByteString,
         algorithm: str = "ECDH",
-    ):
+    ) -> bytes:
         """Perform a key exchange.
 
         Args:
@@ -223,7 +223,7 @@ class ECCPrivateKey(base.BasePrivateKey):
             peer_public_key._key,
         )
 
-    def signer(self, algorithm: str = "ECDSA"):
+    def signer(self, algorithm: str = "ECDSA") -> _SigVerContext:
         """Create a signer context.
 
         Args:
@@ -255,7 +255,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         passphrase: typing.Optional[typing.ByteString] = None,
         *,
         edwards: bool = True,
-    ):
+    ) -> ECCPrivateKey:
         """Loads the private key as `bytes` object and returns a key object.
 
         Args:
@@ -359,7 +359,7 @@ class ECCPublicKey(base.BasePublicKey):
             raise ValueError("The key is not an EC public key.")
         self._key = key
 
-    def verifier(self, algorithm: str = "ECDSA"):
+    def verifier(self, algorithm: str = "ECDSA") -> _SigVerContext:
         """Create a verifier context.
 
         Args:
@@ -387,7 +387,7 @@ class ECCPublicKey(base.BasePublicKey):
 
     def serialize(
         self, encoding: str = "PEM", format: str = "SubjectPublicKeyInfo"
-    ):
+    ) -> bytes:
         """Serialize the public key.
 
         Args:
@@ -425,7 +425,9 @@ class ECCPublicKey(base.BasePublicKey):
         return self._key.public_bytes(encoding_, format_)
 
     @classmethod
-    def load(cls, data: typing.ByteString, *, edwards: bool = True):
+    def load(
+        cls, data: typing.ByteString, *, edwards: bool = True
+    ) -> ECCPublicKey:
         """Loads the public key as ``bytes`` object and returns
         the Key interface.
 
@@ -496,7 +498,7 @@ class _SigVerContext:
         self._ctx_func = key.sign if is_private else key.verify
         self._algorithm = algorithm
 
-    def sign(self, msghash: base.BaseHash):
+    def sign(self, msghash: base.BaseHash) -> bytes:
         """Return the signature of the message hash.
 
         Args:
@@ -521,7 +523,9 @@ class _SigVerContext:
             ),
         )
 
-    def verify(self, msghash: base.BaseHash, signature: typing.ByteString):
+    def verify(
+        self, msghash: base.BaseHash, signature: typing.ByteString
+    ) -> None:
         """Verifies the signature of the message hash.
 
         Args:
@@ -571,7 +575,9 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(data: typing.ByteString, *, edwards: bool = True):
+def load_public_key(
+    data: typing.ByteString, *, edwards: bool = True
+) -> ECCPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:

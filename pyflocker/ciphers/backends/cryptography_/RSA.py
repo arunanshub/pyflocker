@@ -172,7 +172,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
         cls,
         data: typing.ByteString,
         passphrase: typing.Optional[typing.ByteString] = None,
-    ):
+    ) -> RSAPrivateKey:
         """Loads the private key as ``bytes`` object and returns
         the Key interface.
 

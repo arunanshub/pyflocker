@@ -47,7 +47,7 @@ class DHParameters:
         """
         return DHPrivateKey(self._params.generate_private_key())
 
-    def serialize(self, encoding: str = "PEM", format: str = "PKCS3"):
+    def serialize(self, encoding: str = "PEM", format: str = "PKCS3") -> bytes:
         """Serialize the DH parameters.
 
         Args:
@@ -126,7 +126,7 @@ class DHParameters:
         p: int,
         g: int = 2,
         q: typing.Optional[int] = None,
-    ):
+    ) -> DHParameters:
         """Generates a DH parameter group from the parameters.
 
         Args:
@@ -194,7 +194,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         encoding: str = "PEM",
         format: str = "PKCS8",
         passphrase: typing.Optional[typing.ByteString] = None,
-    ):
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
@@ -323,7 +323,7 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
 
     @property
     @_cache
-    def y(self):
+    def y(self) -> int:
         return self._key.public_numbers().y
 
     @classmethod
