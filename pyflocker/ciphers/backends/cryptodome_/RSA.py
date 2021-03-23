@@ -173,9 +173,9 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             data (bytes):
                 The key as bytes object.
             passphrase (bytes, bytearray, memoryview):
-                The passphrase that deserializes the private key. ``passphrase``
-                must be a ``bytes`` object if the key was encrypted while
-                serialization, otherwise ``None``.
+                The passphrase that deserializes the private key.
+                ``passphrase`` must be a ``bytes`` object if the key was
+                encrypted while serialization, otherwise ``None``.
 
         Returns:
             RSAPrivateKey: The RSA private key.

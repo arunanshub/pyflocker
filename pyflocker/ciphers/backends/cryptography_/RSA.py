@@ -180,9 +180,9 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             data (bytes, bytearray):
                 The key as bytes object.
             passphrase (bytes, bytearray):
-                The passphrase that deserializes the private key. ``passphrase``
-                must be a ``bytes-like`` object if the key was encrypted while
-                serialization, otherwise ``None``.
+                The passphrase that deserializes the private key.
+                ``passphrase`` must be a ``bytes-like`` object if the key was
+                encrypted while serialization, otherwise ``None``.
 
         Returns:
             RSAPrivateKey: RSA private key.

@@ -258,8 +258,8 @@ class BasePrivateKey(metaclass=ABCMeta):
 
         Args:
             passphrase (bytes):
-                The passphrase to decrypt the private key. Without a passphrase,
-                the key is not encrypted.
+                The passphrase to decrypt the private key. Without a
+                passphrase, the key is not encrypted.
 
         Returns:
             BaseAsymmetricKey: A key object.
