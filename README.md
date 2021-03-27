@@ -22,7 +22,7 @@ or
 
 # Introduction
 
-PyFLocker aims to be a highly stable and easy of use cryptographic library.
+PyFLocker aims to be a highly stable and easy to use cryptographic library.
 Before you read on, check if you agree to at least one of these points:
 
 - [`PyCryptodome(x)`][pycrypto] and [`pyca/cryptography`][pyca] have
