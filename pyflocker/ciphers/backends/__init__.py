@@ -39,7 +39,9 @@ def load_algorithm(
         ) from e
 
 
-def load_backend(backend: Backends = None) -> typing.types.ModuleType:
+def load_backend(
+    backend: typing.Optional[Backends] = None,
+) -> typing.types.ModuleType:
     """Load a backend.
 
     Args:

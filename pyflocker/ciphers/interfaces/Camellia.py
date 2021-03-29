@@ -29,7 +29,7 @@ def new(
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
-    digestmod: [str, _base.BaseHash] = "sha256",
+    digestmod: typing.Union[str, _base.BaseHash] = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
 ):

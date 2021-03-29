@@ -191,7 +191,7 @@ def lockerf(
     blocksize: int = 16 * 1024,
     metadata: typing.ByteString = METADATA,
     dklen: int = 32,
-    backend: _Backends = None,
+    backend: typing.Optional[_Backends] = None,
 ) -> None:
     """Utility tool for encrypting files.
 
