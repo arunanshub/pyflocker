@@ -70,8 +70,8 @@ class BaseNonAEADCipher(BaseSymmetricCipher):
 class BaseAEADCipher(BaseSymmetricCipher):
     """Abstract base class for AEAD ciphers.
 
-    Custom cipher wrappers that provide AEAD functionality to NonAEAD
-    ciphers must derive from this.
+    Custom cipher wrappers that provide AEAD functionality to NonAEAD ciphers
+    must derive from this.
     """
 
     __slots__ = ()
@@ -129,8 +129,8 @@ class BaseHash(metaclass=ABCMeta):
     def digest_size(self) -> int:
         """
         The size of the digest produced by the hashing object, measured in
-        bytes. If the hash has a variable output size, this output size must
-        be chosen when the hashing object is created, and this attribute must
+        bytes. If the hash has a variable output size, this output size must be
+        chosen when the hashing object is created, and this attribute must
         contain the selected size. Therefore, None is not a legal value for
         this attribute.
 

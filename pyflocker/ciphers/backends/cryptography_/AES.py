@@ -299,25 +299,25 @@ def new(
 
     Keyword Arguments:
         use_hmac (bool):
-            Should the cipher use HMAC as authentication or not,
-            if it does not support AEAD. (Default: False)
+            Should the cipher use HMAC as authentication or not, if it does not
+            support AEAD. (Default: False)
         tag_length (int, None):
             Length of HMAC tag. By default, a **16 byte tag** is generated. If
             ``tag_length`` is ``None``, a **non-truncated** tag is generated.
             Length of non-truncated tag depends on the digest size of the
             underlying hash algorithm used by HMAC.
         digestmod (str, BaseHash):
-            The algorithm to use for HMAC. Defaults to ``sha256``.
-            Specifying this value without setting ``use_hmac`` to True
-            has no effect.
+            The algorithm to use for HMAC. Defaults to ``sha256``. Specifying
+            this value without setting ``use_hmac`` to True has no effect.
         file (filelike):
-            The source file to read from. If `file` is specified
-            and the `mode` is not an AEAD mode, HMAC is always used.
+            The source file to read from. If `file` is specified and the `mode`
+            is not an AEAD mode, HMAC is always used.
 
     Important:
         The following arguments are ignored if the mode is an AEAD mode:
 
         - ``use_hmac``
+        - ``tag_length``
         - ``digestmod``
 
     Returns:

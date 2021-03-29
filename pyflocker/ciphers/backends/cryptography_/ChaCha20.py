@@ -115,8 +115,8 @@ class ChaCha20(NonAEADCipherTemplate):
     """ChaCha20 Cipher class.
 
     This class alone does not provide any authentication. For AEAD purposes,
-    wrap `ChaCha20` object with a class that implements `BaseAEADCipher` or
-    use `ChaCha20Poly1305`.
+    wrap ``ChaCha20`` object with a class that implements ``BaseAEADCipher`` or
+    use ``ChaCha20Poly1305``.
     """
 
     def __init__(self, encrypting, key, nonce):
