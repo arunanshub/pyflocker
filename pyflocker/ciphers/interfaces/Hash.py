@@ -7,7 +7,9 @@ from ..backends import load_algorithm as _load_algo
 from ..base import BaseHash as _BaseHash
 
 
-def algorithms_available(backend: _Backends = None) -> typing.Set[str]:
+def algorithms_available(
+    backend: typing.Optional[_Backends] = None,
+) -> typing.Set[str]:
     """Returns all available hashes supported by backend."""
     if backend is not None:
         return _load_algo("Hash", backend).algorithms_available()
