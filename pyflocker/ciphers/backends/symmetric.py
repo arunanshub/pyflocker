@@ -64,7 +64,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
         """
         if self._ctx is None:
             raise exc.AlreadyFinalized
-        if (data := self._file.read(blocksize)) :
+        if data := self._file.read(blocksize):
             return self._ctx.update(data)
 
     def update_into(
