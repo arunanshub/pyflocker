@@ -90,7 +90,7 @@ class DHParameters:
         return self._numbers().q
 
     @classmethod
-    def load(cls, data: typing.ByteString) -> DHParameters:
+    def load(cls, data: bytes) -> DHParameters:
         """Load the :any:`DHParameters` from the encoded format.
 
         Args:
@@ -170,7 +170,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         """
         return DHPublicKey(self._key.public_key())
 
-    def exchange(self, peer_public_key: typing.ByteString) -> bytes:
+    def exchange(self, peer_public_key: bytes) -> bytes:
         """Perform a key exchange.
 
         Args:
@@ -193,7 +193,7 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -237,8 +237,8 @@ class DHPrivateKey(_DHKey, base.BasePrivateKey):
     @classmethod
     def load(
         cls,
-        data: typing.ByteString,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
     ) -> DHPrivateKey:
         """Deserialize and load the the private key.
 
@@ -327,7 +327,7 @@ class DHPublicKey(_DHKey, base.BasePublicKey):
         return self._key.public_numbers().y
 
     @classmethod
-    def load(cls, data: typing.ByteString) -> DHPublicKey:
+    def load(cls, data: bytes) -> DHPublicKey:
         """Deserialize and load the public key.
 
         Args:
@@ -394,7 +394,7 @@ def load_from_parameters(
     return DHParameters.load_from_parameters(p, g, q)
 
 
-def load_parameters(data: typing.ByteString) -> DHParameters:
+def load_parameters(data: bytes) -> DHParameters:
     """Deserialize the DH parameters and load a parameter object.
 
     Args:
@@ -406,7 +406,7 @@ def load_parameters(data: typing.ByteString) -> DHParameters:
     return DHParameters.load(data)
 
 
-def load_public_key(data: typing.ByteString) -> DHPublicKey:
+def load_public_key(data: bytes) -> DHPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -424,8 +424,8 @@ def load_public_key(data: typing.ByteString) -> DHPublicKey:
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
 ) -> DHPrivateKey:
     """Loads the private key and returns a private key object.
 

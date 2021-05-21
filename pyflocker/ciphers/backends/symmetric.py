@@ -70,7 +70,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
     def update_into(
         self,
         file: typing.BinaryIO,
-        tag: typing.Optional[typing.ByteString] = None,
+        tag: typing.Optional[bytes] = None,
         blocksize: int = 16384,
     ) -> None:
         """
@@ -144,8 +144,8 @@ class HMACWrapper(base.BaseAEADCipher):
     def __init__(
         self,
         cipher: base.BaseNonAEADCipher,
-        hkey: typing.ByteString,
-        rand: typing.ByteString,
+        hkey: bytes,
+        rand: bytes,
         digestmod: typing.Union[str, base.BaseHash] = "sha256",
         offset: int = 0,
         tag_length: typing.Optional[int] = 16,

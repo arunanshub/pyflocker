@@ -34,7 +34,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
         *,
         protection: typing.Optional[str] = None,
     ) -> bytes:
@@ -131,7 +131,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         """
         return _SigVerContext(True, get_DSS(self._key, mode, encoding))
 
-    def exchange(self, peer_public_key: typing.ByteString) -> bytes:
+    def exchange(self, peer_public_key: bytes) -> bytes:
         raise NotImplementedError(
             "key exchange is currently not supported by the backend."
         )
@@ -139,8 +139,8 @@ class ECCPrivateKey(base.BasePrivateKey):
     @classmethod
     def load(
         cls,
-        data: typing.ByteString,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
     ) -> ECCPrivateKey:
         """Loads the private key as binary object and returns the Key
         interface.
@@ -234,7 +234,7 @@ class ECCPublicKey(base.BasePublicKey):
         return _SigVerContext(False, get_DSS(self._key, mode, encoding))
 
     @classmethod
-    def load(cls, data: typing.ByteString) -> ECCPublicKey:
+    def load(cls, data: bytes) -> ECCPublicKey:
         """Loads the public key as binary object and returns the Key object.
 
         Args:
@@ -323,7 +323,7 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(data: typing.ByteString) -> ECCPublicKey:
+def load_public_key(data: bytes) -> ECCPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -337,8 +337,8 @@ def load_public_key(data: typing.ByteString) -> ECCPublicKey:
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 

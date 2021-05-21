@@ -268,16 +268,16 @@ class _EAX:
         return self.__tag
 
 
-def strxor(x: typing.ByteString, y: typing.ByteString) -> bytes:
+def strxor(x: bytes, y: bytes) -> bytes:
     """XOR two byte strings"""
     return bytes([ix ^ iy for ix, iy in zip(x, y)])
 
 
 def new(
     encrypting: bool,
-    key: typing.ByteString,
+    key: bytes,
     mode: _m,
-    iv_or_nonce: typing.ByteString,
+    iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,

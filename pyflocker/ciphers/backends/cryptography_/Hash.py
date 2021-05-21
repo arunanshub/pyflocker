@@ -166,7 +166,7 @@ def algorithms_available() -> typing.Set[str]:
 
 def new(
     name: str,
-    data: typing.ByteString = b"",
+    data: bytes = b"",
     *,
     digest_size: typing.Optional[int] = None,
 ) -> Hash:

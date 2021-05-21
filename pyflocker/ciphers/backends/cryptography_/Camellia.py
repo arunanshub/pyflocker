@@ -39,9 +39,9 @@ class Camellia(NonAEADCipherTemplate):
 
 def new(
     encrypting: bool,
-    key: typing.ByteString,
+    key: bytes,
     mode: _m,
-    iv_or_nonce: typing.ByteString,
+    iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,

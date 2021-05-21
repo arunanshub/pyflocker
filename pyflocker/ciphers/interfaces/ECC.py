@@ -33,7 +33,7 @@ def generate(curve: str, *, backend: typing.Optional[_Backends] = None):
 
 
 def load_public_key(
-    data: typing.ByteString,
+    data: bytes,
     *,
     edwards: bool = True,
     backend: typing.Optional[_Backends] = None,
@@ -65,8 +65,8 @@ def load_public_key(
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
     *,
     edwards: bool = True,
     backend: typing.Optional[_Backends] = None,

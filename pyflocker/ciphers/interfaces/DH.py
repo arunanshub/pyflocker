@@ -59,7 +59,7 @@ def load_from_parameters(
 
 
 def load_parameters(
-    data: typing.ByteString,
+    data: bytes,
     *,
     backend=_Backends.CRYPTOGRAPHY,
 ):
@@ -79,7 +79,7 @@ def load_parameters(
 
 
 def load_public_key(
-    data: typing.ByteString,
+    data: bytes,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
 ) -> base.BasePublicKey:
@@ -100,8 +100,8 @@ def load_public_key(
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
 ) -> base.BasePrivateKey:

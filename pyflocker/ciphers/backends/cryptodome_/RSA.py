@@ -95,7 +95,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
         *,
         protection: str = None,
     ) -> bytes:
@@ -163,8 +163,8 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
     @classmethod
     def load(
         cls,
-        data: typing.ByteString,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
     ) -> RSAPrivateKey:
         """Loads the private key as `bytes` object and returns the
         Key interface.
@@ -246,7 +246,7 @@ class RSAPublicKey(_RSAKey, base.BasePublicKey):
         return self._key.export_key(format=ENCODINGS[encoding])
 
     @classmethod
-    def load(cls, data: typing.ByteString) -> RSAPublicKey:
+    def load(cls, data: bytes) -> RSAPublicKey:
         """Loads the public key as `bytes` object and returns the
         Key interface.
 
@@ -370,7 +370,7 @@ def generate(bits: int, e: int = 65537) -> RSAPrivateKey:
     return RSAPrivateKey(bits, e)
 
 
-def load_public_key(data: typing.ByteString) -> RSAPublicKey:
+def load_public_key(data: bytes) -> RSAPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -384,8 +384,8 @@ def load_public_key(data: typing.ByteString) -> RSAPublicKey:
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
 ) -> RSAPrivateKey:
     """Loads the private key and returns a Key interface.
 

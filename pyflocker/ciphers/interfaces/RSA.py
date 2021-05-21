@@ -37,7 +37,7 @@ def generate(
 
 
 def load_public_key(
-    data: typing.ByteString,
+    data: bytes,
     *,
     backend: typing.Optional[_Backends] = None,
 ) -> base.BasePublicKey:
@@ -58,8 +58,8 @@ def load_public_key(
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
     *,
     backend: typing.Optional[_Backends] = None,
 ) -> base.BasePrivateKey:

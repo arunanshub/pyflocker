@@ -97,7 +97,7 @@ _Header = namedtuple("_Header", "magic mode nonce tag metadata salt")
 
 def locker(
     file: os.PathLike,
-    password: typing.ByteString,
+    password: bytes,
     encrypting: typing.Optional[bool] = None,
     remove: bool = True,
     *,
@@ -181,15 +181,13 @@ def locker(
 def lockerf(
     infile: typing.BinaryIO,
     outfile: typing.BinaryIO,
-    password: typing.ByteString,
+    password: bytes,
     encrypting: bool,
     *,
-    kdf: typing.Callable[
-        [typing.ByteString, typing.ByteString, int], bytes
-    ] = PBKDF2_HMAC,
+    kdf: typing.Callable[[bytes, bytes, int], bytes] = PBKDF2_HMAC,
     aes_mode: Modes = Modes.MODE_GCM,
     blocksize: int = 16 * 1024,
-    metadata: typing.ByteString = METADATA,
+    metadata: bytes = METADATA,
     dklen: int = 32,
     backend: typing.Optional[_Backends] = None,
 ) -> None:
@@ -340,7 +338,7 @@ def lockerf(
 
 def extract_header_from_file(
     path: os.PathLike,
-    metadata: typing.ByteString = METADATA,
+    metadata: bytes = METADATA,
 ) -> _Header:
     """Extract the header from the file ``file``.
 

@@ -140,8 +140,8 @@ class ChaCha20(NonAEADCipherTemplate):
 
 def new(
     encrypting: bool,
-    key: typing.ByteString,
-    nonce: typing.ByteString,
+    key: bytes,
+    nonce: bytes,
     *,
     use_poly1305: bool = True,
     file: typing.Optional[typing.BinaryIO] = None,

@@ -8,8 +8,8 @@ from ..backends import load_algorithm as _load_algo
 
 def new(
     encrypting: bool,
-    key: typing.ByteString,
-    nonce: typing.ByteString,
+    key: bytes,
+    nonce: bytes,
     *,
     use_poly1305: bool = True,
     file: typing.Optional[typing.BinaryIO] = None,

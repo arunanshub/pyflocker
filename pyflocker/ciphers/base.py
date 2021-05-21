@@ -18,7 +18,7 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def update(self, data: typing.ByteString) -> bytes:
+    def update(self, data: bytes) -> bytes:
         """Takes bytes-like object and returns encrypted/decrypted
         bytes object.
 
@@ -33,8 +33,8 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
     @abstractmethod
     def update_into(
         self,
-        data: typing.ByteString,
-        out: typing.ByteString,
+        data: bytes,
+        out: bytes,
     ) -> None:
         """Encrypt or decrypt the `data` and store it in a preallocated buffer
         `out`.
@@ -77,7 +77,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
     __slots__ = ()
 
     @abstractmethod
-    def authenticate(self, data: typing.ByteString) -> None:
+    def authenticate(self, data: bytes) -> None:
         """Authenticates part of the message that get delivered as is, without
         any encryption.
 
@@ -92,7 +92,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
         """
 
     @abstractmethod
-    def finalize(self, tag: typing.Optional[typing.ByteString] = None) -> None:
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
         """Finalizes and ends the cipher state.
 
         Args:
@@ -159,7 +159,7 @@ class BaseHash(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def update(self, data: typing.ByteString) -> None:
+    def update(self, data: bytes) -> None:
         """
         Hash string into the current state of the hashing object. ``update()``
         can be called any number of times during a hashing object's lifetime.
@@ -232,7 +232,7 @@ class BasePrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def serialize(
         self,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
         *args,
         **kwargs,
     ) -> bytes:
@@ -250,7 +250,7 @@ class BasePrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def load(
         cls,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
         *args,
         **kwargs,
     ) -> BasePrivateKey:

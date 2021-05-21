@@ -131,7 +131,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[typing.ByteString] = None,
+        passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -183,7 +183,7 @@ class ECCPrivateKey(base.BasePrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.ByteString,
+        peer_public_key: bytes,
         algorithm: str = "ECDH",
     ) -> bytes:
         """Perform a key exchange.
@@ -251,8 +251,8 @@ class ECCPrivateKey(base.BasePrivateKey):
     @classmethod
     def load(
         cls,
-        data: typing.ByteString,
-        passphrase: typing.Optional[typing.ByteString] = None,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
         *,
         edwards: bool = True,
     ) -> ECCPrivateKey:
@@ -425,9 +425,7 @@ class ECCPublicKey(base.BasePublicKey):
         return self._key.public_bytes(encoding_, format_)
 
     @classmethod
-    def load(
-        cls, data: typing.ByteString, *, edwards: bool = True
-    ) -> ECCPublicKey:
+    def load(cls, data: bytes, *, edwards: bool = True) -> ECCPublicKey:
         """Loads the public key as ``bytes`` object and returns
         the Key interface.
 
@@ -523,9 +521,7 @@ class _SigVerContext:
             ),
         )
 
-    def verify(
-        self, msghash: base.BaseHash, signature: typing.ByteString
-    ) -> None:
+    def verify(self, msghash: base.BaseHash, signature: bytes) -> None:
         """Verifies the signature of the message hash.
 
         Args:
@@ -575,9 +571,7 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(
-    data: typing.ByteString, *, edwards: bool = True
-) -> ECCPublicKey:
+def load_public_key(data: bytes, *, edwards: bool = True) -> ECCPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -601,8 +595,8 @@ def load_public_key(
 
 
 def load_private_key(
-    data: typing.ByteString,
-    passphrase: typing.Optional[typing.ByteString] = None,
+    data: bytes,
+    passphrase: typing.Optional[bytes] = None,
     *,
     edwards: bool = True,
 ) -> ECCPrivateKey:

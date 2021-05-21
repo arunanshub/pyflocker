@@ -15,12 +15,12 @@ from .Hash import _get_hash_algorithm
 
 
 def derive_hkdf_key(
-    master_key: typing.ByteString,
+    master_key: bytes,
     dklen: int,
     hashalgo: typing.Union[str, BaseHash],
-    salt: typing.ByteString,
-    cipher_ctx: typing.ByteString = b"enc-key",
-    auth_ctx: typing.ByteString = b"auth-key",
+    salt: bytes,
+    cipher_ctx: bytes = b"enc-key",
+    auth_ctx: bytes = b"auth-key",
 ) -> typing.Tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
@@ -62,9 +62,7 @@ def derive_hkdf_key(
     return key, hkey
 
 
-def derive_poly1305_key(
-    ckey: typing.ByteString, nonce: typing.ByteString
-) -> bytes:
+def derive_poly1305_key(ckey: bytes, nonce: bytes) -> bytes:
     """Generate a poly1305 key.
 
     Args:

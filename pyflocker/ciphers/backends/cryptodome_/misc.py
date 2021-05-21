@@ -11,12 +11,12 @@ from . import Hash
 
 
 def derive_hkdf_key(
-    master_key: typing.ByteString,
+    master_key: bytes,
     dklen: int,
     hashalgo: typing.Union[str, BaseHash],
-    salt: typing.ByteString,
-    cipher_ctx: typing.ByteString = b"enc-key",
-    auth_ctx: typing.ByteString = b"auth-key",
+    salt: bytes,
+    cipher_ctx: bytes = b"enc-key",
+    auth_ctx: bytes = b"auth-key",
 ) -> typing.Tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
