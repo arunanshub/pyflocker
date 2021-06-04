@@ -15,6 +15,8 @@ from .asymmetric import (
 
 
 class _RSAKey:
+    _key: RSA.RsaKey
+
     @property
     def n(self) -> int:
         """RSA public modulus.

@@ -38,6 +38,8 @@ _supported_encodings = frozenset(
 
 
 class _RSANumbers:
+    _key: typing.Union[rsa.RSAPrivateKey, rsa.RSAPublicKey]
+
     def _numbers(self):
         try:
             k = self._key.public_numbers()
@@ -244,7 +246,7 @@ class RSAPublicKey(_RSANumbers, base.BasePublicKey):
             False, self._key, get_padding_func(padding)(padding)
         )
 
-    def verifier(self, padding=PSS()) -> _EncDecContext:
+    def verifier(self, padding=PSS()) -> _SigVerContext:
         """Creates a verifier context.
 
         Args:
