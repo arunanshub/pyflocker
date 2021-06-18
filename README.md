@@ -87,7 +87,7 @@ PyFLocker provides reasonable defaults wherever possible:
 from pyflocker.ciphers import RSA
 priv = RSA.generate(2048)
 with open("private_key.pem", "xb") as f:
-    key = priv.serialize(password=b"random-chimp-event")
+    key = priv.serialize(passphrase=b"random-chimp-event")
     f.write(key)
 ```
 

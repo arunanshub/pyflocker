@@ -18,7 +18,7 @@ encryption modes`_ like `EAX`_, `CCM`_ or `SIV`_)
 
     data = b"baba booey; fafa fooey; le fishe; monke"
     key, nonce = os.urandom(32), os.urandom(16)
-    
+
     cipher = AES.new(True, key, AES.MODE_GCM, nonce)
     ciphertext = cipher.update(data)
     cipher.finalize()
@@ -47,7 +47,7 @@ data from a file and writes the encrypted data into another file.
 
     cipher = Camellia.new(True, key, Modes.MODE_CTR, nonce, file=infile)
     cipher.update_into(outfile)
-    
+
     print("Tag:", cipher.calculate_tag())
 
 Similarly, we can also use `AES`_ and `ChaCha20`_.
