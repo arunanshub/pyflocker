@@ -45,7 +45,7 @@ def new(
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
-    digestmod: [str, base.BaseHash] = "sha256",
+    digestmod: typing.Union[str, base.BaseHash] = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
 ) -> typing.Union[Camellia, FileCipherWrapper, HMACWrapper]:
     """Instantiate a new Camellia cipher wrapper object.
