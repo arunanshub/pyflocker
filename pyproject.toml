@@ -30,6 +30,11 @@ pytest = "^6.0.2"
 name = "cz_conventional_commits"
 version = "0.3.0"
 tag_format = "v$version"
+version_files = [
+    "setup.py",
+    "pyflocker/__init__.py",
+]
+
 [build-system]
 requires = ["poetry-core>=1.0.0a5"]
 build-backend = "poetry.core.masonry.api"
