@@ -22,11 +22,11 @@ setup(
     ],
     python_requires=">=3.8",
     install_requires=[
-        "cryptography",
+        "cryptography>=2.7",
         # for best case: we don't want python to
         # ignore an older Crypto library and later
         # this library raises errors!
-        "pycryptodomex",
+        "pycryptodomex>=3.9.8",
     ],
     url="https://github.com/arunanshub/pyflocker",
 )
