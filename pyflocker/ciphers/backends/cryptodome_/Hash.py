@@ -169,7 +169,6 @@ class Hash(base.BaseHash):
 
     def new(
         self,
-        name: str,
         data: bytes = b"",
         digest_size: typing.Optional[int] = None,
         *,
@@ -177,7 +176,7 @@ class Hash(base.BaseHash):
         key: typing.Optional[bytes] = None,
     ) -> "Hash":
         return type(self)(
-            name,
+            self.name,
             data,
             digest_size=digest_size,
             custom=custom,

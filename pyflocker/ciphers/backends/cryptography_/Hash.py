@@ -148,13 +148,12 @@ class Hash(base.BaseHash):
 
     def new(
         self,
-        name: str,
         data: typing.Optional[bytes] = None,
         *,
         digest_size: typing.Optional[int] = None,
     ) -> "Hash":
         return type(self)(
-            name,
+            self.name,
             data,
             digest_size=digest_size,
         )
