@@ -63,7 +63,7 @@ def load_backend(
     if backend is None:
         if _DEFAULT_BACKEND is None:
             _DEFAULT_BACKEND = _find_backend()
-        return _DEFAULT_BACKEND
+        return _DEFAULT_BACKEND  # type: ignore
 
     # backend is not None
     if not isinstance(backend, Backends):
