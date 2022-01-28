@@ -38,19 +38,19 @@ HASHES = MappingProxyType(
 )
 
 VAR_DIGEST_SIZE = frozenset(
-    (
+    {
         "blake2b",
         "blake2s",
         "shake128",
         "shake256",
-    )
+    }
 )
 
 XOFS = frozenset(
-    (
+    {
         "shake128",
         "shake256",
-    )
+    }
 )
 
 del MappingProxyType
