@@ -14,6 +14,9 @@ from Cryptodome.Hash import (
     SHAKE256,
     BLAKE2b,
     BLAKE2s,
+    KangarooTwelve,
+    cSHAKE128,
+    cSHAKE256,
 )
 
 from ... import base, exc
@@ -30,30 +33,50 @@ HASHES = MappingProxyType(
         "sha3_256": SHA3_256.new,
         "sha3_384": SHA3_384.new,
         "sha3_512": SHA3_512.new,
+        # Blakes
         "blake2b": BLAKE2b.new,
         "blake2s": BLAKE2s.new,
+        # XOFS
         "shake128": SHAKE128.new,
         "shake256": SHAKE256.new,
+        "cshake128": cSHAKE128.new,
+        "cshake256": cSHAKE256.new,
+        "kangarootwelve": KangarooTwelve.new,
     }
 )
 
+#: Names of hash functions that support variable digest sizes.
 VAR_DIGEST_SIZE = frozenset(
     {
         "blake2b",
         "blake2s",
         "shake128",
         "shake256",
+        "cshake128",
+        "cshake256",
+        "kangarootwelve",
     }
 )
 
+#: Names of extendable-output functions.
 XOFS = frozenset(
     {
         "shake128",
         "shake256",
+        "cshake128",
+        "cshake256",
+        "kangarootwelve",
     }
 )
 
-del MappingProxyType
+#: Names of extendable-output functions that support customization string.
+XOFS_WITH_CUSTOM = frozenset(
+    {
+        "cshake128",
+        "cshake256",
+        "kangarootwelve",
+    }
+)
 
 
 class Hash(base.BaseHash):
@@ -66,27 +89,31 @@ class Hash(base.BaseHash):
         "_oid",
     )
 
-    def __init__(self, name, data=b"", *, digest_size=None):
-        self._ctx = self._construct_hash(name, data, digest_size)
+    def __init__(
+        self,
+        name: str,
+        data: bytes = b"",
+        digest_size: typing.Optional[int] = None,
+        *,
+        custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
+        key: typing.Optional[bytes] = None,  # for blakes
+        _copy: typing.Any = None,
+    ):
+        if _copy is not None:
+            self._ctx = _copy
+        else:
+            self._ctx = self._create_ctx(
+                name,
+                data,
+                digest_size,
+                custom=custom,
+                key=key,
+            )
+
         self._name = name
-
-        self._digest_size = (
-            getattr(self._ctx, "digest_size", None) or digest_size
-        )
-        self._block_size = getattr(self._ctx, "block_size", None)
-        self._oid = getattr(self._ctx, "oid", None)
-        self._digest = None
-
-    @staticmethod
-    def _construct_hash(name, data=b"", digest_size=None):
-        hash_ = HASHES[name]
-
-        if digest_size is None and name in XOFS:  # pragma: no cover
-            raise ValueError("value of digest-size is required")
-
-        if name in VAR_DIGEST_SIZE ^ XOFS:
-            return hash_(data=data, digest_bytes=digest_size)
-        return hash_(data)
+        self._digest_size = getattr(self._ctx, "digest_size", digest_size)
+        self._block_size = getattr(self._ctx, "block_size", NotImplemented)
+        self._oid = getattr(self._ctx, "oid", NotImplemented)
 
     @property
     def digest_size(self):
@@ -94,8 +121,6 @@ class Hash(base.BaseHash):
 
     @property
     def block_size(self):
-        if self._block_size is None:
-            return NotImplemented
         return self._block_size
 
     @property
@@ -103,68 +128,101 @@ class Hash(base.BaseHash):
         return self._name
 
     @property
-    def oid(self):
-        """ASN.1 Object ID of the hash algorithm."""
-        if self._oid is not None:
-            return self._oid
+    def oid(self) -> str:
+        """The ASN.1 Object ID."""
+        if self._oid is NotImplemented:
+            raise ValueError(f"OID not available for {self.name!r}")
+        return self._oid  # type: ignore
 
-        base_msg = "oid is avaliable only for digest sizes "
-        # for BLAKE-2b/2s
-        if self.name == "blake2b":  # pragma: no cover
-            msg = base_msg + "20, 32, 48 and 64"
-        elif self.name == "blake2s":  # pragma: no cover
-            msg = base_msg + "16, 20, 28 and 32"
-        else:  # pragma: no cover
-            msg = f"oid attribute is not available for hash {self.name}"
-        raise AttributeError(msg)
-
-    def update(self, data):
+    def update(self, data: bytes):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._ctx.update(data)
 
-    def copy(self):
-        if self._ctx is None:
-            raise exc.AlreadyFinalized
-        try:
-            hash_ = self._ctx.copy()
-            hashobj = type(self)(self.name, digest_size=self.digest_size)
-            hashobj._ctx = hash_
-            return hashobj
-        except AttributeError as e:
-            raise AttributeError(
-                f"Hash {self.name} does not support copying."
-            ) from e
-
     def digest(self):
         if self._ctx is None:
             return self._digest
-
         ctx, self._ctx = self._ctx, None
+
         if self.name in XOFS:
-            self._digest = ctx.read(self._digest_size)
+            digest = ctx.read(self.digest_size)  # type: ignore
         else:
-            self._digest = ctx.digest()
-        return self._digest
+            digest = ctx.digest()  # type: ignore
 
-    def new(self, data=b"", *, digest_size=None):
-        """Create a fresh hash object.
+        self._digest = digest
+        return digest
 
-        See also:
-            :py:func:`new` for more information.
-        """
+    def copy(self):
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
+
+        try:
+            hashobj = self._ctx.copy()  # type: ignore
+        except AttributeError as e:
+            raise ValueError(f"copying not supported by {self.name!r}") from e
+
         return type(self)(
             self.name,
-            data,
-            digest_size=digest_size or self.digest_size,
+            digest_size=self.digest_size,
+            _copy=hashobj,
         )
+
+    def new(
+        self,
+        name: str,
+        data: bytes = b"",
+        digest_size: typing.Optional[int] = None,
+        *,
+        custom: typing.Optional[bytes] = None,
+        key: typing.Optional[bytes] = None,
+    ) -> "Hash":
+        return type(self)(
+            name,
+            data,
+            digest_size=digest_size,
+            custom=custom,
+            key=key,
+        )
+
+    @staticmethod
+    def _create_ctx(
+        name: str,
+        data: typing.Optional[bytes] = None,
+        digest_size: typing.Optional[int] = None,
+        *,
+        custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
+        key: typing.Optional[bytes] = None,  # for blakes
+    ):
+        """
+        Creates a Cryptodome based hash function object.
+        """
+        hashfunc = HASHES[name]
+        if name in VAR_DIGEST_SIZE:
+            if digest_size is None:
+                raise ValueError("digest_size is required")
+            if name in XOFS:
+                if name in XOFS_WITH_CUSTOM:
+                    hashobj = hashfunc(data, custom)  # type: ignore
+                else:
+                    hashobj = hashfunc(data)  # type: ignore
+            # BLAKE2b, BLAKE2s...
+            else:
+                hashobj = hashfunc(
+                    data,  # type: ignore
+                    digest_bytes=digest_size,  # type: ignore
+                    key=key,  # type: ignore
+                )
+        else:
+            hashobj = hashfunc(data)  # type: ignore
+
+        return hashobj
 
 
 def algorithms_available() -> typing.Set[str]:
     """Return the names of the available hash algorithms.
 
     Returns:
-        set[str]: Names of hash algorithms.
+        Names of hash algorithms.
     """
     return set(HASHES)
 
@@ -172,21 +230,32 @@ def algorithms_available() -> typing.Set[str]:
 def new(
     name: str,
     data: bytes = b"",
-    *,
     digest_size: typing.Optional[int] = None,
+    *,
+    custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
+    key: typing.Optional[bytes] = None,  # for blakes
 ) -> Hash:
-    """Instantiate an hash object with given parameters.
+    """
+    Instantiate a hash object.
 
     Args:
-        name (str):
-            Name of the hash algorithm. It must be compatible with
-            ``hashlib.new``.
-        data (bytes, bytearray, memoryview):
-            Initial data to pass to the hash algorithm.
-        digest_size (int): An integer value.
+        name: The name of the hash function.
+        data: The initial chunk of message to feed to hash.
+        digest_size:
+            The length of the digest size. Must be supplied if the hash
+            function supports it.
 
-    Returns:
-        Hash: Hash object.
+    Keyword Args:
+        custom:
+            A customization string. Can be supplied for hash functions
+            that support domain separation.
+        key:
+            A key that is used to compute the MAC. Can be supplied for hash
+            functions that support working as cryptographic MAC.
+
+    Raises:
+        KeyError: If ``name`` is not a hash function name.
+        ValueError: If ``digest_size`` is required but not provided.
     """
 
-    return Hash(name, data, digest_size=digest_size)
+    return Hash(name, data, digest_size=digest_size, custom=custom, key=key)
