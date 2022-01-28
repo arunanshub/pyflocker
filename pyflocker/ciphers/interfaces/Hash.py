@@ -25,25 +25,30 @@ def new(
     data: bytes = b"",
     digest_size: typing.Optional[int] = None,
     *,
+    custom: typing.Optional[bytes] = None,
+    key: typing.Optional[bytes] = None,
     backend: typing.Optional[_Backends] = None,
 ) -> _BaseHash:
     """
-    Instantiate a new hash instance ``hashname`` with initial
-    data ``data`` (default is empty ``bytes``).
-    The Hash object created by this function can be used as
-    the `hash` argument to ``OAEP`` and ``MGF1``.
+    Instantiate a new hash instance ``hashname`` with initial data ``data``
+    (default is empty ``bytes``). The Hash object created by this function can
+    be used as the `hash` argument to ``OAEP`` and ``MGF1``.
 
     Args:
-        hashname (str): Name of the hashing function to use.
-        data (bytes, bytearray, memoryview):
-            Initial data to pass to hashing function.
-        digest_size (int):
-            The length of the digest from the hash function.
-            Required for ``Shake``.
+        name: The name of the hash function.
+        data: The initial chunk of message to feed to hash.
+        digest_size:
+            The length of the digest size. Must be supplied if the hash
+            function supports it.
 
-    Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`, None):
-            The backend to use. It must be a value from :any:`Backends`.
+    Keyword Args:
+        custom:
+            A customization string. Can be supplied for hash functions
+            that support domain separation.
+        key:
+            A key that is used to compute the MAC. Can be supplied for hash
+            functions that support working as cryptographic MAC.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
         BaseHash: A Hash interface with the given hashing algorithm.
@@ -55,4 +60,6 @@ def new(
         hashname,
         data,
         digest_size=digest_size,
+        custom=custom,
+        key=key,
     )
