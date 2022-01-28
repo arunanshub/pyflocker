@@ -5,6 +5,8 @@ from __future__ import annotations
 import typing
 from abc import ABCMeta, abstractmethod
 
+_NotImplementedType = type(NotImplemented)
+
 
 class BaseSymmetricCipher(metaclass=ABCMeta):
     __slots__ = ()
@@ -140,7 +142,7 @@ class BaseHash(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def block_size(self) -> typing.Union[int, NotImplemented]:
+    def block_size(self) -> typing.Union[int, _NotImplementedType]:
         """
         An integer value or NotImplemented; the internal block size of the hash
         algorithm in bytes. The block size is used by the HMAC module to pad
