@@ -1,45 +1,47 @@
 import typing
 from types import MappingProxyType
 
-from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives import hashes as h
+from cryptography.hazmat.primitives import hashes
 
 from ... import base, exc
 
 HASHES = MappingProxyType(
     {
-        "sha1": h.SHA1,
-        "sha224": h.SHA224,
-        "sha256": h.SHA256,
-        "sha384": h.SHA384,
-        "sha512": h.SHA512,
-        "sha3_224": h.SHA3_224,
-        "sha3_256": h.SHA3_256,
-        "sha3_384": h.SHA3_384,
-        "sha3_512": h.SHA3_512,
-        "sha512_224": h.SHA512_224,
-        "sha512_256": h.SHA512_256,
-        "shake128": h.SHAKE128,
-        "shake256": h.SHAKE256,
-        "blake2b": lambda digest_size=None: h.BLAKE2b(digest_size or 64),
-        "blake2s": lambda digest_size=None: h.BLAKE2s(digest_size or 32),
+        "sha1": hashes.SHA1,
+        "sha224": hashes.SHA224,
+        "sha256": hashes.SHA256,
+        "sha384": hashes.SHA384,
+        "sha512": hashes.SHA512,
+        "sha3_224": hashes.SHA3_224,
+        "sha3_256": hashes.SHA3_256,
+        "sha3_384": hashes.SHA3_384,
+        "sha3_512": hashes.SHA3_512,
+        "sha512_224": hashes.SHA512_224,
+        "sha512_256": hashes.SHA512_256,
+        "blake2b": lambda digest_size=None: hashes.BLAKE2b(digest_size or 64),
+        "blake2s": lambda digest_size=None: hashes.BLAKE2s(digest_size or 32),
+        # XOFS
+        "shake128": hashes.SHAKE128,
+        "shake256": hashes.SHAKE256,
     }
 )
 
+#: Names of hash functions that support variable digest sizes.
 VAR_DIGEST_SIZE = frozenset(
-    (
+    {
         "shake128",
         "shake256",
         "blake2b",
         "blake2s",
-    )
+    }
 )
 
+#: Names of extendable-output functions.
 XOFS = frozenset(
-    (
+    {
         "shake128",
         "shake256",
-    )
+    }
 )
 
 # the ASN.1 Object IDs
@@ -57,35 +59,41 @@ OIDS = MappingProxyType(
         "sha3_512": "2.16.840.1.101.3.4.2.10",
         "shake128": "2.16.840.1.101.3.4.2.11",
         "shake256": "2.16.840.1.101.3.4.2.12",
+        "blake2b": "1.3.6.1.4.1.1722.12.2.1.64",
+        "blake2s": "1.3.6.1.4.1.1722.12.2.1.32",
     }
 )
 
-del MappingProxyType
-
 
 class Hash(base.BaseHash):
-    __slots__ = "_name", "_digest", "_ctx", "_digest_size", "_block_size"
+    __slots__ = (
+        "_name",
+        "_digest",
+        "_ctx",
+        "_digest_size",
+        "_block_size",
+        "_oid",
+    )
 
-    def __init__(self, name, data=b"", *, digest_size=None):
-        self._name = name
-        self._digest = None
-        self._ctx = self._construct_hash(name, data, digest_size)
-
-        # get values directly from the algorithm object
-        algo = self._ctx.algorithm
-        self._digest_size = algo.digest_size
-        self._block_size = getattr(algo, "block_size", None)
-
-    @staticmethod
-    def _construct_hash(name, data=b"", digest_size=None):
-        if name in VAR_DIGEST_SIZE:
-            if digest_size is None and name in XOFS:  # pragma: no cover
-                raise ValueError("value of digest-size is required")
-            hash_ = h.Hash(HASHES[name](digest_size), defb())
+    def __init__(
+        self,
+        name: str,
+        data: bytes = None,
+        *,
+        digest_size: typing.Optional[int] = None,
+        _copy: typing.Optional[hashes.Hash] = None,
+    ):
+        if _copy is not None:
+            self._ctx = _copy
         else:
-            hash_ = h.Hash(HASHES[name](), defb())
-        hash_.update(data)
-        return hash_
+            self._ctx = self._create_ctx(name, data, digest_size=digest_size)
+
+        self._name = name
+        self._digest_size = getattr(
+            self._ctx.algorithm, "digest_size", digest_size
+        )
+        self._block_size = getattr(self._ctx.algorithm, "block_size")
+        self._oid = OIDS.get(name, NotImplemented)
 
     @property
     def digest_size(self):
@@ -93,8 +101,6 @@ class Hash(base.BaseHash):
 
     @property
     def block_size(self):
-        if self._block_size is None:
-            return NotImplemented
         return self._block_size
 
     @property
@@ -102,65 +108,82 @@ class Hash(base.BaseHash):
         return self._name
 
     @property
-    def oid(self):
-        """ASN.1 Object ID of the hash algorithm."""
-        if self.name in OIDS:
-            return OIDS[self.name]
+    def oid(self) -> str:
+        """The ASN.1 Object ID."""
+        if self._oid is NotImplemented:
+            raise ValueError(f"OID not available for {self.name!r}")
 
-        # for BLAKE
-        if self.name == "blake2b":
-            if self.digest_size != 64:
-                raise AttributeError(  # pragma: no cover
-                    "oid is avaliable only when digest size == 64"
-                )
-            return "1.3.6.1.4.1.1722.12.2.1." + str(self.digest_size)
+        if self.name in ("blake2b", "blake2s") and self.digest_size not in (
+            32,
+            64,
+        ):
+            raise AttributeError(
+                f"OID not available for {self.name!r} with digest size"
+                f" {self.digest_size}"
+            )
 
-        if self.name == "blake2s":
-            if self.digest_size != 32:
-                raise AttributeError(  # pragma: no cover
-                    "oid is avaliable only when digest size == 32"
-                )
-            return "1.3.6.1.4.1.1722.12.2.2." + str(self.digest_size)
+        return self._oid  # type: ignore
 
-    def update(self, data):
+    def update(self, data: bytes):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._ctx.update(data)
 
-    def copy(self):
-        if self._ctx is None:
-            raise exc.AlreadyFinalized
-        hashobj = type(self)(self.name, digest_size=self.digest_size)
-        hashobj._ctx = self._ctx.copy()
-        return hashobj
-
     def digest(self):
         if self._ctx is None:
             return self._digest
-
         ctx, self._ctx = self._ctx, None
         self._digest = ctx.finalize()
         return self._digest
 
-    def new(self, data=b"", *, digest_size=None):
-        """Create a fresh hash object.
+    def copy(self):
+        if self._ctx is None:
+            raise exc.AlreadyFinalized
 
-        See also:
-            :py:func:`new` for more information.
-        """
         return type(self)(
             self.name,
-            data,
-            digest_size=digest_size or self.digest_size,
+            digest_size=self.digest_size,
+            _copy=self._ctx.copy(),
         )
+
+    def new(
+        self,
+        name: str,
+        data: typing.Optional[bytes] = None,
+        *,
+        digest_size: typing.Optional[int] = None,
+    ) -> "Hash":
+        return type(self)(
+            name,
+            data,
+            digest_size=digest_size,
+        )
+
+    @staticmethod
+    def _create_ctx(
+        name: str,
+        data: typing.Optional[bytes] = None,
+        *,
+        digest_size: typing.Optional[int] = None,
+    ) -> hashes.Hash:
+        """
+        Creates a pyca/cryptography based hash function object.
+        """
+        hashfunc = HASHES[name]
+        if name in VAR_DIGEST_SIZE:
+            if digest_size is None:
+                raise ValueError("digest_size is required")
+            hashobj = hashfunc(digest_size)  # type: ignore
+        else:
+            hashobj = hashfunc()  # type: ignore
+        hashobj = hashes.Hash(hashobj)
+        if data is not None:
+            hashobj.update(data)
+        return hashobj
 
 
 def algorithms_available() -> typing.Set[str]:
-    """Return the names of the available hash algorithms.
-
-    Returns:
-        set[str]: Names of hash algorithms.
-    """
+    """Return the names of the available hash algorithms."""
     return set(HASHES)
 
 
@@ -169,30 +192,34 @@ def new(
     data: bytes = b"",
     *,
     digest_size: typing.Optional[int] = None,
+    **kwargs,  # only for compatibility with Cryptodome
 ) -> Hash:
-    """Instantiate an hash object with given parameters.
+    """
+    Instantiate a hash object.
 
     Args:
-        name (str):
-            Name of the hash algorithm. It must be compatible with
-            ``hashlib.new``.
-        data (bytes, bytearray, memoryview):
-            Initial data to pass to the hash algorithm.
-        digest_size (int): An integer value.
+        name: The name of the hash function.
+        data: The initial chunk of message to feed to hash.
 
-    Returns:
-        Hash: Hash object.
+    Keyword Args:
+        digest_size:
+            The length of the digest size. Must be supplied if the hash
+            function supports it.
+
+    Raises:
+        KeyError: If ``name`` is not a hash function name.
+        ValueError: If ``digest_size`` is required but not provided.
     """
-
+    del kwargs
     return Hash(name, data, digest_size=digest_size)
 
 
-def _get_hash_algorithm(hashfunc):
+def _get_hash_algorithm(hashfunc: base.BaseHash) -> hashes.HashAlgorithm:
     """
-    Get the cryptography backend specific ``hash algorithm`` object from
-    the given hash ``hashfunc``.
+    Get the cryptography backend specific ``hash algorithm`` object from the
+    given hash ``hashfunc``.
     """
     return new(
         hashfunc.name,
         digest_size=hashfunc.digest_size,
-    )._ctx.algorithm
+    )._ctx.algorithm  # type: ignore
