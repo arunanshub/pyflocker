@@ -4,7 +4,10 @@ version = "0.3.1"
 description = "Python Cryptographic (File Locking) Library"
 authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
 license = "MIT"
-classifiers=[
+readme = "README.md"
+repository = "https://github.com/arunanshub/pyflocker"
+documentation = "https://pyflocker.readthedocs.io"
+classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.7",
     "Programming Language :: Python :: 3.8",
@@ -14,17 +17,16 @@ classifiers=[
     "Intended Audience :: Developers",
     "Topic :: Security :: Cryptography",
 ]
-readme="README.md"
-repository="https://github.com/arunanshub/pyflocker"
 
 [tool.poetry.dependencies]
-python = "^3.7"
-pycryptodomex = ">=3.9.8"
-cryptography = ">=2.7"
+python = "^3.8"
+pycryptodomex = "^3.9.8"
+cryptography = "^2.7"
 
 [tool.poetry.dev-dependencies]
-pytest = "^6.0.2"
-
+Sphinx = "^4.4.0"
+pytest = "^6.2.5"
+furo = "^2022.1.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -32,9 +34,10 @@ version = "0.3.1"
 tag_format = "v$version"
 version_files = [
     "setup.py",
+    "pyproject.toml",
     "pyflocker/__init__.py",
 ]
 
 [build-system]
-requires = ["poetry-core>=1.0.0a5"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
