@@ -10,7 +10,7 @@ Python Cryptographic (File Locking) Library
 
 > Lock as in Lock and Key.
 
-# Installation
+## Installation
 
 Use `pip` or `pip3` to install PyFLocker
 
@@ -20,7 +20,7 @@ or
 
     pip3 install pyflocker
 
-# Introduction
+## Introduction
 
 PyFLocker aims to be a highly stable and easy to use cryptographic library.
 Before you read on, check if you agree to at least one of these points:
@@ -56,9 +56,9 @@ for you.
 
 You can find more information in the [documentation][docs].
 
-# Features
+## Features
 
-## Not a "Yet Another Cryptographic Library"
+### Not a "Yet Another Cryptographic Library"
 
 PyFLocker provides you a seamless interface to both the backends, and switching
 is very easy:
@@ -79,7 +79,7 @@ epriv = ECC.generate("x25519", backend=Backends.CRYPTOGRAPHY)
 Backend loading is done internally, and if a backend is explicitly specified,
 that is used as the default.
 
-## Ease of Use
+### Ease of Use
 
 PyFLocker provides reasonable defaults wherever possible:
 
@@ -96,7 +96,7 @@ or just any other initialization.
 
 In short, the API is very stable, clear and easy on developer's mind.
 
-## Writing into file or file-like objects
+### Writing into file or file-like objects
 
 This is often a related problem when it comes to encryption, but think no more!
 
@@ -141,7 +141,7 @@ locker(
 
 Find more examples [here][examples].
 
-# License
+## License
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
