@@ -50,7 +50,7 @@ HASHES = MappingProxyType(
     }
 )
 
-#: Names of hash functions that support variable digest sizes.
+# Names of hash functions that support variable digest sizes.
 VAR_DIGEST_SIZE = frozenset(
     {
         "blake2b",
