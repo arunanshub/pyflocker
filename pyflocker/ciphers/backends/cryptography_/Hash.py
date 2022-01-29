@@ -150,7 +150,9 @@ class Hash(base.BaseHash):
         return type(self)(
             self.name,
             data,
-            digest_size=digest_size,
+            digest_size=self.digest_size
+            if digest_size is None
+            else digest_size,
         )
 
     @staticmethod
