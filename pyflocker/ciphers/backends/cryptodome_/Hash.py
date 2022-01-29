@@ -206,10 +206,11 @@ class Hash(base.BaseHash):
                     hashobj = hashfunc(data)  # type: ignore
             # BLAKE2b, BLAKE2s...
             else:
+                kwargs = dict(key=key) if key is not None else {}
                 hashobj = hashfunc(
-                    data,  # type: ignore
+                    data=data,  # type: ignore
                     digest_bytes=digest_size,  # type: ignore
-                    key=key,  # type: ignore
+                    **kwargs,
                 )
         else:
             hashobj = hashfunc(data)  # type: ignore
