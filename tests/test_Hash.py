@@ -1,153 +1,190 @@
 import os
-from itertools import product
+from itertools import combinations, product
+from typing import Tuple
 
 import pytest
 
 from pyflocker.ciphers import Hash, exc
 from pyflocker.ciphers.backends import Backends
+from pyflocker.ciphers.base import BaseHash
 
-# shake* & blake* => variable digest size
-# sha3_*, shake* => no block size
+ALL_HASHES = Hash.algorithms_available()
 
-_HASHES = Hash.algorithms_available() ^ {
-    "blake2b",
-    "blake2s",
+# XOF here is simply a catch-all term for hashes that are neither blakes nor
+# fixed digest-size. This has no relation to the cryptographically defined XOF.
+XOFS = {
     "shake128",
     "shake256",
+    "cshake128",
+    "cshake256",
+    "kangarootwelve",
+    "tuplehash128",
+    "tuplehash256",
 }
-_SHAKE_HASHES = {
-    "shake128",
-    "shake256",
-}
-_BLAKE_HASHES = {
+
+BLAKES = {
     "blake2b",
     "blake2s",
 }
+
+VAR_DIGEST_SIZE = XOFS | BLAKES
+
+FIXED_DIGEST_SIZE = ALL_HASHES ^ VAR_DIGEST_SIZE
 
 
 @pytest.fixture
-def hashfunc(name, digest_size, backend1, backend2):
-    try:
-        h1 = Hash.new(name, digest_size=digest_size, backend=backend1)
-    except KeyError:
-        assert name not in Hash.algorithms_available(backend1)
-        pytest.skip(f"{name} not supported by {backend1}")
-    except ValueError:
-        assert backend1 == Backends.CRYPTOGRAPHY
-        pytest.skip(
-            f"{backend1} does not support variable digest size for {name}."
-        )
+def hashfuncs(
+    name: str,
+    digest_size: int,
+    custom: bytes,
+    key: bytes,
+    backend1: Backends,
+    backend2: Backends,
+) -> Tuple[BaseHash, BaseHash]:
+    hashes = []
+    for backend in (backend1, backend2):
+        try:
+            hashes.append(
+                Hash.new(
+                    name,
+                    digest_size=digest_size,
+                    backend=backend,
+                    custom=custom,
+                    key=key,
+                )
+            )
+        except KeyError:
+            assert (
+                name not in Hash.algorithms_available(backend)
+                and name in Hash.algorithms_available()
+            )
+            return pytest.skip(f"{name!r} unsupported by {backend.name!r}")
+        except ValueError:
+            # CRYPTOGRAPHY does not support variable size digests for Blakes.
+            # In essence, they function like fixed digest-size hashes (eg SHA).
+            assert backend == Backends.CRYPTOGRAPHY
+            assert name in BLAKES
+            if name == "blake2s":
+                assert digest_size != 32
+            if name == "blake2b":
+                assert digest_size != 64
 
-    try:
-        h2 = Hash.new(name, digest_size=digest_size, backend=backend2)
-    except KeyError:
-        assert name not in Hash.algorithms_available(backend2)
-        pytest.skip(f"{name} not supported by {backend2}")
-    except ValueError:
-        assert backend2 == Backends.CRYPTOGRAPHY
-        pytest.skip(
-            f"{backend2} does not support variable digest size for {name}."
-        )
-    return h1, h2
+            return pytest.skip(
+                f"Variable digest size unsupported for {name!r} by"
+                f" {backend.name!r}"
+            )
+
+    return tuple(hashes)
 
 
-def _assert_finalized(hash1, hash2):
-    for h in hash1, hash2:
+def _check_equal_and_check_finalize_once(h1: BaseHash, h2: BaseHash):
+    """
+    Assert that hash matches and assert that `update`, `copy` cannot be called
+    after calling `finalize`.
+    """
+    assert h1.digest() == h2.digest()
+    assert h1.hexdigest() == h2.hexdigest()
+
+    for each in h1, h2:
         with pytest.raises(exc.AlreadyFinalized):
-            h.update(b"monke")
+            each.update(b"")
+        with pytest.raises(exc.AlreadyFinalized):
+            each.copy()
+        assert isinstance(each.new(), type(each))
 
 
+@pytest.mark.parametrize("name", ALL_HASHES ^ BLAKES)
+@pytest.mark.parametrize("digest_size", [15])
+@pytest.mark.parametrize("custom", [None])
+@pytest.mark.parametrize("key", [None])
 @pytest.mark.parametrize(
-    "name",
-    _HASHES,
+    ["backend1", "backend2"],
+    list(combinations(Backends, 2)),
 )
+def test_oid_matches_except_blakes(hashfuncs: Tuple[BaseHash, BaseHash]):
+    h1, h2 = hashfuncs
+    assert h1.oid == h2.oid  # type: ignore
+
+
+@pytest.mark.parametrize("name", FIXED_DIGEST_SIZE)
+@pytest.mark.parametrize("digest_size", [None])
+@pytest.mark.parametrize("custom", [None])
+@pytest.mark.parametrize("key", [None])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
     list(product(Backends, repeat=2)),
 )
-@pytest.mark.parametrize(
-    "datalen",
-    [0, 64, 128],
-)
-@pytest.mark.parametrize(
-    "digest_size",
-    [None],
-)
-def test_same_hash(hashfunc, backend1, backend2, datalen):
-    h1, h2 = hashfunc
-    data = os.urandom(datalen)
-    h1.update(data)
-    h2.update(data)
-    assert h1.digest() == h2.digest()
-    assert h1.hexdigest() == h2.hexdigest()
-    _assert_finalized(h1, h2)
+def test_fixed_digest_size_hash_matches(
+    hashfuncs: Tuple[BaseHash, BaseHash],
+    do_update,
+):
+    h1, h2 = hashfuncs
+    if do_update:
+        data = os.urandom(32)
+        for each in h1, h2:
+            each.update(data)
+    _check_equal_and_check_finalize_once(h1, h2)
 
 
-def _hash_var_digest_size(hashfunc, backend1, backend2, datalen):
-    h1, h2 = hashfunc
-    data = os.urandom(datalen)
-    h1.update(data)
-    h2.update(data)
-    assert h1.digest() == h2.digest()
-    assert h1.hexdigest() == h2.hexdigest()
-    _assert_finalized(h1, h2)
-
-
-@pytest.mark.parametrize(
-    "name",
-    _SHAKE_HASHES,
-)
+@pytest.mark.parametrize("name", XOFS)
+@pytest.mark.parametrize("digest_size", range(8, 32))
+@pytest.mark.parametrize("custom", [None, os.urandom(32)])
+@pytest.mark.parametrize("key", [None])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
     list(product(Backends, repeat=2)),
 )
-@pytest.mark.parametrize(
-    "datalen",
-    [0, 64, 128],
-)
-@pytest.mark.parametrize(
-    "digest_size",
-    list(range(1, 65)),
-)
-def test_same_hash_shake(hashfunc, backend1, backend2, datalen):
-    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
+def test_xofs_with_custom_hash_matches(
+    hashfuncs: Tuple[BaseHash, BaseHash],
+    do_update,
+):
+    h1, h2 = hashfuncs
+    if do_update:
+        data = os.urandom(32)
+        for each in h1, h2:
+            each.update(data)
+    _check_equal_and_check_finalize_once(h1, h2)
 
 
-@pytest.mark.parametrize(
-    "name",
-    ["blake2b"],
-)
+@pytest.mark.parametrize("name", ["blake2s"])
+@pytest.mark.parametrize("digest_size", range(1, 32))
+@pytest.mark.parametrize("custom", [None])
+@pytest.mark.parametrize("key", [None, os.urandom(32)])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
     list(product(Backends, repeat=2)),
 )
-@pytest.mark.parametrize(
-    "datalen",
-    [0, 64, 128],
-)
-@pytest.mark.parametrize(
-    "digest_size",
-    list(range(1, 65)),
-)
-def test_same_hash_blake2b(hashfunc, backend1, backend2, datalen):
-    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
+def test_blake2s_with_key_hash_matches(
+    hashfuncs: Tuple[BaseHash, BaseHash],
+    do_update,
+):
+    h1, h2 = hashfuncs
+    if do_update:
+        data = os.urandom(32)
+        for each in h1, h2:
+            each.update(data)
+    _check_equal_and_check_finalize_once(h1, h2)
 
 
-@pytest.mark.parametrize(
-    "name",
-    ["blake2s"],
-)
+@pytest.mark.parametrize("name", ["blake2b"])
+@pytest.mark.parametrize("digest_size", range(1, 64))
+@pytest.mark.parametrize("custom", [None])
+@pytest.mark.parametrize("key", [None, os.urandom(32)])
+@pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
     list(product(Backends, repeat=2)),
 )
-@pytest.mark.parametrize(
-    "datalen",
-    [0, 64, 128],
-)
-@pytest.mark.parametrize(
-    "digest_size",
-    list(range(1, 33)),
-)
-def test_same_hash_blake2s(hashfunc, backend1, backend2, datalen):
-    return _hash_var_digest_size(hashfunc, backend1, backend2, datalen)
+def test_blake2b_with_key_hash_matches(
+    hashfuncs: Tuple[BaseHash, BaseHash],
+    do_update,
+):
+    h1, h2 = hashfuncs
+    if do_update:
+        data = os.urandom(32)
+        for each in h1, h2:
+            each.update(data)
+    _check_equal_and_check_finalize_once(h1, h2)
