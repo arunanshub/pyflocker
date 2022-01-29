@@ -15,6 +15,8 @@ from Cryptodome.Hash import (
     BLAKE2b,
     BLAKE2s,
     KangarooTwelve,
+    TupleHash128,
+    TupleHash256,
     cSHAKE128,
     cSHAKE256,
 )
@@ -36,6 +38,9 @@ HASHES = MappingProxyType(
         # Blakes
         "blake2b": BLAKE2b.new,
         "blake2s": BLAKE2s.new,
+        # TupleHashes: similar to Blakes' API
+        "tuplehash128": TupleHash128.new,
+        "tuplehash256": TupleHash256.new,
         # XOFS
         "shake128": SHAKE128.new,
         "shake256": SHAKE256.new,
@@ -55,10 +60,14 @@ VAR_DIGEST_SIZE = frozenset(
         "cshake128",
         "cshake256",
         "kangarootwelve",
+        "tuplehash128",
+        "tuplehash256",
     }
 )
 
-#: Names of extendable-output functions.
+# Names of extendable-output functions. This is only for separation of APIs.
+# Cryptodome uses `read(int)` for XOFs and the usual `digest()` for other
+# hashes.
 XOFS = frozenset(
     {
         "shake128",
@@ -69,12 +78,25 @@ XOFS = frozenset(
     }
 )
 
-#: Names of extendable-output functions that support customization string.
-XOFS_WITH_CUSTOM = frozenset(
+# Names of hash functions that support customization string. Basically it means
+# we get the `custom=...` param.
+SUPPORTS_CUSTOM = frozenset(
     {
         "cshake128",
         "cshake256",
         "kangarootwelve",
+        "tuplehash128",
+        "tuplehash256",
+    }
+)
+
+
+# Names of hash functions that support key. This essentially turns them into a
+# MAC. Here it is used as a way to separate the API.
+SUPPORTS_KEY = frozenset(
+    {
+        "blake2b",
+        "blake2s",
     }
 )
 
@@ -92,7 +114,7 @@ class Hash(base.BaseHash):
     def __init__(
         self,
         name: str,
-        data: bytes = b"",
+        data: typing.Optional[bytes] = None,
         digest_size: typing.Optional[int] = None,
         *,
         custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
@@ -196,24 +218,33 @@ class Hash(base.BaseHash):
         Creates a Cryptodome based hash function object.
         """
         hashfunc = HASHES[name]
+
+        digest_size_kwargs = {}
         if name in VAR_DIGEST_SIZE:
             if digest_size is None:
                 raise ValueError("digest_size is required")
-            if name in XOFS:
-                if name in XOFS_WITH_CUSTOM:
-                    hashobj = hashfunc(data, custom)  # type: ignore
-                else:
-                    hashobj = hashfunc(data)  # type: ignore
-            # BLAKE2b, BLAKE2s...
-            else:
-                kwargs = dict(key=key) if key is not None else {}
-                hashobj = hashfunc(
-                    data=data,  # type: ignore
-                    digest_bytes=digest_size,  # type: ignore
-                    **kwargs,
-                )
-        else:
-            hashobj = hashfunc(data)  # type: ignore
+            # XOFs have the `read()` API, which is frustrating!
+            if name not in XOFS:
+                digest_size_kwargs = dict(digest_bytes=digest_size)
+
+        custom_kwargs = {}
+        if name in SUPPORTS_CUSTOM and custom is not None:
+            custom_kwargs = dict(custom=custom)
+
+        key_kwargs = {}
+        if name in SUPPORTS_KEY and key is not None:
+            key_kwargs = dict(key=key)
+
+        hashobj = hashfunc(
+            **digest_size_kwargs,
+            **custom_kwargs,
+            **key_kwargs,
+        )
+
+        # `tuplehash*`'s internal hash state can change even if empty byte
+        # string is fed. `None` is a protection against that.
+        if data is not None:
+            hashobj.update(data)
 
         return hashobj
 
@@ -229,7 +260,7 @@ def algorithms_available() -> typing.Set[str]:
 
 def new(
     name: str,
-    data: bytes = b"",
+    data: typing.Optional[bytes] = b"",
     digest_size: typing.Optional[int] = None,
     *,
     custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
@@ -240,7 +271,10 @@ def new(
 
     Args:
         name: The name of the hash function.
-        data: The initial chunk of message to feed to hash.
+        data:
+            The initial chunk of message to feed to hash. Note that for
+            ``TupleHash`` variants, even an empty byte string changes its
+            internal state.
         digest_size:
             The length of the digest size. Must be supplied if the hash
             function supports it.
