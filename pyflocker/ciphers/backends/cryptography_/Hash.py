@@ -18,29 +18,22 @@ HASHES = MappingProxyType(
         "sha3_512": hashes.SHA3_512,
         "sha512_224": hashes.SHA512_224,
         "sha512_256": hashes.SHA512_256,
-        "blake2b": lambda digest_size=None: hashes.BLAKE2b(digest_size or 64),
-        "blake2s": lambda digest_size=None: hashes.BLAKE2s(digest_size or 32),
+        "blake2b": hashes.BLAKE2b,
+        "blake2s": hashes.BLAKE2s,
         # XOFS
         "shake128": hashes.SHAKE128,
         "shake256": hashes.SHAKE256,
     }
 )
 
-#: Names of hash functions that support variable digest sizes.
+# Names of hash functions that support variable digest sizes. They are here
+# to distinguish between constructors who need extra param `digest_size`.
 VAR_DIGEST_SIZE = frozenset(
     {
         "shake128",
         "shake256",
         "blake2b",
         "blake2s",
-    }
-)
-
-#: Names of extendable-output functions.
-XOFS = frozenset(
-    {
-        "shake128",
-        "shake256",
     }
 )
 
@@ -90,7 +83,9 @@ class Hash(base.BaseHash):
 
         self._name = name
         self._digest_size = getattr(
-            self._ctx.algorithm, "digest_size", digest_size
+            self._ctx.algorithm,
+            "digest_size",
+            digest_size,
         )
         self._block_size = getattr(self._ctx.algorithm, "block_size")
         self._oid = OIDS.get(name, NotImplemented)
@@ -169,15 +164,18 @@ class Hash(base.BaseHash):
         Creates a pyca/cryptography based hash function object.
         """
         hashfunc = HASHES[name]
+
+        digest_size_kwargs = {}
         if name in VAR_DIGEST_SIZE:
             if digest_size is None:
                 raise ValueError("digest_size is required")
-            hashobj = hashfunc(digest_size)  # type: ignore
-        else:
-            hashobj = hashfunc()  # type: ignore
-        hashobj = hashes.Hash(hashobj)
+            digest_size_kwargs = dict(digest_size=digest_size)
+
+        hashobj = hashes.Hash(hashfunc(**digest_size_kwargs))  # type: ignore
+
         if data is not None:
             hashobj.update(data)
+
         return hashobj
 
 
