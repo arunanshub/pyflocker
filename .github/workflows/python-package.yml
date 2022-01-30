@@ -9,6 +9,10 @@ on:
   pull_request:
     branches: [ master ]
 
+defaults:
+  run:
+    shell: bash
+
 jobs:
   build:
 
@@ -30,7 +34,6 @@ jobs:
 
       # Do not depend on actions and `pip` to install Poetry. Do it yourself!
       - name: Set up Python Poetry and Update Path
-        shell: bash
         run: |
           curl -fsSL -o install-poetry.py https://install.python-poetry.org
           python install-poetry.py -y
