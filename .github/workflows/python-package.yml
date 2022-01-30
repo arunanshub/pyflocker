@@ -29,9 +29,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       # Do not depend on actions and `pip` to install Poetry. Do it yourself!
-      - name: Set up Python Poetry
-        run: curl -sSL https://install.python-poetry.org | python3 -
+      - name: Set up Python Poetry and Update Path
         shell: bash
+        run: |
+          curl -fsSL -o install-poetry.py https://install.python-poetry.org
+          python install-poetry.py -y
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
         run: |
