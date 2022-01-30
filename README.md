@@ -2,6 +2,7 @@
 
 ![Upload Python Package](https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg)
 ![Build](https://github.com/arunanshub/pyflocker/workflows/Build/badge.svg)
+[![codecov](https://codecov.io/gh/arunanshub/pyflocker/branch/master/graph/badge.svg?token=CBSY6U552K)](https://codecov.io/gh/arunanshub/pyflocker)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python Versions](https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions)](https://pypi.org/project/PyFLocker)
 [![Documentation Status](https://readthedocs.org/projects/pyflocker/badge/?version=latest)](https://pyflocker.readthedocs.io/en/latest/?badge=latest)
