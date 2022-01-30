@@ -32,12 +32,10 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
 
-      # Do not depend on actions and `pip` to install Poetry. Do it yourself!
-      - name: Set up Python Poetry and Update Path
-        run: |
-          curl -fsSL -o install-poetry.py https://install.python-poetry.org
-          python install-poetry.py -y
-          echo "$HOME/.local/bin" >> $GITHUB_PATH
+      # Windows is a piece of shit! I cannot believe that I am unable to set
+      # some basic params to update the PATH.
+      - name: Set up Python Poetry
+        uses: snok/install-poetry@v1
 
       - name: Install dependencies
         run: |
