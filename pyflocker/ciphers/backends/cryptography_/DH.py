@@ -6,9 +6,9 @@ import typing
 if sys.version_info >= (3, 9):
     from functools import cache as _cache
 else:
-    from functools import lru_cache
+    from functools import lru_cache  # pragma: no cover
 
-    def _cache(func):
+    def _cache(func):  # pragma: no cover
         return lru_cache(maxsize=None)(func)
 
 
