@@ -153,7 +153,7 @@ class Hash(base.BaseHash):
     def oid(self) -> str:
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
-            raise ValueError(f"OID not available for {self.name!r}")
+            raise AttributeError(f"OID not available for {self.name!r}")
         return self._oid  # type: ignore
 
     def update(self, data: bytes):

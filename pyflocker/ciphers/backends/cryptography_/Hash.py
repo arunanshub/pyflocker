@@ -106,7 +106,7 @@ class Hash(base.BaseHash):
     def oid(self) -> str:
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
-            raise ValueError(f"OID not available for {self.name!r}")
+            raise AttributeError(f"OID not available for {self.name!r}")
 
         if self.name in ("blake2b", "blake2s") and self.digest_size not in (
             32,
