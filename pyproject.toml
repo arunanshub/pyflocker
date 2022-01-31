@@ -29,6 +29,7 @@ pytest = "^6.2.5"
 furo = "^2022.1.2"
 pytest-cov = "^3.0.0"
 flake8 = "^4.0.1"
+pytest-xdist = "^2.5.0"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
