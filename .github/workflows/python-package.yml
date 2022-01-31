@@ -61,7 +61,7 @@ jobs:
 
       - name: Test and Generate Coverage Report
         run: |
-          poetry run pytest --cov=pyflocker/ --cov-report=xml
+          poetry run pytest -n auto -d --cov=pyflocker/ --cov-report=xml
 
       - name: Upload Coverage Report
         uses: codecov/codecov-action@v2
