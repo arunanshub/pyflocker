@@ -27,9 +27,9 @@ TEST_VECTOR_NONCE = hashlib.sha3_512(b"TEST_VECTOR_NONCE for AES").digest()
 @pytest.fixture
 def cipher(key_length, mode, use_hmac, iv_length, backend1, backend2):
     if mode not in AES.supported_modes(backend1):
-        pytest.skip(f"{backend1} doesn't support {mode}")
+        pytest.skip(f"{backend1} doesn't support {mode!s}")
     elif mode not in AES.supported_modes(backend2):
-        pytest.skip(f"{backend2} doesn't support {mode}")
+        pytest.skip(f"{backend2} doesn't support {mode!s}")
 
     return partial(
         AES.new,
@@ -123,21 +123,21 @@ class _TestAEADOneShot(BaseSymmetricAEAD):
         try:
             enc.update_into(readbuf, in_)
         except NotImplementedError:
-            pytest.skip(f"update_into not supported by {enc.mode}")
+            pytest.skip(f"update_into not supported by {enc.mode!s}")
         except TypeError:
             assert enc.mode == modes.Modes.MODE_OCB
             pytest.skip(
-                f"{enc.mode} does not suport writing into mutable buffers."
+                f"{enc.mode!s} does not suport writing into mutable buffers."
             )
 
         try:
             dec.update_into(in_[: len(readbuf)], out, enc.calculate_tag())
         except NotImplementedError:
-            pytest.skip(f"update_into not supported by {dec.mode}")
+            pytest.skip(f"update_into not supported by {dec.mode!s}")
         except TypeError:
             assert dec.mode == modes.Modes.MODE_OCB
             pytest.skip(
-                f"{dec.mode} does not suport writing into mutable buffers."
+                f"{dec.mode!s} does not suport writing into mutable buffers."
             )
 
         assert out[: len(readbuf)].tobytes() == readbuf.tobytes()
