@@ -153,7 +153,7 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
                 format=ENCODINGS[encoding],
                 pkcs=FORMATS[format],
                 passphrase=(
-                    memoryview(passphrase).tobytes()
+                    memoryview(passphrase).tobytes()  # type: ignore
                     if passphrase is not None
                     else None
                 ),
@@ -186,10 +186,10 @@ class RSAPrivateKey(_RSAKey, base.BasePrivateKey):
             ValueError: if the key could not be deserialized.
         """
         try:
-            key = RSA.import_key(data, passphrase)
+            key = RSA.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
                 raise ValueError("The key is not a private key")
-            return cls(None, key=key)
+            return cls(None, key=key)  # type: ignore
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
