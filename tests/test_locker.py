@@ -25,7 +25,7 @@ def tempfiles():
 class TestLocker:
     @pytest.mark.parametrize(
         "mode",
-        set(modes.Modes) ^ modes.special,
+        sorted(set(modes.Modes) ^ modes.special),
     )
     @pytest.mark.parametrize(
         "chkfail",
@@ -59,7 +59,7 @@ class TestLocker:
 
     @pytest.mark.parametrize(
         "mode",
-        set(modes.Modes) ^ modes.special,
+        sorted(set(modes.Modes) ^ modes.special),
     )
     @pytest.mark.parametrize(
         "chkfail",

@@ -1,3 +1,4 @@
+import hashlib
 import os
 from itertools import combinations, product
 from typing import Tuple
@@ -30,6 +31,10 @@ BLAKES = {
 VAR_DIGEST_SIZE = XOFS | BLAKES
 
 FIXED_DIGEST_SIZE = ALL_HASHES ^ VAR_DIGEST_SIZE
+
+TEST_VECTOR_DATA = hashlib.sha512(b"TEST_VECTOR_DATA").digest()
+TEST_VECTOR_KEY = hashlib.sha512(b"TEST_VECTOR_KEY").digest()
+TEST_VECTOR_CUSTOM = hashlib.sha512(b"TEST_VECTOR_CUSTOM").digest()
 
 
 @pytest.fixture
@@ -77,11 +82,19 @@ def hashfuncs(
     return tuple(hashes)
 
 
-def _check_equal_and_check_finalize_once(h1: BaseHash, h2: BaseHash):
+def _check_equal_and_check_finalize_once(
+    h1: BaseHash,
+    h2: BaseHash,
+    do_update: bool,
+):
     """
     Assert that hash matches and assert that `update`, `copy` cannot be called
     after calling `finalize`.
     """
+    if do_update:
+        for each in h1, h2:
+            each.update(TEST_VECTOR_DATA)
+
     assert h1.digest() == h2.digest()
     assert h1.hexdigest() == h2.hexdigest()
 
@@ -93,7 +106,7 @@ def _check_equal_and_check_finalize_once(h1: BaseHash, h2: BaseHash):
         assert isinstance(each.new(), type(each))
 
 
-@pytest.mark.parametrize("name", ALL_HASHES ^ BLAKES)
+@pytest.mark.parametrize("name", sorted(ALL_HASHES ^ BLAKES))
 @pytest.mark.parametrize("digest_size", [15])
 @pytest.mark.parametrize("custom", [None])
 @pytest.mark.parametrize("key", [None])
@@ -106,7 +119,7 @@ def test_oid_matches_except_blakes(hashfuncs: Tuple[BaseHash, BaseHash]):
     assert h1.oid == h2.oid  # type: ignore
 
 
-@pytest.mark.parametrize("name", FIXED_DIGEST_SIZE)
+@pytest.mark.parametrize("name", sorted(FIXED_DIGEST_SIZE))
 @pytest.mark.parametrize("digest_size", [None])
 @pytest.mark.parametrize("custom", [None])
 @pytest.mark.parametrize("key", [None])
@@ -117,19 +130,15 @@ def test_oid_matches_except_blakes(hashfuncs: Tuple[BaseHash, BaseHash]):
 )
 def test_fixed_digest_size_hash_matches(
     hashfuncs: Tuple[BaseHash, BaseHash],
-    do_update,
+    do_update: bool,
 ):
     h1, h2 = hashfuncs
-    if do_update:
-        data = os.urandom(32)
-        for each in h1, h2:
-            each.update(data)
-    _check_equal_and_check_finalize_once(h1, h2)
+    _check_equal_and_check_finalize_once(h1, h2, do_update)
 
 
-@pytest.mark.parametrize("name", XOFS)
+@pytest.mark.parametrize("name", sorted(XOFS))
 @pytest.mark.parametrize("digest_size", range(8, 32))
-@pytest.mark.parametrize("custom", [None, os.urandom(32)])
+@pytest.mark.parametrize("custom", [None, TEST_VECTOR_CUSTOM])
 @pytest.mark.parametrize("key", [None])
 @pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
@@ -138,20 +147,16 @@ def test_fixed_digest_size_hash_matches(
 )
 def test_xofs_with_custom_hash_matches(
     hashfuncs: Tuple[BaseHash, BaseHash],
-    do_update,
+    do_update: bool,
 ):
     h1, h2 = hashfuncs
-    if do_update:
-        data = os.urandom(32)
-        for each in h1, h2:
-            each.update(data)
-    _check_equal_and_check_finalize_once(h1, h2)
+    _check_equal_and_check_finalize_once(h1, h2, do_update)
 
 
 @pytest.mark.parametrize("name", ["blake2s"])
 @pytest.mark.parametrize("digest_size", range(1, 32))
 @pytest.mark.parametrize("custom", [None])
-@pytest.mark.parametrize("key", [None, os.urandom(32)])
+@pytest.mark.parametrize("key", [None, TEST_VECTOR_KEY[:32]])
 @pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
@@ -159,20 +164,16 @@ def test_xofs_with_custom_hash_matches(
 )
 def test_blake2s_with_key_hash_matches(
     hashfuncs: Tuple[BaseHash, BaseHash],
-    do_update,
+    do_update: bool,
 ):
     h1, h2 = hashfuncs
-    if do_update:
-        data = os.urandom(32)
-        for each in h1, h2:
-            each.update(data)
-    _check_equal_and_check_finalize_once(h1, h2)
+    _check_equal_and_check_finalize_once(h1, h2, do_update)
 
 
 @pytest.mark.parametrize("name", ["blake2b"])
 @pytest.mark.parametrize("digest_size", range(1, 64))
 @pytest.mark.parametrize("custom", [None])
-@pytest.mark.parametrize("key", [None, os.urandom(32)])
+@pytest.mark.parametrize("key", [None, TEST_VECTOR_KEY])
 @pytest.mark.parametrize("do_update", [False, True])
 @pytest.mark.parametrize(
     ["backend1", "backend2"],
@@ -180,11 +181,7 @@ def test_blake2s_with_key_hash_matches(
 )
 def test_blake2b_with_key_hash_matches(
     hashfuncs: Tuple[BaseHash, BaseHash],
-    do_update,
+    do_update: bool,
 ):
     h1, h2 = hashfuncs
-    if do_update:
-        data = os.urandom(32)
-        for each in h1, h2:
-            each.update(data)
-    _check_equal_and_check_finalize_once(h1, h2)
+    _check_equal_and_check_finalize_once(h1, h2, do_update)

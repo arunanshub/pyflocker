@@ -5,7 +5,7 @@ These tests are meant to check the API and hence, do not use
 the official test vectors. The backends used by pyflocker
 implements the tests using the required test vectors.
 """
-import os
+import hashlib
 from functools import partial
 from itertools import product
 
@@ -20,6 +20,9 @@ _LENGTH_NORMAL = (16, 24, 32)
 _LENGTH_SPECIAL_SIV = (32, 48, 64)
 _MODE_NON_AEAD = set(modes.Modes) ^ modes.aead
 
+TEST_VECTOR_KEY = hashlib.sha3_512(b"TEST_VECTOR_KEY for AES").digest()
+TEST_VECTOR_NONCE = hashlib.sha3_512(b"TEST_VECTOR_NONCE for AES").digest()
+
 
 @pytest.fixture
 def cipher(key_length, mode, use_hmac, iv_length, backend1, backend2):
@@ -30,9 +33,9 @@ def cipher(key_length, mode, use_hmac, iv_length, backend1, backend2):
 
     return partial(
         AES.new,
-        key=os.urandom(key_length),
+        key=TEST_VECTOR_KEY[:key_length],
         mode=mode,
-        iv_or_nonce=os.urandom(iv_length),
+        iv_or_nonce=TEST_VECTOR_NONCE[:iv_length],
         use_hmac=use_hmac,
     )
 

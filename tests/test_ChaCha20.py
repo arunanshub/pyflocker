@@ -1,4 +1,4 @@
-import os
+import hashlib
 from functools import partial
 from itertools import product
 
@@ -9,13 +9,20 @@ from pyflocker.ciphers.backends import Backends
 
 from .base import BaseSymmetric, BaseSymmetricAEAD
 
+TEST_VECTOR_KEY = hashlib.sha3_512(b"TEST_VECTOR_KEY for ChaCha20").digest()[
+    :32
+]
+TEST_VECTOR_NONCE = hashlib.sha3_512(
+    b"TEST_VECTOR_NONCE for ChaCha20"
+).digest()
+
 
 @pytest.fixture
 def cipher(nonce_length, use_poly1305):
     return partial(
         ChaCha20.new,
-        key=os.urandom(32),
-        nonce=os.urandom(nonce_length),
+        key=TEST_VECTOR_KEY,
+        nonce=TEST_VECTOR_NONCE[:nonce_length],
         use_poly1305=use_poly1305,
     )
 
