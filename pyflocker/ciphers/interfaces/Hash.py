@@ -22,7 +22,7 @@ def algorithms_available(
 
 def new(
     hashname: str,
-    data: bytes = b"",
+    data: typing.Optional[bytes] = None,
     digest_size: typing.Optional[int] = None,
     *,
     custom: typing.Optional[bytes] = None,
