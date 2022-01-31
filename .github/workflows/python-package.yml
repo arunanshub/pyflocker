@@ -29,6 +29,7 @@ jobs:
 
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v2
+        id: setup-python
         with:
           python-version: ${{ matrix.python-version }}
 
@@ -36,8 +37,19 @@ jobs:
       # some basic params to update the PATH.
       - name: Set up Python Poetry
         uses: snok/install-poetry@v1
+        with:
+          virtualenvs-in-project: true
+
+      - name: Set up Cache
+        uses: actions/cache@v2
+        id: cache-deps
+        with:
+          path: .venv
+          key: |
+            venv-${{ runner.os }}-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles(**/poetry.lock) }}
 
       - name: Install dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: poetry install
 
       - name: Lint with flake8
