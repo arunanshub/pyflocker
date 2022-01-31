@@ -50,7 +50,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: poetry install
+        run: poetry install --no-interaction
 
       - name: Lint with flake8
         run: |
