@@ -21,7 +21,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8"
 pycryptodomex = "^3.9.8"
-cryptography = ">=3.3.2,<37.0.0"
+cryptography = ">=35.0.0"
 
 [tool.poetry.dev-dependencies]
 Sphinx = "^4.4.0"
