@@ -1,7 +1,7 @@
-from enum import Enum
+from enum import IntEnum
 
 
-class Modes(Enum):
+class Modes(IntEnum):
     """Modes for symmetric ciphers (eg. AES, Camellia)."""
 
     MODE_GCM = 1
