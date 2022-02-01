@@ -30,6 +30,7 @@ furo = "^2022.1.2"
 pytest-cov = "^3.0.0"
 flake8 = "^4.0.1"
 pytest-xdist = "^2.5.0"
+pre-commit = "^2.17.0"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -43,6 +44,15 @@ version_files = [
     "pyproject.toml",
     "pyflocker/__init__.py",
 ]
+
+[tool.black]
+line-length = 79
+target-verson = "py39"
+
+[tool.isort]
+multi_line_output = 3
+line_length = 79
+include_trailing_comma = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
