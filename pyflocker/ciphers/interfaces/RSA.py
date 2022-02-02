@@ -1,9 +1,11 @@
 """Interface to RSA cipher and signature algorithm"""
 import typing
 
-from .. import base
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
+
+if typing.TYPE_CHECKING:
+    from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 
 def _load_rsa_cpr(backend):
@@ -16,7 +18,7 @@ def generate(
     e: int = 65537,
     *,
     backend: typing.Optional[_Backends] = None,
-) -> base.BasePrivateKey:
+) -> "BaseRSAPrivateKey":
     """
     Generate a private key with given key modulus ``bits`` and public exponent
     ``e`` (default 65537).
@@ -40,7 +42,7 @@ def load_public_key(
     data: bytes,
     *,
     backend: typing.Optional[_Backends] = None,
-) -> base.BasePublicKey:
+) -> "BaseRSAPublicKey":
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -62,7 +64,7 @@ def load_private_key(
     passphrase: typing.Optional[bytes] = None,
     *,
     backend: typing.Optional[_Backends] = None,
-) -> base.BasePrivateKey:
+) -> "BaseRSAPrivateKey":
     """Loads the private key and returns a Key interface.
 
     If the private key was not encrypted duting the serialization,

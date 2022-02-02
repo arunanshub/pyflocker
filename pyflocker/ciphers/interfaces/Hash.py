@@ -4,7 +4,9 @@ import typing
 
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
-from ..base import BaseHash as _BaseHash
+
+if typing.TYPE_CHECKING:
+    from ..base import BaseHash
 
 
 def algorithms_available(
@@ -28,7 +30,7 @@ def new(
     custom: typing.Optional[bytes] = None,
     key: typing.Optional[bytes] = None,
     backend: typing.Optional[_Backends] = None,
-) -> _BaseHash:
+) -> "BaseHash":
     """
     Instantiate a new hash instance ``hashname`` with initial data ``data``
     (default is empty ``bytes``). The Hash object created by this function can

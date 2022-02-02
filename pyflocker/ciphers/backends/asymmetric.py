@@ -3,8 +3,10 @@
 import typing
 from dataclasses import dataclass, field
 
-from .. import base
 from ..interfaces import Hash
+
+if typing.TYPE_CHECKING:
+    from ..base import BaseHash
 
 
 def _default_hash_factory():
@@ -27,7 +29,7 @@ class MGF1:
             A :any:`BaseHash` object. Defaults to 'sha256'.
     """
 
-    hashfunc: base.BaseHash = field(default_factory=_default_hash_factory)
+    hashfunc: "BaseHash" = field(default_factory=_default_hash_factory)
 
 
 @dataclass(frozen=True)
@@ -46,7 +48,7 @@ class OAEP:
     """
 
     mgf: MGF1 = field(default_factory=MGF1)
-    hashfunc: base.BaseHash = field(default_factory=_default_hash_factory)
+    hashfunc: "BaseHash" = field(default_factory=_default_hash_factory)
     label: typing.Optional[bytes] = None
 
 
