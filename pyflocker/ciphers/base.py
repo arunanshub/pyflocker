@@ -291,3 +291,91 @@ class BasePublicKey(metaclass=ABCMeta):
         Returns:
             BasePublicKey: A key object.
         """
+
+
+class BaseRSAPrivateKey(BasePrivateKey):
+    @property
+    @abstractmethod
+    def p(self) -> int:
+        """First factor of RSA modulus."""
+
+    @property
+    @abstractmethod
+    def q(self) -> int:
+        """Second factor of RSA modulus."""
+
+    @property
+    @abstractmethod
+    def d(self) -> int:
+        """RSA private exponent."""
+
+    @abstractmethod
+    def decryptor(self, padding):
+        """Creates a decryption context.
+
+        Args:
+            padding: The padding to use. Default is OAEP.
+
+        Returns:
+            object for decrypting ciphertexts.
+        """
+
+    @abstractmethod
+    def signer(self, padding):
+        """Create a signer context.
+
+        Args:
+            padding: The padding to use. Default is PSS.
+
+        Returns:
+            Signer object for signing messages.
+
+        Note:
+            If the padding is PSS and ``salt_length`` is None, the salt length
+            will be maximized, as in OpenSSL.
+        """
+
+    @abstractmethod
+    def public_key(self) -> BaseRSAPublicKey:
+        """Creates a public key from the private key.
+
+        Returns:
+            The RSA public key.
+        """
+
+
+class BaseRSAPublicKey(BasePublicKey):
+    @property
+    @abstractmethod
+    def n(self) -> int:
+        """RSA public modulus.
+
+        The number ``n`` is such that ``n == p * q``.
+        """
+
+    @property
+    @abstractmethod
+    def e(self) -> int:
+        """RSA public exponent."""
+
+    @abstractmethod
+    def encryptor(self, padding):
+        """Creates a encryption context.
+
+        Args:
+            padding: The padding to use. Defaults to OAEP.
+
+        Returns:
+            object for decrypting ciphertexts.
+        """
+
+    @abstractmethod
+    def verifier(self, padding):
+        """Creates a verifier context.
+
+        Args:
+            padding: The padding to use. Defaults to ECC.
+
+        Returns:
+            verifier object for verification.
+        """

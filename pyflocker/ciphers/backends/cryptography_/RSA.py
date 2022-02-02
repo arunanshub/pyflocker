@@ -63,7 +63,7 @@ class _RSANumbers:
         return self._numbers().n
 
 
-class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
+class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
     def __init__(self, n: int, e: int = 65537, **kwargs):
         if kwargs:
             self._key = kwargs.pop("key")
@@ -225,7 +225,7 @@ class RSAPrivateKey(_RSANumbers, base.BasePrivateKey):
             ) from e
 
 
-class RSAPublicKey(_RSANumbers, base.BasePublicKey):
+class RSAPublicKey(_RSANumbers, base.BaseRSAPublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
