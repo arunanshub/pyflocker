@@ -296,6 +296,19 @@ class BasePublicKey(metaclass=ABCMeta):
 class BaseRSAPrivateKey(BasePrivateKey):
     @property
     @abstractmethod
+    def n(self) -> int:
+        """RSA public modulus.
+
+        The number ``n`` is such that ``n == p * q``.
+        """
+
+    @property
+    @abstractmethod
+    def e(self) -> int:
+        """RSA public exponent."""
+
+    @property
+    @abstractmethod
     def p(self) -> int:
         """First factor of RSA modulus."""
 
@@ -310,7 +323,7 @@ class BaseRSAPrivateKey(BasePrivateKey):
         """RSA private exponent."""
 
     @abstractmethod
-    def decryptor(self, padding):
+    def decryptor(self, padding) -> BaseDecryptorContext:
         """Creates a decryption context.
 
         Args:
@@ -321,7 +334,7 @@ class BaseRSAPrivateKey(BasePrivateKey):
         """
 
     @abstractmethod
-    def signer(self, padding):
+    def signer(self, padding) -> BaseSignerContext:
         """Create a signer context.
 
         Args:
@@ -359,7 +372,7 @@ class BaseRSAPublicKey(BasePublicKey):
         """RSA public exponent."""
 
     @abstractmethod
-    def encryptor(self, padding):
+    def encryptor(self, padding) -> BaseEncryptorContext:
         """Creates a encryption context.
 
         Args:
@@ -370,12 +383,73 @@ class BaseRSAPublicKey(BasePublicKey):
         """
 
     @abstractmethod
-    def verifier(self, padding):
+    def verifier(self, padding) -> BaseVerifierContext:
         """Creates a verifier context.
 
         Args:
-            padding: The padding to use. Defaults to ECC.
+            padding: The padding to use. Defaults to PSS.
 
         Returns:
             verifier object for verification.
+        """
+
+
+class BaseSignerContext(metaclass=ABCMeta):
+    @abstractmethod
+    def sign(self, hashfunc: BaseHash) -> bytes:
+        """Return the signature of the message hash.
+
+        Args:
+            msghash:
+                It must be a :any:`BaseHash` object, used to digest the message
+                to sign.
+
+        Returns:
+            signature of the message as bytes object.
+        """
+
+
+class BaseVerifierContext(metaclass=ABCMeta):
+    @abstractmethod
+    def verify(self, msghash: BaseHash, signature: typing.ByteString):
+        """Verifies the signature of the message hash.
+
+        Args:
+            msghash:
+                It must be a :any:`BaseHash` object, used to digest the message
+                to sign.
+
+            signature: The signature of the message.
+
+        Raises:
+            SignatureError: if the signature was incorrect.
+        """
+
+
+class BaseEncryptorContext(metaclass=ABCMeta):
+    @abstractmethod
+    def encrypt(self, plaintext: typing.ByteString) -> bytes:
+        """Encrypts the plaintext and returns the ciphertext.
+
+        Args:
+            plaintext: The data to encrypt.
+
+        Returns:
+            encrypted bytes object.
+        """
+
+
+class BaseDecryptorContext(metaclass=ABCMeta):
+    @abstractmethod
+    def decrypt(self, ciphertext: typing.ByteString) -> bytes:
+        """Decrypts the ciphertext and returns the plaintext.
+
+        Args:
+            ciphertext: The ciphertext to decrypt.
+
+        Returns:
+            The plaintext.
+
+        Raises:
+            DecryptionError: if the decryption was not successful.
         """

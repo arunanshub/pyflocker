@@ -19,15 +19,10 @@ class _RSAKey:
 
     @property
     def n(self) -> int:
-        """RSA public modulus.
-
-        The number ``n`` is such that ``n == p * q``.
-        """
         return self._key.n
 
     @property
     def e(self) -> int:
-        """RSA public exponent."""
         return self._key.e
 
 
@@ -42,55 +37,27 @@ class RSAPrivateKey(_RSAKey, base.BaseRSAPrivateKey):
 
     @property
     def p(self) -> int:
-        """First factor of RSA modulus."""
         return self._key.p
 
     @property
     def q(self) -> int:
-        """Second factor of RSA modulus."""
         return self._key.q
 
     @property
     def d(self) -> int:
-        """RSA private exponent."""
         return self._key.d
 
-    def decryptor(self, padding=OAEP()) -> _EncDecContext:
-        """Creates a decryption context.
-
-        Args:
-            padding: The padding to use. Default is OAEP.
-
-        Returns:
-            _EncDecContext: object for decrypting ciphertexts.
-        """
-        return _EncDecContext(
-            True, get_padding_func(padding)(self._key, padding)
+    def decryptor(self, padding=OAEP()) -> DecryptorContext:
+        return DecryptorContext(
+            get_padding_func(padding)(self._key, padding),
         )
 
-    def signer(self, padding=PSS()) -> _SigVerContext:
-        """Create a signer context.
-
-        Args:
-            padding: The padding to use. Default is PSS.
-
-        Returns:
-            _SigVerContext: Signer object for signing messages.
-
-        Note:
-            If the padding is PSS and ``salt_length`` is None, the salt length
-            will be maximized, as in OpenSSL.
-        """
-        return _SigVerContext(
-            True, get_padding_func(padding)(self._key, padding)
+    def signer(self, padding=PSS()) -> SignerContext:
+        return SignerContext(
+            get_padding_func(padding)(self._key, padding),
         )
 
     def public_key(self) -> RSAPublicKey:
-        """Creates a public key from the private key.
-
-        Returns:
-            RSAPublicKey: The RSA public key.
-        """
         return RSAPublicKey(self._key.publickey())
 
     def serialize(
@@ -203,34 +170,14 @@ class RSAPublicKey(_RSAKey, base.BaseRSAPublicKey):
     def __init__(self, key):
         self._key = key
 
-    def encryptor(self, padding=OAEP()) -> _EncDecContext:
-        """Creates a encryption context.
-
-        Args:
-            padding: The padding to use. Defaults to OAEP.
-
-        Returns:
-            _EncDecContext: object for decrypting ciphertexts.
-        """
-        return _EncDecContext(
-            False, get_padding_func(padding)(self._key, padding)
+    def encryptor(self, padding=OAEP()) -> EncryptorContext:
+        return EncryptorContext(
+            get_padding_func(padding)(self._key, padding),
         )
 
-    def verifier(self, padding=PSS()) -> _SigVerContext:
-        """Creates a verifier context.
-
-        Args:
-            padding: The padding to use. Defaults to ECC.
-
-        Returns:
-            _SigVerContext: verifier object for verification.
-
-        Note:
-            If the padding is PSS and ``salt_length`` is None, the salt length
-            will be maximized, as in OpenSSL.
-        """
-        return _SigVerContext(
-            False, get_padding_func(padding)(self._key, padding)
+    def verifier(self, padding=PSS()) -> VerifierContext:
+        return VerifierContext(
+            get_padding_func(padding)(self._key, padding),
         )
 
     def serialize(self, encoding: str = "PEM") -> bytes:
@@ -273,85 +220,38 @@ class RSAPublicKey(_RSAKey, base.BaseRSAPublicKey):
             ) from e
 
 
-class _EncDecContext:
-    def __init__(self, is_private, ctx):
-        self._is_private = is_private
+class EncryptorContext(base.BaseEncryptorContext):
+    def __init__(self, ctx):
         self._ctx = ctx
 
     def encrypt(self, data):
-        """Encrypts the plaintext and returns the ciphertext.
-
-        Args:
-            plaintext (bytes, bytearray):
-                The data to encrypt.
-
-        Returns:
-            bytes: encrypted bytes object.
-        """
-        if self._is_private:
-            raise TypeError("Only public keys can encrypt plaintexts.")
         return self._ctx.encrypt(data)
 
+
+class DecryptorContext(base.BaseDecryptorContext):
+    def __init__(self, ctx):
+        self._ctx = ctx
+
     def decrypt(self, data):
-        """Decrypts the ciphertext and returns the plaintext.
-
-        Args:
-            ciphertext (bytes, bytearray):
-                The ciphertext to decrypt.
-
-        Returns:
-            bytes: The plaintext.
-
-        Raises:
-            DecryptionError: if the decryption was not successful.
-            TypeError: if the key is not a private key.
-        """
-        if not self._is_private:
-            raise TypeError("Only private keys can decrypt ciphertexts.")
         try:
             return self._ctx.decrypt(data)
         except ValueError as e:
             raise exc.DecryptionError from e
 
 
-class _SigVerContext:
-    def __init__(self, is_private, ctx):
-        self._is_private = is_private
+class SignerContext(base.BaseSignerContext):
+    def __init__(self, ctx):
         self._ctx = ctx
 
     def sign(self, msghash):
-        """Return the signature of the message hash.
-
-        Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-
-        Returns:
-            bytes: signature of the message as bytes object.
-        """
-        if not self._is_private:
-            raise TypeError("Only private keys can sign messages.")
         return self._ctx.sign(msghash)
 
+
+class VerifierContext(base.BaseVerifierContext):
+    def __init__(self, ctx):
+        self._ctx = ctx
+
     def verify(self, msghash, signature):
-        """Verifies the signature of the message hash.
-
-        Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-
-            signature (bytes, bytearray): The signature of the message.
-
-        Returns:
-            None
-
-        Raises:
-            SignatureError: if the signature was incorrect.
-        """
-        if self._is_private:
-            raise TypeError("Only public keys can verify messages.")
         if not self._ctx.verify(msghash, signature):
             raise exc.SignatureError
 

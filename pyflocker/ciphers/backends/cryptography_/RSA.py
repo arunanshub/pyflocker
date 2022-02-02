@@ -42,24 +42,19 @@ class _RSANumbers:
 
     def _numbers(self):
         try:
-            k = self._key.public_numbers()
+            k = self._key.public_numbers()  # type: ignore
         except AttributeError:
-            k = self._key.private_numbers().public_numbers
+            k = self._key.private_numbers().public_numbers  # type: ignore
         return k
 
     @property
     @_cache
     def e(self) -> int:
-        """RSA public exponent."""
         return self._numbers().e
 
     @property
     @_cache
     def n(self) -> int:
-        """RSA public modulus.
-
-        The number ``n`` is such that ``n == p * q``.
-        """
         return self._numbers().n
 
 
@@ -78,51 +73,29 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
 
     @property
     def p(self) -> int:
-        """First factor of RSA modulus."""
         return self._p
 
     @property
     def q(self) -> int:
-        """Second factor of RSA modulus."""
         return self._q
 
     @property
     def d(self) -> int:
-        """The private exponent."""
         return self._d
 
     def public_key(self) -> RSAPublicKey:
-        """Creates a public key from the private key.
+        return RSAPublicKey(self._key.public_key())  # type: ignore
 
-        Returns:
-            RSAPublicKey: The public key.
-        """
-        return RSAPublicKey(self._key.public_key())
-
-    def decryptor(self, padding=OAEP()) -> _EncDecContext:
-        """Creates a decryption context.
-
-        Args:
-            padding: The padding to use. Default is ``OAEP``.
-
-        Returns:
-            _EncDecContext: object for decrypting ciphertexts.
-        """
-        return _EncDecContext(
-            True, self._key, get_padding_func(padding)(padding)
+    def decryptor(self, padding=OAEP()) -> DecryptorContext:
+        return DecryptorContext(
+            self._key,
+            get_padding_func(padding)(padding),
         )
 
-    def signer(self, padding=PSS()) -> _SigVerContext:
-        """Create a signer context.
-
-        Args:
-            padding: The padding to use. Default is ``PSS``.
-
-        Returns:
-            _SigVerContext: object for signing messages.
-        """
-        return _SigVerContext(
-            True, self._key, get_padding_func(padding)(padding)
+    def signer(self, padding=PSS()) -> SignerContext:
+        return SignerContext(
+            self._key,
+            get_padding_func(padding)(padding),
         )
 
     def serialize(
@@ -233,30 +206,16 @@ class RSAPublicKey(_RSANumbers, base.BaseRSAPublicKey):
             raise ValueError("The key is not an RSA public key.")
         self._key = key
 
-    def encryptor(self, padding=OAEP()) -> _EncDecContext:
-        """Creates a encryption context.
-
-        Args:
-            padding: The padding to use. Defaults to OAEP.
-
-        Returns:
-            _EncDecContext: object for decrypting ciphertexts.
-        """
-        return _EncDecContext(
-            False, self._key, get_padding_func(padding)(padding)
+    def encryptor(self, padding=OAEP()) -> EncryptorContext:
+        return EncryptorContext(
+            self._key,
+            get_padding_func(padding)(padding),
         )
 
-    def verifier(self, padding=PSS()) -> _SigVerContext:
-        """Creates a verifier context.
-
-        Args:
-            padding: The padding to use. Defaults to ECC.
-
-        Returns:
-            _SigVerContext: verifier object for verification.
-        """
-        return _SigVerContext(
-            False, self._key, get_padding_func(padding)(padding)
+    def verifier(self, padding=PSS()) -> VerifierContext:
+        return VerifierContext(
+            self._key,
+            get_padding_func(padding)(padding),
         )
 
     def serialize(
@@ -321,101 +280,43 @@ class RSAPublicKey(_RSANumbers, base.BaseRSAPublicKey):
             ) from e
 
 
-class _EncDecContext:
-    def __init__(self, is_private, key, padding):
-        self._is_private = is_private
-
-        ctxname = "decrypt" if is_private else "encrypt"
-        self._ctx_func = partial(getattr(key, ctxname), padding=padding)
+class EncryptorContext(base.BaseEncryptorContext):
+    def __init__(self, key, padding):
+        self._encrypt_func = partial(getattr(key, "encrypt"), padding=padding)
 
     def encrypt(self, plaintext):
-        """Encrypts the plaintext and returns the ciphertext.
+        return self._encrypt_func(plaintext)
 
-        Args:
-            plaintext (bytes, bytearray):
-                The data to encrypt.
 
-        Returns:
-            bytes: encrypted bytes object.
-
-        Raises:
-            TypeError: If the key is a private key.
-        """
-        if self._is_private:
-            raise TypeError("Only public keys can encrypt plaintexts.")
-        return self._ctx_func(plaintext)
+class DecryptorContext(base.BaseDecryptorContext):
+    def __init__(self, key, padding):
+        self._decrypt_func = partial(getattr(key, "decrypt"), padding=padding)
 
     def decrypt(self, ciphertext):
-        """Decrypts the ciphertext and returns the plaintext.
-
-        Args:
-            ciphertext (bytes, bytearray):
-                The ciphertext to decrypt.
-
-        Returns:
-            bytes: The plaintext.
-
-        Raises:
-            DecryptionError: if the decryption was not successful.
-            TypeError: if the key is not a private key.
-        """
-        if not self._is_private:
-            raise TypeError("Only private keys can decrypt ciphertexts.")
         try:
-            return self._ctx_func(ciphertext)
+            return self._decrypt_func(ciphertext)
         except ValueError as e:
             raise exc.DecryptionError from e
 
 
-class _SigVerContext:
-    def __init__(self, is_private, key, padding):
-        self._is_private = is_private
-
-        ctxname = "sign" if is_private else "verify"
-        self._ctx_func = partial(getattr(key, ctxname), padding=padding)
+class SignerContext(base.BaseSignerContext):
+    def __init__(self, key, padding):
+        self._sign_func = partial(getattr(key, "sign"), padding=padding)
 
     def sign(self, msghash):
-        """Return the signature of the message hash.
-
-        Args:
-            msghash (:any:`BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-
-        Returns:
-            bytes: signature of the message as bytes object.
-
-        Raises:
-            TypeError: If the key is not a private key.
-        """
-        if not self._is_private:
-            raise TypeError("Only private keys can sign messages.")
-        return self._ctx_func(
+        return self._sign_func(
             data=msghash.digest(),
             algorithm=utils.Prehashed(Hash._get_hash_algorithm(msghash)),
         )
 
+
+class VerifierContext(base.BaseVerifierContext):
+    def __init__(self, key, padding):
+        self._verify_func = partial(getattr(key, "verify"), padding=padding)
+
     def verify(self, msghash, signature):
-        """Verifies the signature of the message hash.
-
-        Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-
-            signature (bytes, bytearray): The signature of the message.
-
-        Returns:
-            None
-
-        Raises:
-            SignatureError: if the signature was incorrect.
-            TypeError: If the key is a private key.
-        """
-        if self._is_private:
-            raise TypeError("Only public keys can verify messages.")
         try:
-            return self._ctx_func(
+            return self._verify_func(
                 signature=signature,
                 data=msghash.digest(),
                 algorithm=utils.Prehashed(Hash._get_hash_algorithm(msghash)),
