@@ -41,7 +41,7 @@ Before you read on, check if you agree to at least one of these points:
   # and so on...
   ```
 
-- You wish that only if `pyca/cryptography` would have been as easy to use as
+- You wish that only if `pyca/cryptography` had been as easy to use as
   `Pycryptodome(x)`, it would have made life more easy.
 
 - You sometimes think that the file encryption script you wrote were somehow
