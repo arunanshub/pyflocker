@@ -11,6 +11,24 @@ SERIALIZATION_KEY = hashlib.sha256(b"SERIALIZATION_KEY").digest()
 ENCRYPTION_PASSPHRASE = hashlib.sha256(b"ENCRYPTION_PASSPHRASE").digest()
 
 
+def private_key_equal(private_key, private_key2):
+    return (
+        private_key.n == private_key2.n
+        and private_key.e == private_key2.e
+        and (
+            (
+                private_key.p == private_key2.p
+                and private_key.q == private_key2.q
+            )
+            or (
+                private_key.p == private_key2.q
+                and private_key.p == private_key2.q
+            )
+        )
+        and private_key.d == private_key2.d
+    )
+
+
 @pytest.fixture
 def private_key(bits: int, backend: Backends):
     return RSA.generate(bits, backend=backend)
@@ -42,11 +60,12 @@ class TestPrivateKeyEncoding:
             assert backend == Backends.CRYPTODOME and format == "OpenSSH"
             return pytest.skip(f"{backend} does not support format {format}")
 
-        RSA.load_private_key(
+        private_key2 = RSA.load_private_key(
             serialized,
             backend=backend2,
             passphrase=passphrase,
         )
+        assert private_key_equal(private_key, private_key2)
 
     @pytest.mark.parametrize("format", ["PKCS1", "PKCS8"])
     @pytest.mark.parametrize("passphrase", [None, ENCRYPTION_PASSPHRASE])
@@ -54,7 +73,6 @@ class TestPrivateKeyEncoding:
         self,
         private_key,
         format: str,
-        backend: Backends,
         backend2: Backends,
         passphrase,
     ):
@@ -68,8 +86,9 @@ class TestPrivateKeyEncoding:
             assert format == "PKCS1"
             return
 
-        RSA.load_private_key(
+        private_key2 = RSA.load_private_key(
             serialized,
             backend=backend2,
             passphrase=passphrase,
         )
+        assert private_key_equal(private_key, private_key2)
