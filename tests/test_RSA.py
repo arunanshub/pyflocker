@@ -29,16 +29,37 @@ def private_key_equal(private_key, private_key2):
     )
 
 
-@pytest.fixture
+def public_key_equal(public_key, public_key2):
+    return public_key.n == public_key2.n and public_key.e == public_key2.e
+
+
+# Fixtures with scope ``module`` are associated with a fixture that is
+# computationally heavy to generate. Here, the hard to compute fixture is
+# ``private_key``. Hence, we will reuse them throughout the test module.
+@pytest.fixture(scope="module")
 def private_key(bits: int, backend: Backends):
     return RSA.generate(bits, backend=backend)
 
 
-@pytest.mark.parametrize("bits", [1024, 2048])
-@pytest.mark.parametrize(
+@pytest.fixture(scope="module")
+def public_key(private_key):
+    return private_key.public_key()
+
+
+bits_fixture = pytest.mark.parametrize(
+    "bits",
+    [1024, 2048, 4096],
+    scope="module",
+)
+backend_cross_fixture = pytest.mark.parametrize(
     "backend, backend2",
     list(product(Backends, repeat=2)),
+    scope="module",
 )
+
+
+@bits_fixture
+@backend_cross_fixture
 class TestPrivateKeyEncoding:
     @pytest.mark.parametrize("format", ["PKCS1", "PKCS8", "OpenSSH"])
     @pytest.mark.parametrize("passphrase", [None, ENCRYPTION_PASSPHRASE])
@@ -58,7 +79,9 @@ class TestPrivateKeyEncoding:
             )
         except ValueError:
             assert backend == Backends.CRYPTODOME and format == "OpenSSH"
-            return pytest.skip(f"{backend} does not support format {format}")
+            return pytest.skip(
+                f"{backend} does not support format {format} for private key",
+            )
 
         private_key2 = RSA.load_private_key(
             serialized,
@@ -92,3 +115,51 @@ class TestPrivateKeyEncoding:
             passphrase=passphrase,
         )
         assert private_key_equal(private_key, private_key2)
+
+
+@bits_fixture
+@backend_cross_fixture
+class TestPublicKeyEncoding:
+    @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo", "PKCS1"])
+    def test_PEM(self, public_key, format, backend, backend2):
+        try:
+            serialized = public_key.serialize(encoding="PEM", format=format)
+        except KeyError:
+            assert backend == Backends.CRYPTODOME
+            return pytest.skip(
+                f"{backend} does not support format {format} for public key",
+            )
+
+        public_key2 = RSA.load_public_key(serialized, backend=backend2)
+        assert public_key_equal(public_key, public_key2)
+
+    @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo", "PKCS1"])
+    def test_DER(self, public_key, format, backend, backend2):
+        try:
+            serialized = public_key.serialize(encoding="DER", format=format)
+        except KeyError:
+            assert backend == Backends.CRYPTODOME
+            return pytest.skip(
+                f"{backend} does not support format {format} for public key",
+            )
+
+        public_key2 = RSA.load_public_key(serialized, backend=backend2)
+        assert public_key_equal(public_key, public_key2)
+
+    @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo", "OpenSSH"])
+    def test_OpenSSH(self, public_key, format, backend, backend2):
+        try:
+            serialized = public_key.serialize(
+                encoding="OpenSSH", format=format
+            )
+        except KeyError:
+            assert backend == Backends.CRYPTODOME
+            return pytest.skip(
+                f"{backend} does not support format {format} for public key",
+            )
+        except ValueError:
+            assert format != "OpenSSH"
+            return
+
+        public_key2 = RSA.load_public_key(serialized, backend=backend2)
+        assert public_key_equal(public_key, public_key2)
