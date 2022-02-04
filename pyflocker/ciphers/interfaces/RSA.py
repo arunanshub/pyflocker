@@ -4,7 +4,7 @@ import typing
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 

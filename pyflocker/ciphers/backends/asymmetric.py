@@ -5,7 +5,7 @@ from dataclasses import dataclass, field
 
 from ..interfaces import Hash
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseHash
 
 
