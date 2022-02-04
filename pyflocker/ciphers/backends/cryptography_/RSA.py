@@ -178,13 +178,13 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
 
         # type check
         if passphrase is not None:
-            passphrase = memoryview(passphrase)
+            passphrase = memoryview(passphrase).tobytes()
 
         try:
             key = loader(memoryview(data), passphrase, defb())
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
-            return cls(None, key=key)
+            return cls(None, key=key)  # type: ignore
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
