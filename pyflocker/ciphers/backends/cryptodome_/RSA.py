@@ -180,18 +180,37 @@ class RSAPublicKey(_RSAKey, base.BaseRSAPublicKey):
             get_padding_func(padding)(self._key, padding),
         )
 
-    def serialize(self, encoding: str = "PEM") -> bytes:
+    def serialize(
+        self,
+        encoding: str = "PEM",
+        format: str = "SubjectPublicKeyInfo",
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
             encoding (str): PEM, DER or OpenSSH (defaults to PEM).
+            format: The supported formats are:
+
+                - SubjectPublicKeyInfo
+                - OpenSSH
+
+                Note:
+                    ``format`` argument is not actually used by Cryptodome. It
+                    is here to maintain compatibility with pyca/cryptography
+                    backend counterpart.
 
         Returns:
             bytes: The serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding is not supported or invalid.
+            KeyError: if the encoding or format is not supported or invalid.
         """
+        if format not in ("SubjectPublicKeyInfo", "OpenSSH"):
+            raise KeyError("Invalid format")
+        if format == "OpenSSH" and encoding != "OpenSSH":
+            raise ValueError(
+                "OpenSSH format can be used only with OpenSSH encoding",
+            )
         return self._key.export_key(format=ENCODINGS[encoding])
 
     @classmethod
