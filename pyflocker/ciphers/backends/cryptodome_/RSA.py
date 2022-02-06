@@ -271,8 +271,10 @@ class VerifierContext(base.BaseVerifierContext):
         self._ctx = ctx
 
     def verify(self, msghash, signature):
-        if self._ctx.verify(msghash, signature) is not None:
-            raise exc.SignatureError
+        try:
+            self._ctx.verify(msghash, signature)
+        except ValueError as e:
+            raise exc.SignatureError from e
 
 
 def generate(bits: int, e: int = 65537) -> RSAPrivateKey:
