@@ -1,4 +1,3 @@
-from functools import partial
 from types import MappingProxyType
 
 from Cryptodome.Cipher import PKCS1_OAEP
@@ -19,13 +18,13 @@ def get_OAEP(key, padding):
             An OAEP encryptor/decryptor object depending on the key, from the
             Cryptodome backend.
     """
-    if isinstance(mgf := padding.mgf, asymmetric.MGF1):
-        mgf = partial(PKCS1_OAEP.MGF1, hash_gen=padding.mgf.hashfunc.new())
+    if not isinstance(padding.mgf, asymmetric.MGF1):
+        raise TypeError("mgf must be an MGF1 instance")
 
     return PKCS1_OAEP.new(
         key,
         padding.hashfunc.new(),
-        mgf,
+        lambda x, y: pss.MGF1(x, y, padding.mgf.hashfunc.new()),
         padding.label or b"",
     )
 
@@ -40,15 +39,16 @@ def get_PSS(key, padding):
     Returns:
         PSS object: An PSS signer/verifier object, depending on the key.
     """
-    if isinstance(mgf := padding.mgf, asymmetric.MGF1):
-        mgf = partial(PKCS1_OAEP.MGF1, hash_gen=padding.mgf.hashfunc.new())
+    if not isinstance(padding.mgf, asymmetric.MGF1):
+        raise TypeError("mgf must be an MGF1 instance")
 
     if padding.salt_length is None:
         return _SaltLengthMaximizer(key, padding)
 
+    mgf = lambda x, y: pss.MGF1(x, y, padding.mgf.hashfunc.new())  # noqa: E731
     return pss.new(
         key,
-        mask_func=mgf,
+        mask_func=mgf,  # type: ignore
         salt_bytes=padding.salt_length,
     )
 
