@@ -271,7 +271,7 @@ class VerifierContext(base.BaseVerifierContext):
         self._ctx = ctx
 
     def verify(self, msghash, signature):
-        if not self._ctx.verify(msghash, signature):
+        if self._ctx.verify(msghash, signature) is not None:
             raise exc.SignatureError
 
 
