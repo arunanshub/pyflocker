@@ -3,12 +3,16 @@ from itertools import product
 
 import pytest
 
-from pyflocker.ciphers import RSA
+from pyflocker.ciphers import RSA, exc
 from pyflocker.ciphers.backends import Backends
+from pyflocker.ciphers.backends.asymmetric import MGF1, PSS
+from pyflocker.ciphers.interfaces import Hash
 
 SERIALIZATION_KEY = hashlib.sha256(b"SERIALIZATION_KEY").digest()
 
 ENCRYPTION_PASSPHRASE = hashlib.sha256(b"ENCRYPTION_PASSPHRASE").digest()
+
+SIGNING_DATA = b"SIGNING_DATA for SignerContext and VerifierContext"
 
 
 def private_key_equal(private_key, private_key2):
@@ -163,3 +167,33 @@ class TestPublicKeyEncoding:
 
         public_key2 = RSA.load_public_key(serialized, backend=backend2)
         assert public_key_equal(public_key, public_key2)
+
+
+@bits_fixture
+@backend_cross_fixture
+class TestSigningVerifying(object):
+    @pytest.mark.parametrize("hashname", ["sha256", "sha512", "sha3_512"])
+    # maximum and minimum salt lengths
+    @pytest.mark.parametrize("salt_length", [None, 0])
+    def test_PSS_MGF1(
+        self,
+        private_key,
+        backend2,
+        hashname,
+        salt_length,
+    ):
+        public_key = RSA.load_public_key(
+            private_key.public_key().serialize(),
+            backend=backend2,
+        )
+
+        pss = PSS(MGF1(Hash.new(hashname)), salt_length)
+        signer = private_key.signer(pss)
+        verifier = public_key.verifier(pss)
+
+        to_sign = Hash.new("sha256", SIGNING_DATA)
+        signature = signer.sign(to_sign)
+        verifier.verify(to_sign, signature)
+
+        with pytest.raises(exc.SignatureError):
+            verifier.verify(Hash.new("sha256", b"bogus"), signature)
