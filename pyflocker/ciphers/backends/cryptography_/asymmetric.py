@@ -46,7 +46,9 @@ def get_PSS(padding):
         raise TypeError("MGF must be an instance of MGF1.")
     return padding_.PSS(
         mgf=padding_.MGF1(Hash._get_hash_algorithm(padding.mgf.hashfunc)),
-        salt_length=padding.salt_length or padding_.PSS.MAX_LENGTH,
+        salt_length=padding_.PSS.MAX_LENGTH
+        if padding.salt_length is None
+        else padding.salt_length,
     )
 
 
