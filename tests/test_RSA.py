@@ -5,7 +5,7 @@ import pytest
 
 from pyflocker.ciphers import RSA, exc
 from pyflocker.ciphers.backends import Backends
-from pyflocker.ciphers.backends.asymmetric import MGF1, PSS
+from pyflocker.ciphers.backends.asymmetric import MGF1, OAEP, PSS
 from pyflocker.ciphers.interfaces import Hash
 
 SERIALIZATION_KEY = hashlib.sha256(b"SERIALIZATION_KEY").digest()
@@ -13,6 +13,8 @@ SERIALIZATION_KEY = hashlib.sha256(b"SERIALIZATION_KEY").digest()
 ENCRYPTION_PASSPHRASE = hashlib.sha256(b"ENCRYPTION_PASSPHRASE").digest()
 
 SIGNING_DATA = b"SIGNING_DATA for SignerContext and VerifierContext"
+
+ENCRYPTION_DECRYPTION_DATA = b"ENCRYPTION_DECRYPTION_DATA for testing"
 
 
 def private_key_equal(private_key, private_key2):
@@ -197,3 +199,26 @@ class TestSigningVerifying(object):
 
         with pytest.raises(exc.SignatureError):
             verifier.verify(Hash.new("sha256", b"bogus"), signature)
+
+
+@bits_fixture
+@backend_cross_fixture
+class TestEncryptionDecryption:
+    @pytest.mark.parametrize("mgf_hash", ["sha256"])
+    @pytest.mark.parametrize("oaep_hash", ["sha256"])
+    def test_OAEP_MGF1(self, private_key, backend2, mgf_hash, oaep_hash):
+        public_key = RSA.load_public_key(
+            private_key.public_key().serialize(),
+            backend=backend2,
+        )
+
+        oaep = OAEP(MGF1(Hash.new(mgf_hash)), Hash.new(oaep_hash), b"")
+        encryptor = public_key.encryptor(oaep)
+        decryptor = private_key.decryptor(oaep)
+
+        ciphertext = encryptor.encrypt(ENCRYPTION_DECRYPTION_DATA)
+        plaintext = decryptor.decrypt(ciphertext)
+
+        assert plaintext == ENCRYPTION_DECRYPTION_DATA
+        with pytest.raises(exc.DecryptionError):
+            decryptor.decrypt(b"bogus")
