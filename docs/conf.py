@@ -10,7 +10,6 @@
 # add these directories to sys.path here. If the directory is relative to the
 # documentation root, use os.path.abspath to make it absolute, like shown here.
 #
-import os
 import sys
 from datetime import date
 
@@ -69,6 +68,9 @@ html_static_path = ["_static"]
 
 # -- Extension configuration -------------------------------------------------
 intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
+
+# Order by source
+autodoc_member_order = "bysource"
 
 # -- Options for todo extension ----------------------------------------------
 
