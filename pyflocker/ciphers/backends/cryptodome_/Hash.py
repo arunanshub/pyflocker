@@ -237,7 +237,7 @@ class Hash(base.BaseHash):
         if name in SUPPORTS_KEY and key is not None:
             key_kwargs = dict(key=key)
 
-        hashobj = hashfunc(
+        hashobj = hashfunc(  # type: ignore
             **digest_size_kwargs,
             **custom_kwargs,
             **key_kwargs,
