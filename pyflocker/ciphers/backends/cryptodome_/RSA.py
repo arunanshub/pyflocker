@@ -15,8 +15,6 @@ from .asymmetric import (
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
-    """RSA private key wrapper class."""
-
     def __init__(self, n: int, e: int = 65537, **kwargs):
         if kwargs:
             self._key = kwargs.pop("key")
@@ -67,17 +65,15 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding (str):
-                PEM or DER (defaults to PEM).
-            format (str):
-                PKCS1 or PKCS8 (defaults to PKCS8).
-            passphrase (bytes, bytearray, memoryview):
-                a bytes object to use for encrypting the private key.
-                If ``passphrase`` is None, the private key will be exported
-                in the clear!
+            encoding: PEM or DER (defaults to PEM).
+            format: PKCS1 or PKCS8 (defaults to PKCS8).
+            passphrase:
+                a bytes object to use for encrypting the private key. If
+                ``passphrase`` is None, the private key will be exported in the
+                clear!
 
         Keyword Arguments:
-            protection (str):
+            protection:
                 The protection scheme to use.
 
                 Supplying a value for protection has meaning only if the
@@ -86,7 +82,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
                 scheme.
 
         Returns:
-            bytes: Serialized key as a bytes object.
+            Serialized key as a bytes object.
 
         Raises:
             ValueError:
@@ -131,23 +127,6 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         data: bytes,
         passphrase: typing.Optional[bytes] = None,
     ) -> RSAPrivateKey:
-        """Loads the private key as `bytes` object and returns the
-        Key interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-            passphrase (bytes, bytearray, memoryview):
-                The passphrase that deserializes the private key.
-                ``passphrase`` must be a ``bytes`` object if the key was
-                encrypted while serialization, otherwise ``None``.
-
-        Returns:
-            RSAPrivateKey: The RSA private key.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
         try:
             key = RSA.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
@@ -161,8 +140,6 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
-    """RSA Public Key wrapper class."""
-
     def __init__(self, key):
         self._key = key
 
@@ -192,7 +169,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         """Serialize the private key.
 
         Args:
-            encoding (str): PEM, DER or OpenSSH (defaults to PEM).
+            encoding: PEM, DER or OpenSSH (defaults to PEM).
             format: The supported formats are:
 
                 - SubjectPublicKeyInfo
@@ -204,13 +181,15 @@ class RSAPublicKey(base.BaseRSAPublicKey):
                     backend counterpart.
 
         Returns:
-            bytes: The serialized public key as bytes object.
+            The serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding or format is not supported or invalid.
+            ValueError:
+                if the encoding or format is not supported or invalid,
+                or OpenSSH encoding is not used with OpenSSH format.
         """
         if format not in ("SubjectPublicKeyInfo", "OpenSSH"):
-            raise KeyError("Invalid format")
+            raise ValueError("Invalid format")
         if format == "OpenSSH" and encoding != "OpenSSH":
             raise ValueError(
                 "OpenSSH format can be used only with OpenSSH encoding",
@@ -219,19 +198,6 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
-        """Loads the public key as `bytes` object and returns the
-        Key interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-
-        Returns:
-            RSAPublicKey: The public key.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
         try:
             key = RSA.import_key(data)
             if key.has_private():
@@ -247,7 +213,7 @@ class EncryptorContext(base.BaseEncryptorContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def encrypt(self, data):
+    def encrypt(self, data: bytes) -> bytes:
         return self._ctx.encrypt(data)
 
 
@@ -255,7 +221,7 @@ class DecryptorContext(base.BaseDecryptorContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def decrypt(self, data):
+    def decrypt(self, data: bytes) -> bytes:
         try:
             return self._ctx.decrypt(data)
         except ValueError as e:
@@ -266,7 +232,7 @@ class SignerContext(base.BaseSignerContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def sign(self, msghash):
+    def sign(self, msghash: base.BaseHash) -> bytes:
         return self._ctx.sign(msghash)
 
 
@@ -274,7 +240,7 @@ class VerifierContext(base.BaseVerifierContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def verify(self, msghash, signature):
+    def verify(self, msghash: base.BaseHash, signature: bytes):
         try:
             self._ctx.verify(msghash, signature)
         except ValueError as e:
@@ -284,15 +250,14 @@ class VerifierContext(base.BaseVerifierContext):
 def generate(bits: int, e: int = 65537) -> RSAPrivateKey:
     """
     Generate a private key with given key modulus ``bits`` and public exponent
-    ``e`` (default 65537).
-    Recommended size of ``bits`` > 1024.
+    ``e`` (default 65537). Recommended size of ``bits`` > 1024.
 
     Args:
-        bits (int): The bit length of the RSA key.
-        e (int): The public exponent value. Default is 65537.
+        bits: The bit length of the RSA key.
+        e: The public exponent value. Default is 65537.
 
     Returns:
-        RSAPrivateKey: The RSA private key.
+        The RSA private key.
     """
     return RSAPrivateKey(bits, e)
 
@@ -301,11 +266,10 @@ def load_public_key(data: bytes) -> RSAPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
-        data (bytes, bytearray):
-            The public key (a bytes-like object) to deserialize.
+        data: The public key (a bytes-like object) to deserialize.
 
     Returns:
-        RSAPublicKey: The RSA public key.
+        The RSA public key.
     """
     return RSAPublicKey.load(data)
 
@@ -316,17 +280,16 @@ def load_private_key(
 ) -> RSAPrivateKey:
     """Loads the private key and returns a Key interface.
 
-    If the private key was not encrypted duting the serialization,
+    If the private key is not encrypted duting the serialization,
     ``passphrase`` must be ``None``, otherwise it must be a ``bytes`` object.
 
     Args:
-        data (bytes, bytearray):
-            The private key (a bytes-like object) to deserialize.
-        passphrase (bytes, bytearray):
-            The passphrase that was used to encrypt the private key.
-            ``None`` if the private key was not encrypted.
+        data: The private key (a bytes-like object) to deserialize.
+        passphrase:
+            The passphrase that is used to encrypt the private key. ``None``
+            if the private key is not encrypted.
 
     Returns:
-        RSAPrivateKey: The RSA private key.
+        The RSA private key.
     """
     return RSAPrivateKey.load(data, passphrase)
