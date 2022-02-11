@@ -5,8 +5,6 @@ from __future__ import annotations
 import typing
 from abc import ABCMeta, abstractmethod
 
-_NotImplementedType = type(NotImplemented)
-
 
 class BaseSymmetricCipher(metaclass=ABCMeta):
     __slots__ = ()
@@ -16,7 +14,7 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
         """Whether the cipher is encrypting or not.
 
         Returns:
-            bool: True if encrypting, else False.
+            ``True`` if encrypting, else ``False``.
         """
 
     @abstractmethod
@@ -25,28 +23,27 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
         bytes object.
 
         Args:
-            data (bytes, bytearray):
-                The bytes-like object to pass to the cipher.
+            data: The bytes-like object to pass to the cipher.
 
         Returns:
-            bytes: bytes-like encrypted data.
+            Encrypted data as bytes.
         """
 
     @abstractmethod
     def update_into(
         self,
         data: bytes,
-        out: bytes,
+        out: typing.Union[bytearray, memoryview],
     ) -> None:
-        """Encrypt or decrypt the `data` and store it in a preallocated buffer
-        `out`.
+        """
+        Encrypt or decrypt the ``data`` and store it in a preallocated buffer
+        ``out``.
 
         Args:
-            data (bytes, bytearray, memoryview):
-                The bytes-like object to pass to the cipher.
-            out (bytearray, memoryview):
-                The buffer interface where the encrypted/decrypted data
-                must be written into.
+            data: The bytes-like object to pass to the cipher.
+            out:
+                The buffer interface where the encrypted/decrypted data must be
+                written into.
         """
 
 
@@ -84,13 +81,11 @@ class BaseAEADCipher(BaseSymmetricCipher):
         any encryption.
 
         Args:
-            data (bytes, bytearray, memoryview):
-                The bytes-like object that must be authenticated.
+            data: The bytes-like object that must be authenticated.
 
         Raises:
             TypeError:
-                if this method is called after calling
-                :py:attr:`~BaseAEADCipher.update`.
+                if this method is called after calling :py:meth:`~update`.
         """
 
     @abstractmethod
@@ -98,9 +93,9 @@ class BaseAEADCipher(BaseSymmetricCipher):
         """Finalizes and ends the cipher state.
 
         Args:
-            tag (bytes, bytearray):
-                The associated tag that authenticates the decryption.
-                `tag` is required for decryption only.
+            tag:
+                The associated tag that authenticates the decryption. Tag is
+                required for decryption only.
 
         Raises:
             ValueError: If cipher is decrypting and tag is not supplied.
@@ -109,12 +104,11 @@ class BaseAEADCipher(BaseSymmetricCipher):
 
     @abstractmethod
     def calculate_tag(self) -> typing.Optional[bytes]:
-        """Calculates and returns the associated `tag`.
+        """Calculates and returns the associated tag.
 
         Returns:
-            Union[None, bytes]:
-                Returns None if decrypting, otherwise the associated
-                authentication tag.
+            Returns ``None`` if decrypting, otherwise the associated
+            authentication tag.
         """
 
 
@@ -137,27 +131,26 @@ class BaseHash(metaclass=ABCMeta):
         this attribute.
 
         Returns:
-            int: Digest size as integer.
+            Digest size as integer.
         """
 
     @property
     @abstractmethod
-    def block_size(self) -> typing.Union[int, _NotImplementedType]:
+    def block_size(self) -> int:
         """
-        An integer value or NotImplemented; the internal block size of the hash
-        algorithm in bytes. The block size is used by the HMAC module to pad
-        the secret key to digest_size or to hash the secret key if it is longer
-        than digest_size. If no HMAC algorithm is standardized for the hash
-        algorithm, returns ``NotImplemented`` instead.
+        An integer value or :any:`NotImplemented`; the internal block size of
+        the hash algorithm in bytes. The block size is used by the HMAC module
+        to pad the secret key to digest_size or to hash the secret key if it is
+        longer than digest_size. If no HMAC algorithm is standardized for the
+        hash algorithm, returns :any:`NotImplemented` instead.
+
+        Returns:
+            An integer if block size is available, otherwise
+            :any:`NotImplemented`.
 
         See Also:
             PEP 452 -- API for Cryptographic Hash Functions v2.0,
             https://www.python.org/dev/peps/pep-0452
-
-        Returns:
-            Union[int, NotImplemented]:
-                An integer if block size is available, otherwise
-                ``NotImplemented``
         """
 
     @abstractmethod
@@ -167,12 +160,12 @@ class BaseHash(metaclass=ABCMeta):
         can be called any number of times during a hashing object's lifetime.
 
         Args:
-            data (bytes, bytearray, memoryview):
-                The chunk of message being hashed.
+            data: The chunk of message being hashed.
 
         Raises:
             AlreadyFinalized:
-                This is raised if ``digest`` or ``hexdigest`` has been called.
+                Raised if :py:meth:`~digest` or :py:meth:`~hexdigest` has been
+                called.
         """
 
     @abstractmethod
@@ -183,7 +176,7 @@ class BaseHash(metaclass=ABCMeta):
         can continue updating the object after calling this function.
 
         Returns:
-            bytes: Digest as binary form.
+            Digest as binary form.
         """
 
     def hexdigest(self) -> str:
@@ -192,7 +185,7 @@ class BaseHash(metaclass=ABCMeta):
         hexadecimal digits.
 
         Returns:
-            str: Digest, as a hexadecimal form.
+            Digest, as a hexadecimal form.
         """
         return self.digest().hex()
 
@@ -203,25 +196,21 @@ class BaseHash(metaclass=ABCMeta):
         An update to this copy won't affect the original object.
 
         Returns:
-            BaseHash: a copy of hash function.
+            A copy of hash function.
 
         Raises:
             AlreadyFinalized:
                 This is raised if the method is called after calling
-                `~BaseHash.digest` method.
+                :py:meth:`~digest` method.
         """
 
     @property
     @abstractmethod
     def name(self) -> str:
-        """Name of the hash function.
-
-        Returns:
-            str: Name of hash function.
-        """
+        """Name of the hash function."""
 
     @abstractmethod
-    def new(self, data=b"", *args, **kwargs) -> BaseHash:
+    def new(self, data=b"") -> BaseHash:
         """Create a fresh hash object."""
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -229,77 +218,20 @@ class BaseHash(metaclass=ABCMeta):
 
 
 class BasePrivateKey(metaclass=ABCMeta):
-    __slots__ = ()
-
-    @abstractmethod
-    def serialize(
-        self,
-        passphrase: typing.Optional[bytes] = None,
-        *args,
-        **kwargs,
-    ) -> bytes:
-        """Serialize the private key into a bytes object.
-
-        Args:
-            passphrase (bytes, bytearray, memoryview):
-                The passphrase to use to protect (encrypt) the key.
-
-        Returns:
-            bytes: The binary representation of the key.
-        """
-
-    @classmethod
-    @abstractmethod
-    def load(
-        cls,
-        passphrase: typing.Optional[bytes] = None,
-        *args,
-        **kwargs,
-    ) -> BasePrivateKey:
-        """Load (or deserialize) the key into a key object.
-
-        Args:
-            passphrase (bytes):
-                The passphrase to decrypt the private key. Without a
-                passphrase, the key is not encrypted.
-
-        Returns:
-            BaseAsymmetricKey: A key object.
-        """
+    ...
 
 
 class BasePublicKey(metaclass=ABCMeta):
-    __slots__ = ()
-
-    @abstractmethod
-    def serialize(
-        self,
-        *args,
-        **kwargs,
-    ) -> bytes:
-        """Serialize the public key into a bytes object.
-
-        Returns:
-            bytes: The binary representation of the public key.
-        """
-
-    @classmethod
-    @abstractmethod
-    def load(cls, *args, **kwargs) -> BasePublicKey:
-        """Load (or deserialize) the key into a key object.
-
-        Returns:
-            BasePublicKey: A key object.
-        """
+    ...
 
 
-class BaseRSAPrivateKey(BasePrivateKey):
+class BaseRSAPrivateKey(metaclass=ABCMeta):
     @property
     @abstractmethod
     def n(self) -> int:
         """RSA public modulus.
 
-        The number ``n`` is such that ``n == p * q``.
+        The number `n` is such that `n == p * q`.
         """
 
     @property
@@ -356,14 +288,66 @@ class BaseRSAPrivateKey(BasePrivateKey):
             The RSA public key.
         """
 
+    @abstractmethod
+    def serialize(
+        self,
+        encoding: str,
+        format: str,
+        passphrase: typing.Optional[bytes] = None,
+    ) -> bytes:
+        """Serialize the private key.
 
-class BaseRSAPublicKey(BasePublicKey):
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+            passphrase:
+                A bytes object to use for encrypting the private key. If
+                ``passphrase`` is None, the private key will be exported in the
+                clear!
+
+        Returns:
+            Serialized key as a bytes object.
+
+        Raises:
+            ValueError: If the encoding or format is incorrect.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of the method for supported options.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(
+        cls,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
+    ) -> BaseRSAPrivateKey:
+        """Loads the private key as bytes object and returns the Key interface.
+
+        Args:
+            data: The key as bytes object.
+            passphrase:
+                The passphrase that deserializes the private key. It must be a
+                bytes-like object if the key was encrypted while serialization,
+                otherwise ``None``.
+
+        Returns:
+            RSA private key.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+
+
+class BaseRSAPublicKey(metaclass=ABCMeta):
     @property
     @abstractmethod
     def n(self) -> int:
         """RSA public modulus.
 
-        The number ``n`` is such that ``n == p * q``.
+        The number `n` is such that `n = p * q`.
         """
 
     @property
@@ -379,7 +363,7 @@ class BaseRSAPublicKey(BasePublicKey):
             padding: The padding to use. Defaults to OAEP.
 
         Returns:
-            object for decrypting ciphertexts.
+            object for encrypting plaintexts.
         """
 
     @abstractmethod
@@ -393,10 +377,50 @@ class BaseRSAPublicKey(BasePublicKey):
             verifier object for verification.
         """
 
+    @abstractmethod
+    def serialize(
+        self,
+        encoding: str,
+        format: str,
+    ) -> bytes:
+        """Serialize the public key.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+
+        Returns:
+            Serialized public key as bytes object.
+
+        Raises:
+            KeyError: if the encoding or format is incorrect or unsupported.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of this method for supported options.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(cls, data: bytes) -> BaseRSAPublicKey:
+        """Loads the public key as ``bytes`` object and returns
+        the Key interface.
+
+        Args:
+            data: The key as bytes object.
+
+        Returns:
+            The RSA public key.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+
 
 class BaseSignerContext(metaclass=ABCMeta):
     @abstractmethod
-    def sign(self, hashfunc: BaseHash) -> bytes:
+    def sign(self, msghash: BaseHash) -> bytes:
         """Return the signature of the message hash.
 
         Args:
@@ -411,7 +435,7 @@ class BaseSignerContext(metaclass=ABCMeta):
 
 class BaseVerifierContext(metaclass=ABCMeta):
     @abstractmethod
-    def verify(self, msghash: BaseHash, signature: typing.ByteString):
+    def verify(self, msghash: BaseHash, signature: bytes):
         """Verifies the signature of the message hash.
 
         Args:
@@ -428,7 +452,7 @@ class BaseVerifierContext(metaclass=ABCMeta):
 
 class BaseEncryptorContext(metaclass=ABCMeta):
     @abstractmethod
-    def encrypt(self, plaintext: typing.ByteString) -> bytes:
+    def encrypt(self, plaintext: bytes) -> bytes:
         """Encrypts the plaintext and returns the ciphertext.
 
         Args:
@@ -441,7 +465,7 @@ class BaseEncryptorContext(metaclass=ABCMeta):
 
 class BaseDecryptorContext(metaclass=ABCMeta):
     @abstractmethod
-    def decrypt(self, ciphertext: typing.ByteString) -> bytes:
+    def decrypt(self, ciphertext: bytes) -> bytes:
         """Decrypts the ciphertext and returns the plaintext.
 
         Args:
