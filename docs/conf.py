@@ -72,6 +72,9 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 # Order by source
 autodoc_member_order = "bysource"
 
+# Show typehints in documentation only.
+autodoc_typehints = "description"
+
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
