@@ -4,7 +4,6 @@ import typing
 from functools import partial
 
 import cryptography.exceptions as bkx
-from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import rsa, utils
 
@@ -32,7 +31,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         if kwargs:
             self._key = kwargs.pop("key")
         else:
-            self._key = rsa.generate_private_key(e, n, defb())
+            self._key = rsa.generate_private_key(e, n)
 
         # numbers
         priv_nos = self._key.private_numbers()
@@ -61,7 +60,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         return self._e
 
     @property
-    def n(self):
+    def n(self) -> int:
         return self._n
 
     def public_key(self) -> RSAPublicKey:
@@ -88,20 +87,20 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding (str): PEM or DER (defaults to PEM).
-            format (str): The formats can be:
+            encoding: PEM or DER (defaults to PEM).
+            format: The formats can be:
 
                 - PKCS8 (default)
                 - TraditionalOpenSSL
                 - OpenSSH (available from pyca/cryptography version >=3.X)
                 - PKCS1 (alias to TraditionalOpenSSL for Cryptodome compat)
-            passphrase (bytes, bytearray, memoryview):
+            passphrase:
                 A bytes-like object to protect the private key. If
                 ``passphrase`` is None, the private key will be exported in the
                 clear!
 
         Returns:
-            bytes: The private key as a bytes object.
+            The private key as a bytes object.
 
         Raises:
            ValueError: if the format or encoding is invalid or not supported.
@@ -130,32 +129,15 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         data: bytes,
         passphrase: typing.Optional[bytes] = None,
     ) -> RSAPrivateKey:
-        """Loads the private key as ``bytes`` object and returns
-        the Key interface.
-
-        Args:
-            data (bytes, bytearray):
-                The key as bytes object.
-            passphrase (bytes, bytearray):
-                The passphrase that deserializes the private key.
-                ``passphrase`` must be a ``bytes-like`` object if the key was
-                encrypted while serialization, otherwise ``None``.
-
-        Returns:
-            RSAPrivateKey: RSA private key.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
-        fmts = {
+        formats = {
             b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
             b"-----": ser.load_pem_private_key,
             b"0": ser.load_der_private_key,
         }
 
         try:
-            loader = fmts[[*filter(data.startswith, fmts)][0]]
-        except IndexError:
+            loader = formats[next(filter(data.startswith, formats))]
+        except StopIteration:
             raise ValueError("Invalid format.") from None
 
         # type check
@@ -163,7 +145,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             passphrase = memoryview(passphrase).tobytes()
 
         try:
-            key = loader(memoryview(data), passphrase, defb())
+            key = loader(memoryview(data), passphrase)
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
             return cls(None, key=key)  # type: ignore
@@ -198,7 +180,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         return self._e
 
     @property
-    def n(self):
+    def n(self) -> int:
         return self._n
 
     def encryptor(self, padding=OAEP()) -> EncryptorContext:
@@ -229,7 +211,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
                 - OpenSSH
 
         Returns:
-            bytes: Serialized public key as bytes object.
+            Serialized public key as bytes object.
 
         Raises:
             KeyError: if the encoding or format is incorrect or unsupported.
@@ -238,24 +220,24 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             encd = ENCODINGS[encoding]
             fmt = PUBLIC_FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}") from e
+            raise ValueError(f"Invalid encoding or format: {encoding}") from e
         return self._key.public_bytes(encd, fmt)  # type: ignore
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
-        fmts = {
+        formats = {
             b"ssh-rsa ": ser.load_ssh_public_key,
             b"-----": ser.load_pem_public_key,
             b"0": ser.load_der_public_key,
         }
 
         try:
-            loader = fmts[[*filter(data.startswith, fmts)][0]]
-        except IndexError:
+            loader = formats[next(filter(data.startswith, formats))]
+        except StopIteration:
             raise ValueError("Invalid format.") from None
 
         try:
-            return cls(loader(memoryview(data), defb()))
+            return cls(loader(memoryview(data)))
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. The key format might be invalid."
@@ -266,7 +248,7 @@ class EncryptorContext(base.BaseEncryptorContext):
     def __init__(self, key, padding):
         self._encrypt_func = partial(getattr(key, "encrypt"), padding=padding)
 
-    def encrypt(self, plaintext):
+    def encrypt(self, plaintext: bytes) -> bytes:
         return self._encrypt_func(plaintext)
 
 
@@ -274,7 +256,7 @@ class DecryptorContext(base.BaseDecryptorContext):
     def __init__(self, key, padding):
         self._decrypt_func = partial(getattr(key, "decrypt"), padding=padding)
 
-    def decrypt(self, ciphertext):
+    def decrypt(self, ciphertext: bytes) -> bytes:
         try:
             return self._decrypt_func(ciphertext)
         except ValueError as e:
@@ -285,7 +267,7 @@ class SignerContext(base.BaseSignerContext):
     def __init__(self, key, padding):
         self._sign_func = partial(getattr(key, "sign"), padding=padding)
 
-    def sign(self, msghash):
+    def sign(self, msghash: base.BaseHash) -> bytes:
         return self._sign_func(
             data=msghash.digest(),
             algorithm=utils.Prehashed(Hash._get_hash_algorithm(msghash)),
@@ -296,7 +278,7 @@ class VerifierContext(base.BaseVerifierContext):
     def __init__(self, key, padding):
         self._verify_func = partial(getattr(key, "verify"), padding=padding)
 
-    def verify(self, msghash, signature):
+    def verify(self, msghash: base.BaseHash, signature: bytes):
         try:
             return self._verify_func(
                 signature=signature,
@@ -310,12 +292,11 @@ class VerifierContext(base.BaseVerifierContext):
 def generate(bits: int, e: int = 65537) -> RSAPrivateKey:
     """
     Generate a private key with given key modulus ``bits`` and public exponent
-    ``e`` (default 65537).
-    Recommended size of ``bits`` > 1024.
+    ``e`` (default 65537). Recommended size of ``bits`` > 1024.
 
     Args:
-        bits (int): The bit length of the RSA key.
-        e (int): The public exponent value. Default is 65537.
+        bits: The bit length of the RSA key.
+        e: The public exponent value. Default is 65537.
 
     Returns:
         RSAPrivateKey: The RSA private key.
@@ -327,8 +308,7 @@ def load_public_key(data: bytes) -> RSAPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
-        data (bytes, bytearray):
-            The public key (a bytes-like object) to deserialize.
+        data: The public key (a bytes-like object) to deserialize.
 
     Returns:
         RSAPublicKey: The RSA public key.
@@ -346,11 +326,10 @@ def load_private_key(
     ``passphrase`` must be ``None``, otherwise it must be a ``bytes`` object.
 
     Args:
-        data (bytes, bytearray):
-            The private key (a bytes-like object) to deserialize.
-        passphrase (bytes, bytearray):
-            The passphrase that was used to encrypt the private key.
-            ``None`` if the private key was not encrypted.
+        data: The private key (a bytes-like object) to deserialize.
+        passphrase:
+            The passphrase that was used to encrypt the private key. ``None``
+            if the private key was not encrypted.
 
     Returns:
         RSAPrivateKey: The RSA private key.
