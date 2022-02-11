@@ -1,14 +1,14 @@
 """Interface to RSA cipher and signature algorithm"""
 import typing
 
-from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
 if typing.TYPE_CHECKING:  # pragma: no cover
+    from ..backends import Backends
     from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 
-def _load_rsa_cpr(backend):
+def _load_rsa(backend):
     """Load the cipher module from the backend."""
     return _load_algo("RSA", backend)
 
@@ -17,7 +17,7 @@ def generate(
     bits: int,
     e: int = 65537,
     *,
-    backend: typing.Optional[_Backends] = None,
+    backend: typing.Optional["Backends"] = None,
 ) -> "BaseRSAPrivateKey":
     """
     Generate a private key with given key modulus ``bits`` and public exponent
@@ -25,63 +25,59 @@ def generate(
     Recommended size of ``bits`` > 1024.
 
     Args:
-        bits (int): The bit length of the RSA key.
-        e (int): The public exponent value. Default is 65537.
+        bits: The bit length of the RSA key.
+        e: The public exponent value. Default is 65537.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        BasePrivateKey: The RSA private key.
+        The RSA private key.
     """
-    return _load_rsa_cpr(backend).generate(bits, e)
+    return _load_rsa(backend).generate(bits, e)
 
 
 def load_public_key(
     data: bytes,
     *,
-    backend: typing.Optional[_Backends] = None,
+    backend: typing.Optional["Backends"] = None,
 ) -> "BaseRSAPublicKey":
     """Loads the public key and returns a Key interface.
 
     Args:
-        data (bytes, bytearray):
-            The public key (a bytes-like object) to deserialize.
+        data: The public key (a bytes-like object) to deserialize.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        BasePublicKey: The RSA public key.
+        The RSA public key.
     """
-    return _load_rsa_cpr(backend).load_public_key(data)
+    return _load_rsa(backend).load_public_key(data)
 
 
 def load_private_key(
     data: bytes,
     passphrase: typing.Optional[bytes] = None,
     *,
-    backend: typing.Optional[_Backends] = None,
+    backend: typing.Optional["Backends"] = None,
 ) -> "BaseRSAPrivateKey":
     """Loads the private key and returns a Key interface.
 
-    If the private key was not encrypted duting the serialization,
-    `passphrase` must be `None`, otherwise it must be a `bytes` object.
+    If the private key was not encrypted duting the serialization, `passphrase`
+    must be `None`, otherwise it must be a `bytes` object.
 
     Args:
-        data (bytes, bytearray):
+        data:
             The private key (a bytes-like object) to deserialize.
-        passphrase (bytes, bytearray):
-            The passphrase that was used to encrypt the private key.
-            ``None`` if the private key was not encrypted.
+        passphrase:
+            The passphrase that was used to encrypt the private key. ``None``
+            if the private key was not encrypted.
 
     Keyword Arguments:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        BasePrivateKey: The RSA private key.
+        The RSA private key.
     """
-    return _load_rsa_cpr(backend).load_private_key(data, passphrase)
+    return _load_rsa(backend).load_private_key(data, passphrase)
