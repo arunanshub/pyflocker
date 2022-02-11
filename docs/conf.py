@@ -75,6 +75,10 @@ autodoc_member_order = "bysource"
 # Show typehints in documentation only.
 autodoc_typehints = "description"
 
+# Add type hints for only those targets that have been documented.
+autodoc_typehints_description_target = "documented"
+
+
 # -- Options for todo extension ----------------------------------------------
 
 # If true, `todo` and `todoList` produce output, else they produce nothing.
