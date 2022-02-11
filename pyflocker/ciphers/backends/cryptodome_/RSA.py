@@ -14,19 +14,7 @@ from .asymmetric import (
 )
 
 
-class _RSAKey:
-    _key: RSA.RsaKey
-
-    @property
-    def n(self) -> int:
-        return self._key.n
-
-    @property
-    def e(self) -> int:
-        return self._key.e
-
-
-class RSAPrivateKey(_RSAKey, base.BaseRSAPrivateKey):
+class RSAPrivateKey(base.BaseRSAPrivateKey):
     """RSA private key wrapper class."""
 
     def __init__(self, n: int, e: int = 65537, **kwargs):
@@ -46,6 +34,14 @@ class RSAPrivateKey(_RSAKey, base.BaseRSAPrivateKey):
     @property
     def d(self) -> int:
         return self._key.d
+
+    @property
+    def n(self) -> int:
+        return self._key.n
+
+    @property
+    def e(self) -> int:
+        return self._key.e
 
     def decryptor(self, padding=OAEP()) -> DecryptorContext:
         return DecryptorContext(
@@ -164,11 +160,19 @@ class RSAPrivateKey(_RSAKey, base.BaseRSAPrivateKey):
             ) from e
 
 
-class RSAPublicKey(_RSAKey, base.BaseRSAPublicKey):
+class RSAPublicKey(base.BaseRSAPublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
         self._key = key
+
+    @property
+    def n(self) -> int:
+        return self._key.n
+
+    @property
+    def e(self) -> int:
+        return self._key.e
 
     def encryptor(self, padding=OAEP()) -> EncryptorContext:
         return EncryptorContext(

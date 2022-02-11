@@ -1,17 +1,7 @@
 from __future__ import annotations
 
-import sys
 import typing
 from functools import partial
-
-if sys.version_info >= (3, 9):
-    from functools import cache as _cache
-else:
-    from functools import lru_cache  # pragma: no cover
-
-    def _cache(func):  # pragma: no cover
-        return lru_cache(maxsize=None)(func)
-
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
@@ -37,28 +27,7 @@ _supported_encodings = frozenset(
 )
 
 
-class _RSANumbers:
-    _key: typing.Union[rsa.RSAPrivateKey, rsa.RSAPublicKey]
-
-    def _numbers(self):
-        try:
-            k = self._key.public_numbers()  # type: ignore
-        except AttributeError:
-            k = self._key.private_numbers().public_numbers  # type: ignore
-        return k
-
-    @property
-    @_cache
-    def e(self) -> int:
-        return self._numbers().e
-
-    @property
-    @_cache
-    def n(self) -> int:
-        return self._numbers().n
-
-
-class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
+class RSAPrivateKey(base.BaseRSAPrivateKey):
     def __init__(self, n: int, e: int = 65537, **kwargs):
         if kwargs:
             self._key = kwargs.pop("key")
@@ -66,10 +35,14 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
             self._key = rsa.generate_private_key(e, n, defb())
 
         # numbers
-        nos = self._key.private_numbers()
-        self._p = nos.p
-        self._q = nos.q
-        self._d = nos.d
+        priv_nos = self._key.private_numbers()
+        self._p = priv_nos.p
+        self._q = priv_nos.q
+        self._d = priv_nos.d
+
+        pub_nos = priv_nos.public_numbers
+        self._e = pub_nos.e
+        self._n = pub_nos.n
 
     @property
     def p(self) -> int:
@@ -82,6 +55,14 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
     @property
     def d(self) -> int:
         return self._d
+
+    @property
+    def e(self) -> int:
+        return self._e
+
+    @property
+    def n(self):
+        return self._n
 
     def public_key(self) -> RSAPublicKey:
         return RSAPublicKey(self._key.public_key())  # type: ignore
@@ -134,13 +115,14 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
         except KeyError as e:
             raise ValueError("The encoding or format is invalid.") from e
 
+        prot: ser.KeySerializationEncryption
         if passphrase is None:
             prot = ser.NoEncryption()
         else:
             prot = ser.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
-        return self._key.private_bytes(encd, fmt, prot)
+        return self._key.private_bytes(encd, fmt, prot)  # type: ignore
 
     @classmethod
     def load(
@@ -198,13 +180,26 @@ class RSAPrivateKey(_RSANumbers, base.BaseRSAPrivateKey):
             ) from e
 
 
-class RSAPublicKey(_RSANumbers, base.BaseRSAPublicKey):
+class RSAPublicKey(base.BaseRSAPublicKey):
     """RSA Public Key wrapper class."""
 
     def __init__(self, key):
         if not isinstance(key, rsa.RSAPublicKey):
             raise ValueError("The key is not an RSA public key.")
         self._key = key
+
+        # numbers
+        pub_nos = self._key.public_numbers()
+        self._e = pub_nos.e
+        self._n = pub_nos.n
+
+    @property
+    def e(self) -> int:
+        return self._e
+
+    @property
+    def n(self):
+        return self._n
 
     def encryptor(self, padding=OAEP()) -> EncryptorContext:
         return EncryptorContext(
@@ -244,23 +239,10 @@ class RSAPublicKey(_RSANumbers, base.BaseRSAPublicKey):
             fmt = PUBLIC_FORMATS[format]
         except KeyError as e:
             raise ValueError(f"Invalid encoding or format: {e.args}") from e
-        return self._key.public_bytes(encd, fmt)
+        return self._key.public_bytes(encd, fmt)  # type: ignore
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
-        """Loads the public key as ``bytes`` object and returns
-        the Key interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-
-        Returns:
-            RSAPublicKey: The RSA public key.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
         fmts = {
             b"ssh-rsa ": ser.load_ssh_public_key,
             b"-----": ser.load_pem_public_key,
