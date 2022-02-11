@@ -130,7 +130,7 @@ class TestPublicKeyEncoding:
     def test_PEM(self, public_key, format, backend, backend2):
         try:
             serialized = public_key.serialize(encoding="PEM", format=format)
-        except KeyError:
+        except ValueError:
             assert backend == Backends.CRYPTODOME
             return pytest.skip(
                 f"{backend} does not support format {format} for public key",
@@ -143,7 +143,7 @@ class TestPublicKeyEncoding:
     def test_DER(self, public_key, format, backend, backend2):
         try:
             serialized = public_key.serialize(encoding="DER", format=format)
-        except KeyError:
+        except ValueError:
             assert backend == Backends.CRYPTODOME
             return pytest.skip(
                 f"{backend} does not support format {format} for public key",
