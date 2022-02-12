@@ -73,11 +73,10 @@ intersphinx_mapping = {"python": ("https://docs.python.org/3", None)}
 autodoc_member_order = "bysource"
 
 # Show typehints in documentation only.
-autodoc_typehints = "description"
+autodoc_typehints = "signature"
 
-# Add type hints for only those targets that have been documented.
-autodoc_typehints_description_target = "documented"
-
+# Do not show the fully qualified name for a type.
+autodoc_typehints_format = "short"
 
 # -- Options for todo extension ----------------------------------------------
 
