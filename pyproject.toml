@@ -31,6 +31,7 @@ pytest-cov = "^3.0.0"
 flake8 = "^4.0.1"
 pytest-xdist = "^2.5.0"
 pre-commit = "^2.17.0"
+mypy = "^0.931"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
