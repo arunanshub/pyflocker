@@ -74,12 +74,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
         Keyword Arguments:
             protection:
-                The protection scheme to use.
-
-                Supplying a value for protection has meaning only if the
-                ``format`` is PKCS8. If ``None`` is provided
-                ``PBKDF2WithHMAC-SHA1AndAES256-CBC`` is used as the protection
-                scheme.
+                The protection scheme to use. Supplying a value for protection
+                has meaning only if the ``format`` is PKCS8. If ``None`` is
+                provided ``PBKDF2WithHMAC-SHA1AndAES256-CBC`` is used as the
+                protection scheme.
 
         Returns:
             Serialized key as a bytes object.
@@ -213,17 +211,17 @@ class EncryptorContext(base.BaseEncryptorContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def encrypt(self, data: bytes) -> bytes:
-        return self._ctx.encrypt(data)
+    def encrypt(self, plaintext: bytes) -> bytes:
+        return self._ctx.encrypt(plaintext)
 
 
 class DecryptorContext(base.BaseDecryptorContext):
     def __init__(self, ctx):
         self._ctx = ctx
 
-    def decrypt(self, data: bytes) -> bytes:
+    def decrypt(self, plaintext: bytes) -> bytes:
         try:
-            return self._ctx.decrypt(data)
+            return self._ctx.decrypt(plaintext)
         except ValueError as e:
             raise exc.DecryptionError from e
 
