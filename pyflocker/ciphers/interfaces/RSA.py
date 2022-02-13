@@ -1,4 +1,6 @@
 """Interface to RSA cipher and signature algorithm"""
+from __future__ import annotations
+
 import typing
 
 from ..backends import load_algorithm as _load_algo
@@ -17,12 +19,11 @@ def generate(
     bits: int,
     e: int = 65537,
     *,
-    backend: typing.Optional["Backends"] = None,
-) -> "BaseRSAPrivateKey":
+    backend: typing.Optional[Backends] = None,
+) -> BaseRSAPrivateKey:
     """
     Generate a private key with given key modulus ``bits`` and public exponent
-    ``e`` (default 65537).
-    Recommended size of ``bits`` > 1024.
+    ``e`` (default 65537). Recommended size of ``bits`` > 1024.
 
     Args:
         bits: The bit length of the RSA key.
@@ -41,7 +42,7 @@ def load_public_key(
     data: bytes,
     *,
     backend: typing.Optional["Backends"] = None,
-) -> "BaseRSAPublicKey":
+) -> BaseRSAPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
@@ -60,8 +61,8 @@ def load_private_key(
     data: bytes,
     passphrase: typing.Optional[bytes] = None,
     *,
-    backend: typing.Optional["Backends"] = None,
-) -> "BaseRSAPrivateKey":
+    backend: typing.Optional[Backends] = None,
+) -> BaseRSAPrivateKey:
     """Loads the private key and returns a Key interface.
 
     If the private key was not encrypted duting the serialization, `passphrase`
