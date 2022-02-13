@@ -214,7 +214,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             Serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding or format is incorrect or unsupported.
+            ValueError: if the encoding or format is incorrect or unsupported.
         """
         try:
             encd = ENCODINGS[encoding]
@@ -329,7 +329,7 @@ def load_private_key(
         data: The private key (a bytes-like object) to deserialize.
         passphrase:
             The passphrase that was used to encrypt the private key. ``None``
-            if the private key was not encrypted.
+            if the private key is not encrypted.
 
     Returns:
         RSAPrivateKey: The RSA private key.
