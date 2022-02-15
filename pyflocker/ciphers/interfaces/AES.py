@@ -34,7 +34,7 @@ def new(
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, _base.BaseHash] = "sha256",
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[typing.IO[bytes]] = None,
     backend: typing.Optional[_Backends] = None,
 ) -> typing.Union[_base.BaseNonAEADCipher, _base.BaseAEADCipher]:
     """Instantiate a new AES cipher object.
