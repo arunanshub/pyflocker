@@ -18,6 +18,10 @@ classifiers = [
     "Topic :: Security :: Cryptography",
 ]
 
+[tool.poetry.urls]
+"Bug Tracker" = "https://github.com/arunanshub/pyflocker/issues"
+"Changelog" = "https://github.com/arunanshub/pyflocker/blob/master/CHANGELOG.md"
+
 [tool.poetry.dependencies]
 python = "^3.8"
 pycryptodomex = "^3.9.8"
