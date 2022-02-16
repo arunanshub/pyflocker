@@ -189,7 +189,7 @@ def encryptf(
         aes_mode:
             The AES mode to use for encryption/decryption. The mode can be any
             attribute from :any:`Modes` except those which are defined in
-            :any:`modes.special`. Defaults to :any:`Modes.MODE_GCM`. The AES
+            :any:`modes.SPECIAL`. Defaults to :any:`Modes.MODE_GCM`. The AES
             mode is stored as a part of the encrypted file.
         blocksize:
             The amount of data to read from ``infile`` in each iteration.
