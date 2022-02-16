@@ -117,7 +117,7 @@ from .ciphers.backends import Backends
 from .ciphers.interfaces import AES
 from .ciphers.modes import Modes, aead, special
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     PathLike = typing.Union[str, os.PathLike[str]]
     KDFunc = typing.Callable[[bytes, bytes, int], bytes]
 
