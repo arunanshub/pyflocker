@@ -11,7 +11,7 @@ from pyflocker.ciphers import modes
 from pyflocker.ciphers.backends import Backends
 from pyflocker.ciphers.exc import DecryptionError
 
-if typing.TYPE_CHECKING:
+if typing.TYPE_CHECKING:  # pragma: no cover
     from pathlib import Path
 
 ENCRYPTION_DECRYPTION_DATA = b"ENCRYPTION_DECRYPTION_DATA for testing"
