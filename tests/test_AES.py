@@ -18,7 +18,7 @@ from .base import BaseSymmetric, BaseSymmetricAEAD
 
 _LENGTH_NORMAL = (16, 24, 32)
 _LENGTH_SPECIAL_SIV = (32, 48, 64)
-_MODE_NON_AEAD = set(modes.Modes) ^ modes.aead
+_MODE_NON_AEAD = set(modes.Modes) ^ modes.AEAD
 
 TEST_VECTOR_KEY = hashlib.sha3_512(b"TEST_VECTOR_KEY for AES").digest()
 TEST_VECTOR_NONCE = hashlib.sha3_512(b"TEST_VECTOR_NONCE for AES").digest()
@@ -75,7 +75,7 @@ class TestNonAEAD(BaseSymmetric):
 )
 @pytest.mark.parametrize(
     "mode",
-    set(modes.Modes) ^ modes.special,
+    set(modes.Modes) ^ modes.SPECIAL,
 )
 @pytest.mark.parametrize(
     "use_hmac",

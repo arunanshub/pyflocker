@@ -24,7 +24,7 @@ TESTING_EXT = ".testing"
     "backend1, backend2",
     list(combinations_with_replacement(Backends, 2)),
 )
-@pytest.mark.parametrize("mode", sorted(set(modes.Modes) ^ modes.special))
+@pytest.mark.parametrize("mode", sorted(set(modes.Modes) ^ modes.SPECIAL))
 class TestLocker:
     @pytest.mark.parametrize("dklen", [16, 24, 32, 128, 192, 256])
     def test_encryptf_decryptf(
@@ -233,7 +233,7 @@ class TestLockerErrors:
             with pytest.raises(ValueError):
                 locker.decryptf(file, file, ENCRYPTION_DECRYPTION_PASSWORD)
 
-    @pytest.mark.parametrize("mode", sorted(modes.special))
+    @pytest.mark.parametrize("mode", sorted(modes.SPECIAL))
     def test_encryptf_decryptf_mode_special_error(
         self,
         mode,

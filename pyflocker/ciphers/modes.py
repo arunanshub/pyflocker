@@ -18,7 +18,7 @@ class Modes(IntEnum):
 
 
 # authenticated modes
-aead = frozenset(
+AEAD = frozenset(
     {
         Modes.MODE_GCM,
         Modes.MODE_CCM,
@@ -28,8 +28,10 @@ aead = frozenset(
     }
 )
 
-# the special modes
-special = frozenset(
+aead = AEAD
+
+#: the special modes
+SPECIAL = frozenset(
     {
         Modes.MODE_SIV,
         Modes.MODE_CCM,
@@ -37,3 +39,5 @@ special = frozenset(
         # MODE_OPENPGP,
     }
 )
+
+special = SPECIAL

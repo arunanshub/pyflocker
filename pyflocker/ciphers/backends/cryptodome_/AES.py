@@ -219,13 +219,13 @@ def new(
     if mode not in supported_modes():
         raise NotImplementedError(f"{mode} not supported.")
 
-    if mode in modes.special:
+    if mode in modes.SPECIAL:
         if file is not None:
             raise NotImplementedError(
                 f"{mode} does not support encryption/decryption of files."
             )
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
-    elif mode in modes.aead:
+    elif mode in modes.AEAD:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
     else:
         if use_hmac:

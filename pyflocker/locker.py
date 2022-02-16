@@ -115,7 +115,7 @@ from hashlib import pbkdf2_hmac
 from .ciphers import exc
 from .ciphers.backends import Backends
 from .ciphers.interfaces import AES
-from .ciphers.modes import Modes, aead, special
+from .ciphers.modes import AEAD, SPECIAL, Modes
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     PathLike = typing.Union[str, os.PathLike[str]]
@@ -212,7 +212,7 @@ def encryptf(
     """
     _assert_unique_files(infile, outfile)
 
-    if aes_mode in special:
+    if aes_mode in SPECIAL:
         raise NotImplementedError(f"{aes_mode} is not supported.")
 
     if len(metadata) > MAX_METADATA_LEN:
@@ -633,6 +633,6 @@ def _get_header(data: bytes, metadata: bytes = METADATA) -> _Header:
 
     if mode == Modes.MODE_GCM.value:
         nonce = nonce[:12]
-    if Modes(mode) in aead:
+    if Modes(mode) in AEAD:
         tag = tag[:16]
     return _Header(magic, mode, nonce, tag, metadata, salt)

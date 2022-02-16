@@ -335,13 +335,13 @@ def new(
     if file is not None:
         use_hmac = True
 
-    if mode in modes_.special:
+    if mode in modes_.SPECIAL:
         if file is not None:
             raise NotImplementedError(
                 f"{mode} does not support encryption/decryption of files."
             )
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
-    elif mode in modes_.aead:
+    elif mode in modes_.AEAD:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
     else:
         if use_hmac:
@@ -374,7 +374,7 @@ def supported_modes() -> typing.Set[_m]:
 def _aes_cipher(key, mode, nonce_or_iv):
     if mode == _m.MODE_EAX:
         return _EAX(key, nonce_or_iv)
-    if mode in modes_.special:
+    if mode in modes_.SPECIAL:
         if mode == _m.MODE_CCM:
             if not 7 <= len(nonce_or_iv) <= 13:
                 raise ValueError(
