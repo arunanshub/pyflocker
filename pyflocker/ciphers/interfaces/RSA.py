@@ -69,8 +69,7 @@ def load_private_key(
     must be `None`, otherwise it must be a `bytes` object.
 
     Args:
-        data:
-            The private key (a bytes-like object) to deserialize.
+        data: The private key (a bytes-like object) to deserialize.
         passphrase:
             The passphrase that was used to encrypt the private key. ``None``
             if the private key was not encrypted.
