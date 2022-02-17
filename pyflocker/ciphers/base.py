@@ -254,6 +254,11 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
     def d(self) -> int:
         """RSA private exponent."""
 
+    @property
+    @abstractmethod
+    def key_size(self):
+        """Size of the key, in bits."""
+
     @abstractmethod
     def decryptor(self, padding) -> BaseDecryptorContext:
         """Creates a decryption context.
@@ -354,6 +359,11 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def e(self) -> int:
         """RSA public exponent."""
+
+    @property
+    @abstractmethod
+    def key_size(self) -> int:
+        """Size of the key, in bits."""
 
     @abstractmethod
     def encryptor(self, padding) -> BaseEncryptorContext:

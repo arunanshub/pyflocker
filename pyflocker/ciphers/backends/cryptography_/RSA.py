@@ -63,8 +63,12 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def n(self) -> int:
         return self._n
 
+    @property
+    def key_size(self) -> int:
+        return self._key.key_size
+
     def public_key(self) -> RSAPublicKey:
-        return RSAPublicKey(self._key.public_key())  # type: ignore
+        return RSAPublicKey(self._key.public_key())
 
     def decryptor(self, padding=OAEP()) -> DecryptorContext:
         return DecryptorContext(
@@ -121,7 +125,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             prot = ser.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
-        return self._key.private_bytes(encd, fmt, prot)  # type: ignore
+        return self._key.private_bytes(encd, fmt, prot)
 
     @classmethod
     def load(
@@ -148,7 +152,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             key = loader(memoryview(data), passphrase)
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
-            return cls(None, key=key)  # type: ignore
+            return cls(1024, key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
@@ -182,6 +186,10 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     @property
     def n(self) -> int:
         return self._n
+
+    @property
+    def key_size(self) -> int:
+        return self._key.key_size
 
     def encryptor(self, padding=OAEP()) -> EncryptorContext:
         return EncryptorContext(
@@ -221,7 +229,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             fmt = PUBLIC_FORMATS[format]
         except KeyError as e:
             raise ValueError(f"Invalid encoding or format: {encoding}") from e
-        return self._key.public_bytes(encd, fmt)  # type: ignore
+        return self._key.public_bytes(encd, fmt)
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:

@@ -41,6 +41,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def e(self) -> int:
         return self._key.e
 
+    @property
+    def key_size(self) -> int:
+        return self._key.size_in_bits()
+
     def decryptor(self, padding=OAEP()) -> DecryptorContext:
         return DecryptorContext(
             get_padding_func(padding)(self._key, padding),
@@ -148,6 +152,10 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     @property
     def e(self) -> int:
         return self._key.e
+
+    @property
+    def key_size(self) -> int:
+        return self._key.size_in_bits()
 
     def encryptor(self, padding=OAEP()) -> EncryptorContext:
         return EncryptorContext(
