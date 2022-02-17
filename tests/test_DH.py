@@ -51,6 +51,24 @@ class TestDHParameters:
             and dh_param.q == dh_param2.q
         )
 
+    def test_load_from_parameters(self, dh_param, backend2):
+        try:
+            dh_param2 = DH.load_from_parameters(
+                dh_param.p,
+                dh_param.g,
+                dh_param.q,
+                backend=backend2,
+            )
+        except exc.UnsupportedAlgorithm:
+            assert backend2 == Backends.CRYPTODOME
+            return pytest.skip("DH not supported by Cryptodome")
+
+        assert (
+            dh_param.g == dh_param2.g
+            and dh_param.p == dh_param2.p
+            and dh_param.q == dh_param2.q
+        )
+
 
 @key_size_fixture
 @backend_cross_fixture
