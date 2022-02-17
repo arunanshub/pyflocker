@@ -32,11 +32,16 @@ def private_key_equal(private_key, private_key2):
             )
         )
         and private_key.d == private_key2.d
+        and private_key.key_size == private_key2.key_size
     )
 
 
 def public_key_equal(public_key, public_key2):
-    return public_key.n == public_key2.n and public_key.e == public_key2.e
+    return (
+        public_key.n == public_key2.n
+        and public_key.e == public_key2.e
+        and public_key.key_size == public_key2.key_size
+    )
 
 
 # Fixtures with scope ``module`` are associated with a fixture that is
