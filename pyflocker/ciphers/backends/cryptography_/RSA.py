@@ -152,7 +152,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             key = loader(memoryview(data), passphrase)
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
-            return cls(1024, key=key)
+            return cls(None, key=key)  # type: ignore
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
