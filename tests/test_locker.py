@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import os
 import typing
-from itertools import combinations_with_replacement
+from itertools import product
 
 import pytest
 
@@ -22,7 +22,7 @@ TESTING_EXT = ".testing"
 
 @pytest.mark.parametrize(
     "backend1, backend2",
-    list(combinations_with_replacement(Backends, 2)),
+    list(product(Backends, repeat=2)),
 )
 @pytest.mark.parametrize("mode", sorted(set(modes.Modes) ^ modes.SPECIAL))
 class TestLocker:
