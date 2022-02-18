@@ -116,3 +116,24 @@ class TestDHPublicKeyEncoding:
             public_key.y == public_key2.y  # type: ignore
             and public_key.key_size == public_key2.key_size  # type: ignore
         )
+
+
+@key_size_fixture
+@backend_cross_fixture
+class TestDHExchange(object):
+    def test_exchange(self, dh_param, backend2):
+        try:
+            dh_param2 = DH.load_parameters(
+                dh_param.serialize(),
+                backend=backend2,
+            )
+        except exc.UnsupportedAlgorithm:
+            assert backend2 == Backends.CRYPTODOME
+            return pytest.skip("DH not supported by Cryptodome")
+
+        private_key = dh_param.private_key()
+        private_key2 = dh_param2.private_key()
+
+        assert private_key.exchange(
+            private_key2.public_key()
+        ) == private_key2.exchange(private_key.public_key())
