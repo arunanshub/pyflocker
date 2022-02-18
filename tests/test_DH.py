@@ -31,6 +31,14 @@ backend_cross_fixture = pytest.mark.parametrize(
 )
 
 
+def dh_params_equal(dh_param, dh_param2):
+    return (
+        dh_param.g == dh_param2.g
+        and dh_param.p == dh_param2.p
+        and dh_param.q == dh_param2.q
+    )
+
+
 @key_size_fixture
 @backend_cross_fixture
 class TestDHParameters:
@@ -45,11 +53,7 @@ class TestDHParameters:
             assert backend2 == Backends.CRYPTODOME
             return pytest.skip("DH not supported by Cryptodome")
 
-        assert (
-            dh_param.g == dh_param2.g
-            and dh_param.p == dh_param2.p
-            and dh_param.q == dh_param2.q
-        )
+        assert dh_params_equal(dh_param, dh_param2)
 
     def test_load_from_parameters(self, dh_param, backend2):
         try:
@@ -63,11 +67,15 @@ class TestDHParameters:
             assert backend2 == Backends.CRYPTODOME
             return pytest.skip("DH not supported by Cryptodome")
 
-        assert (
-            dh_param.g == dh_param2.g
-            and dh_param.p == dh_param2.p
-            and dh_param.q == dh_param2.q
-        )
+        assert dh_params_equal(dh_param, dh_param2)
+
+    def test_same_parameters(self, dh_param, backend2):
+        del backend2  # we don't need this
+        dh_param2 = dh_param.private_key().parameters()
+        dh_param3 = dh_param.private_key().public_key().parameters()
+
+        assert dh_params_equal(dh_param, dh_param2)
+        assert dh_params_equal(dh_param2, dh_param3)
 
 
 @key_size_fixture
@@ -135,5 +143,65 @@ class TestDHExchange(object):
         private_key2 = dh_param2.private_key()
 
         assert private_key.exchange(
+            private_key2.public_key().serialize()
+        ) == private_key2.exchange(private_key.public_key().serialize())
+
+    def test_exchange_bytes(self, dh_param, backend2):
+        try:
+            dh_param2 = DH.load_parameters(
+                dh_param.serialize(),
+                backend=backend2,
+            )
+        except exc.UnsupportedAlgorithm:
+            assert backend2 == Backends.CRYPTODOME
+            return pytest.skip("DH not supported by Cryptodome")
+
+        private_key = dh_param.private_key()
+        private_key2 = dh_param2.private_key()
+
+        assert private_key.exchange(
             private_key2.public_key()
         ) == private_key2.exchange(private_key.public_key())
+
+
+@pytest.mark.parametrize("backend", [Backends.CRYPTOGRAPHY], scope="module")
+class TestDHErrors:
+    @key_size_fixture
+    def test_dh_param_serialize_invalid_encoding_format(self, dh_param):
+        with pytest.raises(ValueError):
+            dh_param.serialize(encoding="nonexistent")
+
+        with pytest.raises(ValueError):
+            dh_param.serialize(format="nonexistent")
+
+    def test_dh_param_load_invalid_data_format(self, backend):
+        with pytest.raises(ValueError):
+            DH.load_parameters(b"invalid", backend=backend)
+
+    @key_size_fixture
+    def test_dh_private_key_invalid_encoding_format(self, dh_param):
+        private_key = dh_param.private_key()
+
+        with pytest.raises(ValueError):
+            private_key.serialize(encoding="nonexistent")
+
+        with pytest.raises(ValueError):
+            private_key.serialize(format="nonexistent")
+
+    def test_dh_private_key_load_invalid_data_format(self, backend):
+        with pytest.raises(ValueError):
+            DH.load_private_key(b"invalid", backend=backend)
+
+    @key_size_fixture
+    def test_dh_public_key_invalid_encoding_format(self, dh_param):
+        public_key = dh_param.private_key().public_key()
+
+        with pytest.raises(ValueError):
+            public_key.serialize(encoding="nonexistent")
+
+        with pytest.raises(ValueError):
+            public_key.serialize(format="nonexistent")
+
+    def test_dh_public_key_load_invalid_data_format(self, backend):
+        with pytest.raises(ValueError):
+            DH.load_public_key(b"invalid", backend=backend)
