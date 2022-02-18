@@ -23,11 +23,11 @@ class DHParameters:
     ):
         if kwargs:
             params = kwargs.pop("parameter")
-            if not isinstance(params, dh.DHParameters):
+            if not isinstance(params, dh.DHParameters):  # pragma: no cover
                 raise ValueError("The parameter is not a DH parameter object.")
             self._params = params
         else:
-            if key_size is None:
+            if key_size is None:  # pragma: no cover
                 raise TypeError("key_size must be an integer")
             self._params = dh.generate_parameters(generator, key_size)
 
@@ -353,7 +353,7 @@ class DHPublicKey(base.BasePublicKey):
 
         try:
             loader = formats[next(filter(data.startswith, formats))]
-        except IndexError:
+        except StopIteration:
             raise ValueError("Invalid format.") from None
 
         try:
