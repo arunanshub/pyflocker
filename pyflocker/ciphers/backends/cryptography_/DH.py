@@ -15,13 +15,20 @@ from .asymmetric import (
 
 
 class DHParameters:
-    def __init__(self, key_size: int, generator: int = 2, **kwargs):
+    def __init__(
+        self,
+        key_size: typing.Optional[int],
+        generator: int = 2,
+        **kwargs,
+    ):
         if kwargs:
             params = kwargs.pop("parameter")
             if not isinstance(params, dh.DHParameters):
                 raise ValueError("The parameter is not a DH parameter object.")
             self._params = params
         else:
+            if key_size is None:
+                raise TypeError("key_size must be an integer")
             self._params = dh.generate_parameters(generator, key_size)
 
         numbers = self._params.parameter_numbers()
@@ -99,8 +106,7 @@ class DHParameters:
             params = loader(data)
             if not isinstance(params, dh.DHParameters):
                 raise ValueError("Invalid parameter format.")
-            # 1024 will not be used anyways; keeps mypy happy
-            return cls(1024, parameter=params)
+            return cls(None, parameter=params)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
@@ -125,7 +131,7 @@ class DHParameters:
             DHParameters object.
         """
         param_nos = dh.DHParameterNumbers(p, g, q)
-        return cls(1024, parameter=param_nos.parameters())
+        return cls(None, parameter=param_nos.parameters())
 
 
 class DHPrivateKey(base.BasePrivateKey):
@@ -143,7 +149,7 @@ class DHPrivateKey(base.BasePrivateKey):
         Returns:
             The DH parameter object.
         """
-        return DHParameters(1024, parameter=self._key.parameters())
+        return DHParameters(None, parameter=self._key.parameters())
 
     @property
     def key_size(self) -> int:
@@ -180,7 +186,7 @@ class DHPrivateKey(base.BasePrivateKey):
         if isinstance(peer_public_key, DHPublicKey):
             return self._key.exchange(peer_public_key._key)
         return self._key.exchange(
-            DHPublicKey.load(memoryview(peer_public_key))._key
+            DHPublicKey.load(memoryview(peer_public_key).tobytes())._key
         )
 
     def serialize(
@@ -291,7 +297,7 @@ class DHPublicKey(base.BasePublicKey):
         Returns:
             The DH parameter object.
         """
-        return DHParameters(1024, parameter=self._key.parameters())
+        return DHParameters(None, parameter=self._key.parameters())
 
     @property
     def key_size(self) -> int:
