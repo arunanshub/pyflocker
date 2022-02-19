@@ -1,7 +1,7 @@
 # PyFLocker
 
-![Upload Python Package](https://github.com/arunanshub/pyflocker/workflows/Upload%20Python%20Package/badge.svg)
-![Build](https://github.com/arunanshub/pyflocker/workflows/Build/badge.svg)
+[![Upload Python Package](https://github.com/arunanshub/pyflocker/actions/workflows/python-publish.yml/badge.svg)](https://github.com/arunanshub/pyflocker/actions/workflows/python-publish.yml)
+[![Build](https://github.com/arunanshub/pyflocker/actions/workflows/python-package.yml/badge.svg)](https://github.com/arunanshub/pyflocker/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/gh/arunanshub/pyflocker/branch/master/graph/badge.svg?token=CBSY6U552K)](https://codecov.io/gh/arunanshub/pyflocker)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python Versions](https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions)](https://pypi.org/project/PyFLocker)
