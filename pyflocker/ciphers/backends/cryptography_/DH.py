@@ -32,10 +32,10 @@ class DHParameters(base.BaseDHParameters):
         if kwargs:
             params = kwargs.pop("parameter")
             if not isinstance(params, dh.DHParameters):  # pragma: no cover
-                raise ValueError("The parameter is not a DH parameter object.")
+                raise TypeError("The parameter is not a DH parameter object.")
             self._params = params
         else:
-            if key_size is None:  # pragma: no cover
+            if not isinstance(key_size, int):  # pragma: no cover
                 raise TypeError("key_size must be an integer")
             self._params = dh.generate_parameters(generator, key_size)
 
@@ -97,13 +97,13 @@ class DHParameters(base.BaseDHParameters):
 
         try:
             params = loader(data)
-            if not isinstance(params, dh.DHParameters):
+            if not isinstance(params, dh.DHParameters):  # pragma: no cover
                 raise ValueError("Invalid parameter format.")
             return cls(None, parameter=params)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. The key format is invalid. Backend "
-                f"error message:\n{e}",
+                "Cannot deserialize key. The parameter format is invalid. "
+                f"Backend error message:\n{e}",
             ) from e
 
     @classmethod
@@ -127,7 +127,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
     }
 
     def __init__(self, key):
-        if not isinstance(key, dh.DHPrivateKey):
+        if not isinstance(key, dh.DHPrivateKey):  # pragma: no cover
             raise ValueError("The key is not a DH private key.")
         self._key = key
 
@@ -204,6 +204,10 @@ class DHPrivateKey(base.BaseDHPrivateKey):
 
         try:
             key = loader(memoryview(data).tobytes(), passphrase)
+            if not isinstance(key, dh.DHPrivateKey):
+                raise ValueError(
+                    "Cannot deserialize key. This key is not a DH private key"
+                )
             return cls(key)
         except ValueError as e:
             raise ValueError(
@@ -228,7 +232,7 @@ class DHPublicKey(base.BaseDHPublicKey):
     }
 
     def __init__(self, key):
-        if not isinstance(key, dh.DHPublicKey):
+        if not isinstance(key, dh.DHPublicKey):  # pragma: no cover
             raise ValueError("The key is not a DH public key.")
         self._key = key
         self._y = key.public_numbers().y
@@ -284,7 +288,12 @@ class DHPublicKey(base.BaseDHPublicKey):
             raise ValueError("Invalid format.") from None
 
         try:
-            return cls(key=loader(memoryview(data)))
+            key = loader(memoryview(data))
+            if not isinstance(key, dh.DHPublicKey):
+                raise ValueError(
+                    "Cannot deserialize key. This key is not a DH public key"
+                )
+            return cls(key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Incorrect key format. Backend error"
