@@ -14,7 +14,7 @@ from cryptography.hazmat.primitives.serialization import (
 from ... import base
 
 
-class DHParameters:
+class DHParameters(base.BaseDHParameters):
     _encodings = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
@@ -46,25 +46,17 @@ class DHParameters:
 
     @property
     def g(self) -> int:
-        """The generator value."""
         return self._g
 
     @property
     def p(self) -> int:
-        """The prime modulus value."""
         return self._p
 
     @property
     def q(self) -> typing.Optional[int]:
-        """The p subgroup order value."""
         self._q
 
     def private_key(self) -> DHPrivateKey:
-        """Create a DH private key from the parameters.
-
-        Returns:
-            A private key object.
-        """
         return DHPrivateKey(self._params.generate_private_key())
 
     def serialize(self, encoding: str = "PEM", format: str = "PKCS3") -> bytes:
@@ -93,15 +85,6 @@ class DHParameters:
 
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
-        """Deserialize the encoded DH parameters.
-
-        Args:
-            data:
-                The parameters as an encoded bytes object.
-
-        Returns:
-            DHParameters: DH parameter object.
-        """
         formats = {
             b"-----BEGIN DH PARAMETERS": ser.load_pem_parameters,
             b"0": ser.load_der_parameters,
@@ -130,21 +113,11 @@ class DHParameters:
         g: int = 2,
         q: typing.Optional[int] = None,
     ) -> DHParameters:
-        """Generates a DH parameter group from the parameters.
-
-        Args:
-            p: The prime modulus value.
-            g: The generator value. Must be 2 or 5. Default is 2.
-            q: p subgroup order value. Defaults to ``None``.
-
-        Returns:
-            DHParameters object.
-        """
         param_nos = dh.DHParameterNumbers(p, g, q)
         return cls(None, parameter=param_nos.parameters())
 
 
-class DHPrivateKey(base.BasePrivateKey):
+class DHPrivateKey(base.BaseDHPrivateKey):
     _encodings = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
@@ -162,45 +135,19 @@ class DHPrivateKey(base.BasePrivateKey):
         self._x = numbers.x
 
     def parameters(self) -> DHParameters:
-        """Creates a new :any:`DHParameters` object from the key.
-
-        Returns:
-            The DH parameter object.
-        """
         return DHParameters(None, parameter=self._key.parameters())
 
     @property
     def key_size(self) -> int:
-        """Size of the key, in bytes."""
         return self._key.key_size
 
     def public_key(self) -> DHPublicKey:
-        """Create a public key from the private key.
-
-        Returns:
-            A public key object.
-        """
         return DHPublicKey(self._key.public_key())
 
     def exchange(
         self,
         peer_public_key: typing.Union[bytes, DHPublicKey],
     ) -> bytes:
-        """Perform a key exchange.
-
-        Args:
-            peer_public_key:
-                The peer public key can be a bytes or a :any:`DHPublicKey`
-                object.
-
-        Returns:
-            A shared key.
-
-        Raises:
-            TypeError:
-                if ``peer_public_key`` is not a bytes-like or
-                :any:`DHPublicKey` object.
-        """
         if isinstance(peer_public_key, DHPublicKey):
             return self._key.exchange(peer_public_key._key)
         return self._key.exchange(
@@ -213,24 +160,6 @@ class DHPrivateKey(base.BasePrivateKey):
         format: str = "PKCS8",
         passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
-        """Serialize the private key.
-
-        Args:
-            encoding (str):
-                The encoding to use. Can be ``PEM`` or ``DER``.
-                Defaults to ``PEM``.
-            format (str): The format can be ``PKCS8`` only.
-            passphrase (bytes):
-                The passphrase to use to protect the private key.
-                ``None`` if the private key is not encrypted.
-
-        Returns:
-            bytes: The private key as bytes object.
-
-        Raises:
-            ValueError: if the encoding or format is invalid.
-            TypeError: if the passphrase is not a bytes-like object.
-        """
         if passphrase is None:
             protection = ser.NoEncryption()
         else:
@@ -259,21 +188,6 @@ class DHPrivateKey(base.BasePrivateKey):
         data: bytes,
         passphrase: typing.Optional[bytes] = None,
     ) -> DHPrivateKey:
-        """Deserialize and load the the private key.
-
-        Args:
-            data: The serialized private key as ``bytes-like`` object.
-            passphrase:
-                The passphrase that was used to protect the private key. If key
-                is not protected, passphrase is ``None``.
-
-        Returns:
-            A private key.
-
-        Raises:
-            ValueError: If the key could not be deserialized.
-            TypeError: If passphrase is not a bytes-like object.
-        """
         formats = {
             b"-----": ser.load_pem_private_key,
             b"0": ser.load_der_private_key,
@@ -304,7 +218,7 @@ class DHPrivateKey(base.BasePrivateKey):
             ) from e
 
 
-class DHPublicKey(base.BasePublicKey):
+class DHPublicKey(base.BaseDHPublicKey):
     _encodings = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
@@ -320,16 +234,10 @@ class DHPublicKey(base.BasePublicKey):
         self._y = key.public_numbers().y
 
     def parameters(self) -> DHParameters:
-        """Creates a new DH parameters object from the key.
-
-        Returns:
-            The DH parameter object.
-        """
         return DHParameters(None, parameter=self._key.parameters())
 
     @property
     def key_size(self) -> int:
-        """Size of the key, in bytes."""
         return self._key.key_size
 
     def serialize(
@@ -347,7 +255,7 @@ class DHPublicKey(base.BasePublicKey):
             The public key as bytes object.
 
         Raises:
-            KeyError: if the encoding or format is invalid.
+            ValueError: if the encoding or format is invalid.
         """
         try:
             return self._key.public_bytes(
@@ -365,17 +273,6 @@ class DHPublicKey(base.BasePublicKey):
 
     @classmethod
     def load(cls, data: bytes) -> DHPublicKey:
-        """Deserialize and load the public key.
-
-        Args:
-            data: The serialized public key as ``bytes-like`` object.
-
-        Returns:
-            A public key object.
-
-        Raises:
-            ValueError: If the key could not be deserialized.
-        """
         formats = {
             b"-----": ser.load_pem_public_key,
             b"0": ser.load_der_public_key,
@@ -405,7 +302,7 @@ def generate(key_size: int, g: int = 2) -> DHParameters:
         g: The value to use as a generator value. Default is 2.
 
     Returns:
-        DHParameters: A DH key exchange paramenter object.
+        A DH key exchange paramenter object.
     """
     return DHParameters(key_size, g)
 
@@ -418,12 +315,12 @@ def load_from_parameters(
     """Create a DH Parameter object from the given parameters.
 
     Args:
-        p: The prime modulus ``p`` as ``int``.
+        p: The prime modulus `p` as ``int``.
         g: The generator.
-        q: ``p`` subgroup order value.
+        q: `p` subgroup order value.
 
     Returns:
-        DHParameters: A DH key exchange paramenter object.
+        A DH key exchange paramenter object.
     """
     return DHParameters.load_from_parameters(p, g, q)
 
@@ -435,7 +332,7 @@ def load_parameters(data: bytes) -> DHParameters:
         data: Serialized DH Parameter.
 
     Returns:
-        DHParameters: A parameter object.
+        A parameter object.
     """
     return DHParameters.load(data)
 
