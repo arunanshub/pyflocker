@@ -8,6 +8,34 @@ from pyflocker.ciphers.backends import Backends
 
 SERIALIZATION_KEY = hashlib.sha256(b"SERIALIZATION_KEY").digest()
 
+PRIVATE_KEY_DESERIALIZATION_TESTING_KEY = b"""\
+-----BEGIN PRIVATE KEY-----
+MIICdwIBADANBgkqhkiG9w0BAQEFAASCAmEwggJdAgEAAoGBANrHjEjTGuI53E6n
+3YOew7haCTzwO2R5Kx5ktepffDCHk6LK9TxHm0cJP6uRIQGVfqsLOkMCmMIw+u12
+fgdQFvAEemvYn0ujFwkMxVaTMphJ+llhQOp0amIuH0jtd0x5jkcxc1GMD7tUvi7p
+Tcp+aGvSdgE4DAqOAxmheiDfYZcNAgMBAAECgYEArj5nuEiKDMtQb0S64+06rETp
+PqOGagsnEFndmQDbhDs2ll1W29+cCAORti8sPnq2G7whduVGjMM91oqc7W4YFTAu
+9icwcbG3XH1CV6A2iWaoNepTZioZYomylF1a2wOOOEHahjcvIc9BrpdD5/JdYBoj
+4Y3KA9YYWHG0OQVB8IECQQDxfxR/SkUSpkjnhc1w9sOaBJ9MnQXrqLGHH/jGyyGv
+NZSBQDrwh/9l5b6aRK90+jQPjZyAGk6AVdU0xK6L7xNlAkEA5+s0FY69EDClhTUT
+IujlZXYHNSQxw6w5dKav1IPAY2IdoKr0xvBkqKdJIE/fdt/4/Cd80kEuVHB6Jjd7
+vEr+iQJBAOG+Vxy+Al9yjUfPLcHhCetZUse9KKGnqXuUiWray3wK6+z+a5oYpsdL
+waZXemQw1qWLTLX64VLZ6VlQWZF5RHkCQCGD9Rf0c9AmJ5VzkRtnatdZ0jrUyzhK
+6Fa6TAi7LY9vO3bfndYuIW3aFxBLWrD0NyhBkKFV+BsN0ik5tXEFqXkCQHcG7ClZ
+c84r6y+Pe2fYXYprIRIaSmp3u3912xpcyTAlsvCvshMBk/6qDCu5G00fxHong/Q6
+4LZG2ywmlWmhcgM=
+-----END PRIVATE KEY-----
+"""
+
+PUBLIC_KEY_DESERIALIZATION_TESTING_KEY = b"""\
+-----BEGIN PUBLIC KEY-----
+MIGfMA0GCSqGSIb3DQEBAQUAA4GNADCBiQKBgQDuAwZY1btNke+dyI1vAZMBaekN
+S/sSZglgUUNKDf2xFG2ycHka7NUJSnDV9XCdY+aDFE5PEI+v19Cy0XLCjHuNiJVj
+KS4r1cm9dO66bA0wA5RJCLehxkKJ2blKZADvmOB9EwaBmP9m1u9rUs3i8Jqzoh0I
+HXaBksU5EaWUBaeIzQIDAQAB
+-----END PUBLIC KEY-----
+"""
+
 
 @pytest.fixture(scope="module")
 def dh_param(key_size, backend):
@@ -164,9 +192,16 @@ class TestDHExchange(object):
         ) == private_key2.exchange(private_key.public_key())
 
 
+single_key_size_fixture = pytest.mark.parametrize(
+    "key_size",
+    [512],
+    scope="module",
+)
+
+
 @pytest.mark.parametrize("backend", [Backends.CRYPTOGRAPHY], scope="module")
 class TestDHErrors:
-    @key_size_fixture
+    @single_key_size_fixture
     def test_dh_param_serialize_invalid_encoding_format(self, dh_param):
         with pytest.raises(ValueError):
             dh_param.serialize(encoding="nonexistent")
@@ -184,7 +219,7 @@ class TestDHErrors:
         with pytest.raises(ValueError):
             DH.load_parameters(b"-----BEGIN DH PARAMETERS123", backend=backend)
 
-    @key_size_fixture
+    @single_key_size_fixture
     def test_dh_private_key_invalid_encoding_format(self, dh_param):
         private_key = dh_param.private_key()
 
@@ -207,7 +242,22 @@ class TestDHErrors:
                 backend=backend,
             )
 
-    @key_size_fixture
+        with pytest.raises(ValueError):
+            DH.load_private_key(PRIVATE_KEY_DESERIALIZATION_TESTING_KEY)
+
+    @single_key_size_fixture
+    def test_dh_private_key_password_errors(self, dh_param):
+        private_key = dh_param.private_key()
+
+        serialized = private_key.serialize()
+        with pytest.raises(ValueError):
+            DH.load_private_key(serialized, passphrase=b"unnecessary")
+
+        serialized2 = private_key.serialize(passphrase=b"password given")
+        with pytest.raises(ValueError):
+            DH.load_private_key(serialized2)
+
+    @single_key_size_fixture
     def test_dh_public_key_invalid_encoding_format(self, dh_param):
         public_key = dh_param.private_key().public_key()
 
@@ -232,3 +282,6 @@ class TestDHErrors:
                 b"-----BEGIN",
                 backend=backend,
             )
+
+        with pytest.raises(ValueError):
+            DH.load_public_key(PUBLIC_KEY_DESERIALIZATION_TESTING_KEY)
