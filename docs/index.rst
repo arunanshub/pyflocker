@@ -77,7 +77,7 @@ is very easy:
     # Multiple backends - same API
     enc = AES.new(True, key, AES.MODE_EAX, nonce, backend=Backends.CRYPTOGRAPHY)
     rpriv = RSA.generate(2048, backend=Backends.CRYPTODOME)
-    epriv = ECC.generate("x25519", backend=Backend.CRYPTOGRAPHY)
+    epriv = ECC.generate("x25519", backend=Backends.CRYPTOGRAPHY)
 
 Backend loading is done internally, and if a backend is explicitly specified,
 that is used as the default.
