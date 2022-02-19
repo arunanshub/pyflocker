@@ -4,17 +4,25 @@ import typing
 
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import dh
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    ParameterFormat,
+    PrivateFormat,
+    PublicFormat,
+)
 
 from ... import base
-from .asymmetric import (
-    ENCODINGS,
-    PARAMETER_FORMATS,
-    PRIVATE_FORMATS,
-    PUBLIC_FORMATS,
-)
 
 
 class DHParameters:
+    _encodings = {
+        "PEM": Encoding.PEM,
+        "DER": Encoding.DER,
+    }
+    _formats = {
+        "PKCS3": ParameterFormat.PKCS3,
+    }
+
     def __init__(
         self,
         key_size: typing.Optional[int],
@@ -75,11 +83,13 @@ class DHParameters:
         """
         try:
             return self._params.parameter_bytes(
-                ENCODINGS[encoding],
-                PARAMETER_FORMATS[format],
+                self._encodings[encoding],
+                self._formats[format],
             )
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args[0]}") from e
+            raise ValueError(
+                f"Invalid encoding or format: {e.args[0]!r}"
+            ) from e
 
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
@@ -109,8 +119,8 @@ class DHParameters:
             return cls(None, parameter=params)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid or "
-                "passphrase is missing or incorrect."
+                "Cannot deserialize key. The key format is invalid. Backend "
+                f"error message:\n{e}",
             ) from e
 
     @classmethod
@@ -135,6 +145,14 @@ class DHParameters:
 
 
 class DHPrivateKey(base.BasePrivateKey):
+    _encodings = {
+        "PEM": Encoding.PEM,
+        "DER": Encoding.DER,
+    }
+    _formats = {
+        "PKCS8": PrivateFormat.PKCS8,
+    }
+
     def __init__(self, key):
         if not isinstance(key, dh.DHPrivateKey):
             raise ValueError("The key is not a DH private key.")
@@ -222,12 +240,14 @@ class DHPrivateKey(base.BasePrivateKey):
 
         try:
             return self._key.private_bytes(
-                ENCODINGS[encoding],
-                PRIVATE_FORMATS[format],
+                self._encodings[encoding],
+                self._formats[format],
                 protection,
             )
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args[0]}") from e
+            raise ValueError(
+                f"Invalid encoding or format: {e.args[0]!r}"
+            ) from e
 
     @property
     def x(self) -> int:
@@ -274,17 +294,25 @@ class DHPrivateKey(base.BasePrivateKey):
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
-                "passphrase is incorrect."
+                f"passphrase is incorrect. Backend error message:\n{e}"
             ) from e
         except TypeError as e:
             raise ValueError(
                 "The key is encrypted but the passphrase is not given or the"
                 " key is not encrypted but the passphrase is given."
-                " Cannot deserialize the key."
+                f" Cannot deserialize the key. Backend error message:\n{e}"
             ) from e
 
 
 class DHPublicKey(base.BasePublicKey):
+    _encodings = {
+        "PEM": Encoding.PEM,
+        "DER": Encoding.DER,
+    }
+    _formats = {
+        "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
+    }
+
     def __init__(self, key):
         if not isinstance(key, dh.DHPublicKey):
             raise ValueError("The key is not a DH public key.")
@@ -292,7 +320,7 @@ class DHPublicKey(base.BasePublicKey):
         self._y = key.public_numbers().y
 
     def parameters(self) -> DHParameters:
-        """Creates a new :any:`DHParameters` object from the key.
+        """Creates a new DH parameters object from the key.
 
         Returns:
             The DH parameter object.
@@ -323,11 +351,13 @@ class DHPublicKey(base.BasePublicKey):
         """
         try:
             return self._key.public_bytes(
-                ENCODINGS[encoding],
-                PUBLIC_FORMATS[format],
+                self._encodings[encoding],
+                self._formats[format],
             )
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}") from e
+            raise ValueError(
+                f"Invalid encoding or format: {e.args[0]!r}"
+            ) from e
 
     @property
     def y(self) -> int:
@@ -360,7 +390,8 @@ class DHPublicKey(base.BasePublicKey):
             return cls(key=loader(memoryview(data)))
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Incorrect key format.",
+                "Cannot deserialize key. Incorrect key format. Backend error"
+                f" message:\n{e}",
             ) from e
 
 
