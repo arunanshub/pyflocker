@@ -85,7 +85,8 @@ class BaseAEADCipher(BaseSymmetricCipher):
 
         Raises:
             TypeError:
-                if this method is called after calling :py:meth:`~update`.
+                if this method is called after calling
+                :py:meth:`~BaseSymmetricCipher.update`.
         """
 
     @abstractmethod
@@ -486,4 +487,235 @@ class BaseDecryptorContext(metaclass=ABCMeta):
 
         Raises:
             DecryptionError: if the decryption was not successful.
+        """
+
+
+class BaseDHParameters(metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def g(self) -> int:
+        """The generator value."""
+
+    @property
+    @abstractmethod
+    def p(self) -> int:
+        """The prime modulus value."""
+
+    @property
+    @abstractmethod
+    def q(self) -> typing.Optional[int]:
+        """The p subgroup order value."""
+
+    @abstractmethod
+    def private_key(self) -> BaseDHPrivateKey:
+        """Create a DH private key from the parameters.
+
+        Returns:
+            A private key object.
+        """
+
+    @abstractmethod
+    def serialize(self, encoding: str, format: str) -> bytes:
+        """Serialize the DH parameters.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+
+        Returns:
+            The parameters encoded as bytes object.
+
+        Raises:
+            ValueError: if the encoding of format is invalid.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of this method for supported options.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(cls, data: bytes) -> BaseDHParameters:
+        """Deserialize the encoded DH parameters.
+
+        Args:
+            data: The parameters as an encoded bytes object.
+
+        Returns:
+            DH parameter object.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load_from_parameters(
+        cls,
+        p: int,
+        g: int = 2,
+        q: typing.Optional[int] = None,
+    ) -> BaseDHParameters:
+        """Generates a DH parameter group from the parameters.
+
+        Args:
+            p: The prime modulus value.
+            g: The generator value. Must be 2 or 5. Default is 2.
+            q: p subgroup order value. Defaults to ``None``.
+
+        Returns:
+            DH Parameter object.
+        """
+
+
+class BaseDHPrivateKey(metaclass=ABCMeta):
+    @abstractmethod
+    def parameters(self) -> BaseDHParameters:
+        """Creates a new DH Parameters object from the key.
+
+        Returns:
+            The DH parameter object.
+        """
+
+    @property
+    @abstractmethod
+    def key_size(self) -> int:
+        """Size of the key, in bytes."""
+
+    @abstractmethod
+    def public_key(self) -> BaseDHPublicKey:
+        """Create a public key from the private key.
+
+        Returns:
+            A public key object.
+        """
+
+    @abstractmethod
+    def exchange(
+        self,
+        peer_public_key: typing.Union[bytes, BaseDHPublicKey],
+    ) -> bytes:
+        """Perform a key exchange.
+
+        Args:
+            peer_public_key:
+                The peer public key can be a bytes or a :any:`BaseDHPublicKey`
+                object.
+
+        Returns:
+            A shared key.
+
+        Raises:
+            TypeError:
+                if ``peer_public_key`` is not a bytes-like or DH Public Key
+                object.
+        """
+
+    @abstractmethod
+    def serialize(
+        self,
+        encoding: str,
+        format: str,
+        passphrase: typing.Optional[bytes],
+    ) -> bytes:
+        """Serialize the private key.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+            passphrase:
+                The passphrase to use to protect the private key. ``None`` if
+                the private key is not encrypted.
+
+        Returns:
+            The private key as bytes object.
+
+        Raises:
+            ValueError: if the encoding or format is invalid.
+            TypeError: if the passphrase is not a bytes-like object.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of this method for supported options.
+        """
+
+    @property
+    @abstractmethod
+    def x(self) -> int:
+        """The private value."""
+
+    @classmethod
+    @abstractmethod
+    def load(
+        cls,
+        data: bytes,
+        passphrase: typing.Optional[bytes] = None,
+    ) -> BaseDHPrivateKey:
+        """Deserialize and load the the private key.
+
+        Args:
+            data: The serialized private key as bytes-like object.
+            passphrase:
+                The passphrase that was used to protect the private key. If key
+                is not protected, passphrase is ``None``.
+
+        Returns:
+            A private key.
+
+        Raises:
+            ValueError: If the key could not be deserialized.
+            TypeError: If passphrase is not a bytes-like object.
+        """
+
+
+class BaseDHPublicKey(metaclass=ABCMeta):
+    @abstractmethod
+    def parameters(self) -> BaseDHParameters:
+        """Creates a new DH parameters object from the key.
+
+        Returns:
+            The DH parameter object.
+        """
+
+    @property
+    @abstractmethod
+    def key_size(self) -> int:
+        """Size of the key, in bytes."""
+
+    @abstractmethod
+    def serialize(
+        self,
+        encoding: str,
+        format: str,
+    ) -> bytes:
+        """Serialize the public key.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+
+        Returns:
+            The public key as bytes object.
+
+        Raises:
+            ValueError: if the encoding or format is invalid.
+        """
+
+    @property
+    @abstractmethod
+    def y(self) -> int:
+        """The public value."""
+
+    @classmethod
+    @abstractmethod
+    def load(cls, data: bytes) -> BaseDHPublicKey:
+        """Deserialize and load the public key.
+
+        Args:
+            data: The serialized public key as bytes-like object.
+
+        Returns:
+            A public key object.
+
+        Raises:
+            ValueError: If the key could not be deserialized.
         """
