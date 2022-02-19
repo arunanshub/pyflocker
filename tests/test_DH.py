@@ -178,6 +178,12 @@ class TestDHErrors:
         with pytest.raises(ValueError):
             DH.load_parameters(b"invalid", backend=backend)
 
+        with pytest.raises(ValueError):
+            DH.load_parameters(b"012323", backend=backend)
+
+        with pytest.raises(ValueError):
+            DH.load_parameters(b"-----BEGIN DH PARAMETERS123", backend=backend)
+
     @key_size_fixture
     def test_dh_private_key_invalid_encoding_format(self, dh_param):
         private_key = dh_param.private_key()
@@ -192,6 +198,15 @@ class TestDHErrors:
         with pytest.raises(ValueError):
             DH.load_private_key(b"invalid", backend=backend)
 
+        with pytest.raises(ValueError):
+            DH.load_private_key(b"012323", backend=backend)
+
+        with pytest.raises(ValueError):
+            DH.load_private_key(
+                b"-----BEGIN",
+                backend=backend,
+            )
+
     @key_size_fixture
     def test_dh_public_key_invalid_encoding_format(self, dh_param):
         public_key = dh_param.private_key().public_key()
@@ -202,6 +217,18 @@ class TestDHErrors:
         with pytest.raises(ValueError):
             public_key.serialize(format="nonexistent")
 
+        with pytest.raises(ValueError):
+            public_key.serialize(format="PKCS8")
+
     def test_dh_public_key_load_invalid_data_format(self, backend):
         with pytest.raises(ValueError):
             DH.load_public_key(b"invalid", backend=backend)
+
+        with pytest.raises(ValueError):
+            DH.load_public_key(b"012323", backend=backend)
+
+        with pytest.raises(ValueError):
+            DH.load_public_key(
+                b"-----BEGIN",
+                backend=backend,
+            )
