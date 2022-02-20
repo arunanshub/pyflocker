@@ -54,7 +54,7 @@ class DHParameters(base.BaseDHParameters):
 
     @property
     def q(self) -> typing.Optional[int]:
-        self._q
+        return self._q
 
     def private_key(self) -> DHPrivateKey:
         return DHPrivateKey(self._params.generate_private_key())
@@ -146,12 +146,21 @@ class DHPrivateKey(base.BaseDHPrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.Union[bytes, DHPublicKey],
+        peer_public_key: typing.Union[
+            bytes,
+            DHPublicKey,
+            base.BaseDHPublicKey,
+        ],
     ) -> bytes:
+        if isinstance(peer_public_key, bytes):
+            return self._key.exchange(DHPublicKey.load(peer_public_key)._key)
+        # optimizing case: key is made from this Backend
         if isinstance(peer_public_key, DHPublicKey):
             return self._key.exchange(peer_public_key._key)
-        return self._key.exchange(
-            DHPublicKey.load(memoryview(peer_public_key).tobytes())._key
+        return self._key.exchange(  # pragma: no cover
+            DHPublicKey.load(
+                peer_public_key.serialize("PEM", "SubjectPublicKeyInfo"),
+            )._key
         )
 
     def serialize(
@@ -160,6 +169,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         format: str = "PKCS8",
         passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
+        protection: ser.KeySerializationEncryption
         if passphrase is None:
             protection = ser.NoEncryption()
         else:
