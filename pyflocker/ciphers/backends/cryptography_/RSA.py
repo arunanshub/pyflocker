@@ -73,13 +73,17 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def public_key(self) -> RSAPublicKey:
         return RSAPublicKey(self._key.public_key())
 
-    def decryptor(self, padding=OAEP()) -> DecryptorContext:
+    def decryptor(self, padding=None) -> DecryptorContext:
+        if padding is None:
+            padding = OAEP()
         return DecryptorContext(
             self._key,
             get_padding_func(padding)(padding),
         )
 
-    def signer(self, padding=PSS()) -> SignerContext:
+    def signer(self, padding=None) -> SignerContext:
+        if padding is None:
+            padding = PSS()
         return SignerContext(
             self._key,
             get_padding_func(padding)(padding),
@@ -202,13 +206,17 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     def key_size(self) -> int:
         return self._key.key_size
 
-    def encryptor(self, padding=OAEP()) -> EncryptorContext:
+    def encryptor(self, padding=None) -> EncryptorContext:
+        if padding is None:
+            padding = OAEP()
         return EncryptorContext(
             self._key,
             get_padding_func(padding)(padding),
         )
 
-    def verifier(self, padding=PSS()) -> VerifierContext:
+    def verifier(self, padding=None) -> VerifierContext:
+        if padding is None:
+            padding = PSS()
         return VerifierContext(
             self._key,
             get_padding_func(padding)(padding),
@@ -267,7 +275,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
 class EncryptorContext(base.BaseEncryptorContext):
     def __init__(self, key, padding):
-        self._encrypt_func = partial(getattr(key, "encrypt"), padding=padding)
+        self._encrypt_func = partial(key.encrypt, padding=padding)
 
     def encrypt(self, plaintext: bytes) -> bytes:
         return self._encrypt_func(plaintext)
@@ -275,7 +283,7 @@ class EncryptorContext(base.BaseEncryptorContext):
 
 class DecryptorContext(base.BaseDecryptorContext):
     def __init__(self, key, padding):
-        self._decrypt_func = partial(getattr(key, "decrypt"), padding=padding)
+        self._decrypt_func = partial(key.decrypt, padding=padding)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
         try:
@@ -286,7 +294,7 @@ class DecryptorContext(base.BaseDecryptorContext):
 
 class SignerContext(base.BaseSignerContext):
     def __init__(self, key, padding):
-        self._sign_func = partial(getattr(key, "sign"), padding=padding)
+        self._sign_func = partial(key.sign, padding=padding)
 
     def sign(self, msghash: base.BaseHash) -> bytes:
         return self._sign_func(
@@ -297,7 +305,7 @@ class SignerContext(base.BaseSignerContext):
 
 class VerifierContext(base.BaseVerifierContext):
     def __init__(self, key, padding):
-        self._verify_func = partial(getattr(key, "verify"), padding=padding)
+        self._verify_func = partial(key.verify, padding=padding)
 
     def verify(self, msghash: base.BaseHash, signature: bytes):
         try:
