@@ -6,27 +6,30 @@ from functools import partial
 import cryptography.exceptions as bkx
 from cryptography.hazmat.primitives import serialization as ser
 from cryptography.hazmat.primitives.asymmetric import rsa, utils
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    PrivateFormat,
+    PublicFormat,
+)
 
 from ... import base, exc
 from ..asymmetric import OAEP, PSS
 from . import Hash
-from .asymmetric import (
-    ENCODINGS,
-    PRIVATE_FORMATS,
-    PUBLIC_FORMATS,
-    get_padding_func,
-)
-
-_supported_encodings = frozenset(
-    (
-        "PEM",
-        "DER",
-        "OpenSSH",
-    )
-)
+from .asymmetric import get_padding_func
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
+    _encodings = {
+        "PEM": Encoding.PEM,
+        "DER": Encoding.DER,
+    }
+    _formats = {
+        "OpenSSH": PrivateFormat.OpenSSH,
+        "PKCS1": PrivateFormat.TraditionalOpenSSL,
+        "PKCS8": PrivateFormat.PKCS8,
+        "TraditionalOpenSSL": PrivateFormat.TraditionalOpenSSL,
+    }
+
     def __init__(self, n: int, e: int = 65537, **kwargs):
         if kwargs:
             self._key = kwargs.pop("key")
@@ -109,23 +112,22 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         Raises:
            ValueError: if the format or encoding is invalid or not supported.
         """
-        if encoding not in _supported_encodings ^ {"OpenSSH"}:
-            raise ValueError("Encoding must be PEM or DER")
-
         try:
-            encd = ENCODINGS[encoding]
-            fmt = PRIVATE_FORMATS[format]
+            encd = self._encodings[encoding]
+            fmt = self._formats[format]
         except KeyError as e:
-            raise ValueError("The encoding or format is invalid.") from e
+            raise ValueError(
+                f"The encoding or format is invalid: {e.args[0]!r}"
+            ) from e
 
-        prot: ser.KeySerializationEncryption
+        protection: ser.KeySerializationEncryption
         if passphrase is None:
-            prot = ser.NoEncryption()
+            protection = ser.NoEncryption()
         else:
-            prot = ser.BestAvailableEncryption(
+            protection = ser.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
-        return self._key.private_bytes(encd, fmt, prot)
+        return self._key.private_bytes(encd, fmt, protection)
 
     @classmethod
     def load(
@@ -167,7 +169,16 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
-    """RSA Public Key wrapper class."""
+    _encodings = {
+        "PEM": Encoding.PEM,
+        "DER": Encoding.DER,
+        "OpenSSH": Encoding.OpenSSH,
+    }
+    _formats = {
+        "OpenSSH": PublicFormat.OpenSSH,
+        "PKCS1": PublicFormat.PKCS1,
+        "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
+    }
 
     def __init__(self, key):
         if not isinstance(key, rsa.RSAPublicKey):
@@ -225,10 +236,12 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             ValueError: if the encoding or format is incorrect or unsupported.
         """
         try:
-            encd = ENCODINGS[encoding]
-            fmt = PUBLIC_FORMATS[format]
+            encd = self._encodings[encoding]
+            fmt = self._formats[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {encoding}") from e
+            raise ValueError(
+                f"Invalid encoding or format: {e.args[0]!r}"
+            ) from e
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
