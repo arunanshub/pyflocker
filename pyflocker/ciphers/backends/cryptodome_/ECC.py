@@ -80,9 +80,9 @@ class ECCPrivateKey(base.BasePrivateKey):
             if protection not in PROTECTION_SCHEMES:
                 raise ValueError("invalid protection scheme")
             # use a curated encryption choice and not DES-EDE3-CBC
-            prot = dict(protection="PBKDF2WithHMAC-SHA1AndAES256-CBC")
+            prot = {"protection": "PBKDF2WithHMAC-SHA1AndAES256-CBC"}
         else:
-            prot = dict(protection=protection)
+            prot = {"protection": protection}
 
         if passphrase is not None:
             # type checking of key
