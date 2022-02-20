@@ -227,15 +227,15 @@ class Hash(base.BaseHash):
                 raise ValueError("digest_size is required")
             # XOFs have the `read()` API, which is frustrating!
             if name not in XOFS:
-                digest_size_kwargs = dict(digest_bytes=digest_size)
+                digest_size_kwargs = {"digest_bytes": digest_size}
 
         custom_kwargs = {}
         if name in SUPPORTS_CUSTOM and custom is not None:
-            custom_kwargs = dict(custom=custom)
+            custom_kwargs = {"custom": custom}
 
         key_kwargs = {}
         if name in SUPPORTS_KEY and key is not None:
-            key_kwargs = dict(key=key)
+            key_kwargs = {"key": key}
 
         hashobj = hashfunc(  # type: ignore
             **digest_size_kwargs,
