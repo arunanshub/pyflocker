@@ -72,9 +72,9 @@ ENCODINGS = MappingProxyType(
 
 
 try:
-    _fmt = dict(OpenSSH=serial.PrivateFormat.OpenSSH)
+    _fmt = {"OpenSSH": serial.PrivateFormat.OpenSSH}
 except AttributeError:
-    _fmt = dict()
+    _fmt = {}
 
 PRIVATE_FORMATS = MappingProxyType(
     {
