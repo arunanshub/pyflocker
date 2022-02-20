@@ -20,7 +20,7 @@ from . import Hash
 from .asymmetric import ENCODINGS, PRIVATE_FORMATS, PUBLIC_FORMATS
 
 # divide curves (ie. public and private keys) into categories
-EXCHANGE_CURVES = MappingProxyType(
+EXCHANGE_CURVES_PRIVATE = MappingProxyType(
     {
         "x448": x448.X448PrivateKey,
         "x25519": x25519.X25519PrivateKey,
@@ -34,7 +34,7 @@ EXCHANGE_CURVES_PUBLIC = MappingProxyType(
     }
 )
 
-EDWARDS_CURVES = MappingProxyType(
+EDWARDS_CURVES_PRIVATE = MappingProxyType(
     {
         "ed448": ed448.Ed448PrivateKey,
         "ed25519": ed25519.Ed25519PrivateKey,
@@ -48,10 +48,10 @@ EDWARDS_CURVES_PUBLIC = MappingProxyType(
     }
 )
 
-SPECIAL_CURVES = MappingProxyType(
+SPECIAL_CURVES_PRIVATE = MappingProxyType(
     {
-        **EXCHANGE_CURVES,
-        **EDWARDS_CURVES,
+        **EXCHANGE_CURVES_PRIVATE,
+        **EDWARDS_CURVES_PRIVATE,
     }
 )
 
@@ -85,7 +85,7 @@ CURVES = MappingProxyType(
         "p521": ec.SECP521R1,
         "P-521": ec.SECP521R1,
         "prime521v1": ec.SECP521R1,
-        **SPECIAL_CURVES,
+        **SPECIAL_CURVES_PRIVATE,
     }
 )
 
@@ -112,10 +112,10 @@ class ECCPrivateKey(base.BasePrivateKey):
             self._key = kwargs.pop("key")
             return
         try:
-            if curve not in SPECIAL_CURVES:
+            if curve not in SPECIAL_CURVES_PRIVATE:
                 self._key = ec.generate_private_key(CURVES[curve], defb())
                 return
-            self._key = SPECIAL_CURVES[curve].generate()
+            self._key = SPECIAL_CURVES_PRIVATE[curve].generate()
         except KeyError as e:
             raise ValueError(f"Invalid curve: {curve}") from e
 
@@ -203,7 +203,7 @@ class ECCPrivateKey(base.BasePrivateKey):
             NotImplementedError: the key does not support key exchange.
         """
         # Ed* key
-        if isinstance(self._key, (*EDWARDS_CURVES.values(),)):
+        if isinstance(self._key, (*EDWARDS_CURVES_PRIVATE.values(),)):
             raise NotImplementedError(
                 "Edwards curves don't suport key exchange."
             )
@@ -214,7 +214,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         peer_public_key = ECCPublicKey.load(peer_public_key)
 
         # X* key
-        if isinstance(self._key, (*EXCHANGE_CURVES.values(),)):
+        if isinstance(self._key, (*EXCHANGE_CURVES_PRIVATE.values(),)):
             return self._key.exchange(peer_public_key._key)
 
         # any other key
@@ -239,12 +239,12 @@ class ECCPrivateKey(base.BasePrivateKey):
             NotImplementedError: if the key doesn't support signing.
         """
         # special case 1: x* key
-        if isinstance(self._key, (*EXCHANGE_CURVES.values(),)):
+        if isinstance(self._key, (*EXCHANGE_CURVES_PRIVATE.values(),)):
             raise NotImplementedError(
                 "Exchange only curves don't support signing."
             )
         # special case 2: ed* key
-        if isinstance(self._key, (*EDWARDS_CURVES.values(),)):
+        if isinstance(self._key, (*EDWARDS_CURVES_PRIVATE.values(),)):
             return _SigVerContext(True, self._key, None)
         return _SigVerContext(True, self._key, SIGNATURE_ALGORITHMS[algorithm])
 
@@ -285,8 +285,7 @@ class ECCPrivateKey(base.BasePrivateKey):
         """
         # type check
         if passphrase is not None:
-            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
-                raise TypeError("passphrase must be a bytes object.")
+            passphrase = memoryview(passphrase).tobytes()
 
         fmts = {
             b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
@@ -301,13 +300,13 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         # type check
         if passphrase is not None:
-            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
-                raise TypeError("passphrase must be a bytes-like object.")
+            passphrase = memoryview(passphrase).tobytes()
 
         try:
             key = loader(memoryview(data), passphrase, defb())
             if not isinstance(
-                key, (ec.EllipticCurvePrivateKey, *SPECIAL_CURVES.values())
+                key,
+                (ec.EllipticCurvePrivateKey, *SPECIAL_CURVES_PRIVATE.values()),
             ):
                 raise ValueError("The key is not an EC private key.")
             return cls(None, key=key)
@@ -326,8 +325,8 @@ class ECCPrivateKey(base.BasePrivateKey):
     @staticmethod
     def _get_raw_ecc_loader(data, edwards=True):
         fmts = {
-            57: SPECIAL_CURVES["ed448"].from_private_bytes,
-            56: SPECIAL_CURVES["x448"].from_private_bytes,
+            57: SPECIAL_CURVES_PRIVATE["ed448"].from_private_bytes,
+            56: SPECIAL_CURVES_PRIVATE["x448"].from_private_bytes,
             32: None,
         }
 
@@ -338,9 +337,9 @@ class ECCPrivateKey(base.BasePrivateKey):
 
         if loader is None:
             if edwards:
-                loader = SPECIAL_CURVES["ed25519"].from_private_bytes
+                loader = SPECIAL_CURVES_PRIVATE["ed25519"].from_private_bytes
             else:
-                loader = SPECIAL_CURVES["x25519"].from_private_bytes
+                loader = SPECIAL_CURVES_PRIVATE["x25519"].from_private_bytes
 
         return lambda data, *args: loader(data)
 
@@ -483,9 +482,9 @@ class ECCPublicKey(base.BasePublicKey):
 
         if loader is None:
             if edwards:
-                loader = SPECIAL_CURVES["ed25519"].from_public_bytes
+                loader = SPECIAL_CURVES_PRIVATE["ed25519"].from_public_bytes
             else:
-                loader = SPECIAL_CURVES["x25519"].from_public_bytes
+                loader = SPECIAL_CURVES_PRIVATE["x25519"].from_public_bytes
 
         return lambda data, *args: loader(data)
 
