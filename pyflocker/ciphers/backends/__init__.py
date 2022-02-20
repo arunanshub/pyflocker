@@ -71,7 +71,7 @@ def load_backend(
 
     if _DEFAULT_BACKEND is None:
         _DEFAULT_BACKEND = _import_helper(backend)
-        return _DEFAULT_BACKEND
+        return _DEFAULT_BACKEND  # noqa: PIE781
 
     return _import_helper(backend)
 
