@@ -33,16 +33,17 @@ def derive_hkdf_key(
         auth_ctx (bytes): Context for HMAC.
 
     Returns:
-        tuple[bytes, bytes]: A pair of *cipher key* and *MAC key*.
+        A pair of *cipher key* and *MAC key*.
     """
+    if not isinstance(hashalgo, (str, BaseHash)):
+        raise TypeError(
+            "hashalgo must be a str or an object implementing BaseHash"
+        )
+
     if isinstance(hashalgo, str):
         hash_ = _hashes[hashalgo]()
-    elif isinstance(hashalgo, BaseHash):
-        hash_ = _get_hash_algorithm(hashalgo)
     else:
-        raise TypeError(
-            "hashalgo must be a str or an object implementing BaseHash."
-        )
+        hash_ = _get_hash_algorithm(hashalgo)
 
     key = HKDF(
         hash_,
@@ -81,9 +82,5 @@ def derive_poly1305_key(ckey: bytes, nonce: bytes) -> bytes:
     if len(nonce) == 8:
         nonce = bytes(4) + nonce
 
-    crp = Cipher(
-        algo.ChaCha20(ckey, bytes(4) + nonce),
-        None,
-        defb(),
-    ).encryptor()
+    crp = Cipher(algo.ChaCha20(ckey, bytes(4) + nonce), None).encryptor()
     return crp.update(bytes(32))

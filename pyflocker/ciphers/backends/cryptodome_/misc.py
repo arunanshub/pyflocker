@@ -31,15 +31,16 @@ def derive_hkdf_key(
     Returns:
         tuple[bytes, bytes]: A pair of *cipher key* and *MAC key*.
     """
-    if isinstance(hashalgo, str):
-        hash_ = Hash.new(hashalgo)
-    elif isinstance(hashalgo, BaseHash):
-        # use our hashalgo
-        hash_ = hashalgo.new()
-    else:
+    if not isinstance(hashalgo, (str, BaseHash)):
         raise TypeError(
             "hashalgo must be a str or an object implementing BaseHash."
         )
+
+    if isinstance(hashalgo, str):
+        hash_ = Hash.new(hashalgo)
+    else:
+        # use our hashalgo
+        hash_ = hashalgo.new()
 
     key = KDF.HKDF(
         master=master_key,
