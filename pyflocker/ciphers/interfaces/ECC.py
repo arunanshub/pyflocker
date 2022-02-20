@@ -57,10 +57,9 @@ def load_public_key(
     Returns:
         BasePublicKey: An ECC public key.
     """
-    kwargs = dict()
-    if len(data) == 32:
-        if backend == _Backends.CRYPTOGRAPHY:
-            kwargs = dict(edwards=edwards)
+    kwargs = {}
+    if len(data) == 32 and backend == _Backends.CRYPTOGRAPHY:
+        kwargs = {"edwards": edwards}
     return _load_ecc_cpr(backend).load_public_key(data, **kwargs)
 
 
@@ -96,10 +95,9 @@ def load_private_key(
     Returns:
         BasePrivateKey: An ECCPrivateKey interface.
     """
-    kwargs = dict()
-    if len(data) == 32:
-        if backend == _Backends.CRYPTOGRAPHY:
-            kwargs = dict(edwards=edwards)
+    kwargs = {}
+    if len(data) == 32 and backend == _Backends.CRYPTOGRAPHY:
+        kwargs = {"edwards": edwards}
     return _load_ecc_cpr(backend).load_private_key(
         data,
         passphrase,
