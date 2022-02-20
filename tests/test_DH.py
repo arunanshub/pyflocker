@@ -156,7 +156,7 @@ class TestDHPublicKeyEncoding:
 
 @key_size_fixture
 @backend_cross_fixture
-class TestDHExchange(object):
+class TestDHExchange:
     def test_exchange(self, dh_param, backend2):
         try:
             dh_param2 = DH.load_parameters(

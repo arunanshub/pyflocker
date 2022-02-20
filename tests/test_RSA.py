@@ -178,7 +178,7 @@ class TestPublicKeyEncoding:
 
 @bits_fixture
 @backend_cross_fixture
-class TestSigningVerifying(object):
+class TestSigningVerifying:
     @pytest.mark.parametrize("hashname", ["sha256", "sha512", "sha3_512"])
     # maximum and minimum salt lengths
     @pytest.mark.parametrize("salt_length", [None, 0])
