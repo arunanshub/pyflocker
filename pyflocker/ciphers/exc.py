@@ -9,13 +9,9 @@ class DecryptionError(Exception):
     - Asymmetric ciphers (RSA) failed to decrypt the data.
     """
 
-    pass
-
 
 class SignatureError(Exception):
     """Raised when the signature is invalid."""
-
-    pass
 
 
 class FinalizationError(Exception):
@@ -24,25 +20,17 @@ class FinalizationError(Exception):
     destruction related errors.
     """
 
-    pass
-
 
 class UnsupportedAlgorithm(Exception):
     """Raised if the backend does not support the algorithm."""
-
-    pass
 
 
 class AlreadyFinalized(FinalizationError):
     """The context was already destroyed."""
 
-    pass
-
 
 class NotFinalized(FinalizationError):
     """The context has not been destroyed yet."""
-
-    pass
 
 
 NotYetFinalized = NotFinalized
