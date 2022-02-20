@@ -95,9 +95,8 @@ class FileCipherWrapper(base.BaseAEADCipher):
         """
         if self._ctx is None:
             raise exc.AlreadyFinalized
-        if not self._encrypting:
-            if tag is None:
-                raise ValueError("tag is required for decryption")
+        if not self._encrypting and tag is None:
+            raise ValueError("tag is required for decryption")
 
         buf = memoryview(bytearray(blocksize + self._offset))
         rbuf = buf[:blocksize]
@@ -215,12 +214,11 @@ class HMACWrapper(base.BaseAEADCipher):
 
         self._ctx = None
 
-        if not self._encrypting:
-            if not hmac.compare_digest(
-                self._auth.digest()[: self._tag_length],
-                tag,
-            ):
-                raise exc.DecryptionError
+        if not self._encrypting and not hmac.compare_digest(
+            self._auth.digest()[: self._tag_length],
+            tag,
+        ):
+            raise exc.DecryptionError
 
     def calculate_tag(self):
         if self._ctx is not None:
