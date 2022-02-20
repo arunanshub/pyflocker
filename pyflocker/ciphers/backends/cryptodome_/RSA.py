@@ -45,12 +45,16 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def key_size(self) -> int:
         return self._key.size_in_bits()
 
-    def decryptor(self, padding=OAEP()) -> DecryptorContext:
+    def decryptor(self, padding=None) -> DecryptorContext:
+        if padding is None:
+            padding = OAEP()
         return DecryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
-    def signer(self, padding=PSS()) -> SignerContext:
+    def signer(self, padding=None) -> SignerContext:
+        if padding is None:
+            padding = PSS()
         return SignerContext(
             get_padding_func(padding)(self._key, padding),
         )
@@ -95,9 +99,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
             raise ValueError("encoding must be PEM or DER")
 
-        if protection is not None:
-            if protection not in PROTECTION_SCHEMES:
-                raise ValueError("invalid protection scheme")
+        if protection is not None and protection not in PROTECTION_SCHEMES:
+            raise ValueError("invalid protection scheme")
 
         if format == "PKCS1":
             if protection is not None:
@@ -157,12 +160,16 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     def key_size(self) -> int:
         return self._key.size_in_bits()
 
-    def encryptor(self, padding=OAEP()) -> EncryptorContext:
+    def encryptor(self, padding=None) -> EncryptorContext:
+        if padding is None:
+            padding = OAEP()
         return EncryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
-    def verifier(self, padding=PSS()) -> VerifierContext:
+    def verifier(self, padding=None) -> VerifierContext:
+        if padding is None:
+            padding = PSS()
         return VerifierContext(
             get_padding_func(padding)(self._key, padding),
         )
@@ -172,7 +179,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         encoding: str = "PEM",
         format: str = "SubjectPublicKeyInfo",
     ) -> bytes:
-        """Serialize the private key.
+        """Serialize the public key.
 
         Args:
             encoding: PEM, DER or OpenSSH (defaults to PEM).
