@@ -87,7 +87,7 @@ class Hash(base.BaseHash):
             "digest_size",
             digest_size,
         )
-        self._block_size = getattr(self._ctx.algorithm, "block_size")
+        self._block_size = getattr(self._ctx.algorithm, "block_size", None)
         self._oid = OIDS.get(name, NotImplemented)
 
     @property
@@ -171,7 +171,7 @@ class Hash(base.BaseHash):
         if name in VAR_DIGEST_SIZE:
             if digest_size is None:
                 raise ValueError("digest_size is required")
-            digest_size_kwargs = dict(digest_size=digest_size)
+            digest_size_kwargs = {"digest_size": digest_size}
 
         hashobj = hashes.Hash(hashfunc(**digest_size_kwargs))  # type: ignore
 
