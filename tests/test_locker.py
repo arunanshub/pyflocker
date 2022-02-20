@@ -244,14 +244,13 @@ class TestLockerErrors:
 
         with infile_path.open("w+b") as infile, outfile_path.open(
             "w+b"
-        ) as outfile:
-            with pytest.raises(NotImplementedError):
-                locker.encryptf(
-                    infile,
-                    outfile,
-                    ENCRYPTION_DECRYPTION_PASSWORD,
-                    aes_mode=mode,
-                )
+        ) as outfile, pytest.raises(NotImplementedError):
+            locker.encryptf(
+                infile,
+                outfile,
+                ENCRYPTION_DECRYPTION_PASSWORD,
+                aes_mode=mode,
+            )
 
     def test_encryptf_max_metadata_len(self, tmp_path: "Path"):
         infile_path = tmp_path / "infile"
@@ -259,14 +258,13 @@ class TestLockerErrors:
 
         with infile_path.open("w+b") as infile, outfile_path.open(
             "w+b"
-        ) as outfile:
-            with pytest.raises(OverflowError):
-                locker.encryptf(
-                    infile,
-                    outfile,
-                    ENCRYPTION_DECRYPTION_PASSWORD,
-                    metadata=bytes(locker.MAX_METADATA_LEN + 1),
-                )
+        ) as outfile, pytest.raises(OverflowError):
+            locker.encryptf(
+                infile,
+                outfile,
+                ENCRYPTION_DECRYPTION_PASSWORD,
+                metadata=bytes(locker.MAX_METADATA_LEN + 1),
+            )
 
     def test_locker_newfile_ext_exculsive(self, tmp_path: "Path"):
         nonexistent_path = tmp_path / "nonexistent"
@@ -333,14 +331,13 @@ class TestLockerErrors:
         outfile_path = tmp_path / "outfile"
         with infile_path.open("wb") as infile, outfile_path.open(
             "w+b"
-        ) as outfile:
-            with pytest.raises(ValueError):
-                locker.encryptf(
-                    infile,
-                    outfile,
-                    ENCRYPTION_DECRYPTION_PASSWORD,
-                    dklen=11,
-                )
+        ) as outfile, pytest.raises(ValueError):
+            locker.encryptf(
+                infile,
+                outfile,
+                ENCRYPTION_DECRYPTION_PASSWORD,
+                dklen=11,
+            )
 
     def test_encrypt_decrypt_outfile_deleted_on_header_mismatch(
         self,
