@@ -374,12 +374,9 @@ def supported_modes() -> typing.Set[_m]:
 def _aes_cipher(key, mode, nonce_or_iv):
     if mode == _m.MODE_EAX:
         return _EAX(key, nonce_or_iv)
-    if mode in modes_.SPECIAL:
-        if mode == _m.MODE_CCM:
-            if not 7 <= len(nonce_or_iv) <= 13:
-                raise ValueError(
-                    "Length of nonce must be between 7 and 13 bytes."
-                )
+    if mode in modes_.SPECIAL and mode == _m.MODE_CCM:
+        if not 7 <= len(nonce_or_iv) <= 13:
+            raise ValueError("Length of nonce must be between 7 and 13 bytes")
         return SUPPORTED[mode](key)
 
     return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv), defb())
@@ -387,7 +384,7 @@ def _aes_cipher(key, mode, nonce_or_iv):
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
-    crp = HMACWrapper(
+    return HMACWrapper(
         NonAEAD(encrypting, ckey, mode, iv_or_nonce),
         hkey,
         iv_or_nonce,
@@ -395,4 +392,3 @@ def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
         tag_length=tag_length,
         offset=15,
     )
-    return crp
