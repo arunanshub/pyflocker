@@ -48,9 +48,8 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         return _DecryptionCtx(ctx, auth)
 
     def _pad_aad(self):
-        if not self._updated:
-            if self._len_aad & 0x0F:
-                self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
+        if not self._updated and self._len_aad & 0x0F:
+            self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
         self._updated = True
 
     def is_encrypting(self):
@@ -81,9 +80,8 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
     def finalize(self, tag=None):
         if self._ctx is None:
             raise exc.AlreadyFinalized
-        if not self.is_encrypting():
-            if tag is None:
-                raise ValueError("tag is required for decryption")
+        if not self.is_encrypting() and tag is None:
+            raise ValueError("tag is required for decryption")
 
         self._pad_aad()
 
