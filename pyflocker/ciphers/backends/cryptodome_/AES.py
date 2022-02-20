@@ -1,5 +1,6 @@
 """Implementation of AES cipher."""
 
+import contextlib
 import typing
 from types import MappingProxyType
 
@@ -32,17 +33,18 @@ del MappingProxyType
 
 def _get_aes_cipher(key, mode, iv_or_nonce):
     args = (iv_or_nonce,)
-    kwargs = dict()
+    kwargs = {}
 
     if mode == _m.MODE_CFB:
         # compat with pyca/cryptography's CFB(...) mode
-        kwargs = dict(segment_size=128)
+        kwargs = {"segment_size": 128}
     elif mode == _m.MODE_CTR:
-        kwargs = dict(
+        kwargs = {
             # initial value of Cryptodome is nonce for pyca/cryptography
-            initial_value=int.from_bytes(iv_or_nonce, "big"),
-            nonce=b"",
-        )
+            "initial_value": int.from_bytes(iv_or_nonce, "big"),
+            "nonce": b"",
+        }
+
         args = ()
 
     return AES.new(key, SUPPORTED[mode], *args, **kwargs)
@@ -130,11 +132,11 @@ class AEADOneShot(AEAD):
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
-        if not self._encrypting:
-            if tag is None:
-                raise ValueError("tag is required for decryption.")
+        if not self._encrypting and tag is None:
+            raise ValueError("tag is required for decryption.")
 
-        try:
+        # decryption error is ignored, and raised from finalize method
+        with contextlib.suppress(ValueError):
             try:
                 data = self._update_func(data, tag, output=out)
             except TypeError as e:
@@ -145,9 +147,6 @@ class AEADOneShot(AEAD):
                         "buffers"
                     ) from e
                 data = self._update_func(data, tag)
-        except ValueError:
-            # decryption error is ignored, and raised from finalize method
-            pass
 
         self.finalize(tag)
         return data
@@ -257,11 +256,10 @@ def supported_modes() -> typing.Set[_m]:
 
 def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
-    crp = HMACWrapper(
+    return HMACWrapper(
         NonAEAD(encrypting, ckey, mode, iv_or_nonce),
         hkey,
         iv_or_nonce,
         digestmod,
         tag_length=tag_length,
     )
-    return crp
