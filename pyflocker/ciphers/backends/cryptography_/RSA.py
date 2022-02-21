@@ -4,7 +4,7 @@ import typing
 from functools import partial
 
 import cryptography.exceptions as bkx
-from cryptography.hazmat.primitives import serialization as ser
+from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import rsa, utils
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -124,11 +124,11 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
                 f"The encoding or format is invalid: {e.args[0]!r}"
             ) from e
 
-        protection: ser.KeySerializationEncryption
+        protection: serial.KeySerializationEncryption
         if passphrase is None:
-            protection = ser.NoEncryption()
+            protection = serial.NoEncryption()
         else:
-            protection = ser.BestAvailableEncryption(
+            protection = serial.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
         return self._key.private_bytes(encd, fmt, protection)
@@ -140,9 +140,9 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         passphrase: typing.Optional[bytes] = None,
     ) -> RSAPrivateKey:
         formats = {
-            b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
-            b"-----": ser.load_pem_private_key,
-            b"0": ser.load_der_private_key,
+            b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
+            b"-----": serial.load_pem_private_key,
+            b"0": serial.load_der_private_key,
         }
 
         try:
@@ -255,9 +255,9 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
         formats = {
-            b"ssh-rsa ": ser.load_ssh_public_key,
-            b"-----": ser.load_pem_public_key,
-            b"0": ser.load_der_public_key,
+            b"ssh-rsa ": serial.load_ssh_public_key,
+            b"-----": serial.load_pem_public_key,
+            b"0": serial.load_der_public_key,
         }
 
         try:
@@ -350,9 +350,6 @@ def load_private_key(
     passphrase: typing.Optional[bytes] = None,
 ) -> RSAPrivateKey:
     """Loads the private key and returns a Key interface.
-
-    If the private key was not encrypted duting the serialization,
-    ``passphrase`` must be ``None``, otherwise it must be a ``bytes`` object.
 
     Args:
         data: The private key (a bytes-like object) to deserialize.
