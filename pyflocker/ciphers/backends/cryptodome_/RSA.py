@@ -6,19 +6,27 @@ from Cryptodome.PublicKey import RSA
 
 from ... import base, exc
 from ..asymmetric import OAEP, PSS
-from .asymmetric import (
-    ENCODINGS,
-    FORMATS,
-    PROTECTION_SCHEMES,
-    get_padding_func,
-)
+from .asymmetric import PROTECTION_SCHEMES, get_padding_func
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
-    def __init__(self, n: int, e: int = 65537, **kwargs):
-        if kwargs:
-            self._key = kwargs.pop("key")
+    _encodings = ("PEM", "DER")
+    _formats = {
+        "PKCS1": 1,
+        "PKCS8": 8,
+    }
+
+    def __init__(
+        self,
+        n: typing.Optional[int],
+        e: int = 65537,
+        _key: typing.Optional[RSA.RsaKey] = None,
+    ):
+        if _key is not None:
+            self._key = _key
         else:
+            if not isinstance(n, int):  # pragma: no cover
+                raise TypeError("n must be an integer value")
             self._key = RSA.generate(n, e=e)
 
     @property
@@ -46,14 +54,14 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         return self._key.size_in_bits()
 
     def decryptor(self, padding=None) -> DecryptorContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = OAEP()
         return DecryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
     def signer(self, padding=None) -> SignerContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = PSS()
         return SignerContext(
             get_padding_func(padding)(self._key, padding),
@@ -96,14 +104,18 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
                 if DER is used with PKCS1 or,
                 protection value is supplied with PKCS1 format.
         """
-        if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
-            raise ValueError("encoding must be PEM or DER")
+        if encoding not in self._encodings:
+            raise ValueError(f"Invalid encoding: {encoding!r}")
+        if format not in self._formats:
+            raise ValueError(f"Invalid format: {format!r}")
 
-        if protection is not None and protection not in PROTECTION_SCHEMES:
+        if (
+            protection is not None and protection not in PROTECTION_SCHEMES
+        ):  # pragma: no cover
             raise ValueError("invalid protection scheme")
 
         if format == "PKCS1":
-            if protection is not None:
+            if protection is not None:  # pragma: no cover
                 raise ValueError("protection is meaningful only for PKCS8")
             if encoding == "DER":
                 raise ValueError("cannot use DER with PKCS1 format")
@@ -112,19 +124,16 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             # use a curated encryption choice and not DES-EDE3-CBC
             protection = "PBKDF2WithHMAC-SHA1AndAES256-CBC"
 
-        try:
-            return self._key.export_key(
-                format=ENCODINGS[encoding],
-                pkcs=FORMATS[format],
-                passphrase=(
-                    memoryview(passphrase).tobytes()  # type: ignore
-                    if passphrase is not None
-                    else None
-                ),
-                protection=protection,
-            )
-        except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e.args}") from e
+        return self._key.export_key(
+            format=encoding,
+            pkcs=self._formats[format],
+            passphrase=(
+                memoryview(passphrase).tobytes()  # type: ignore
+                if passphrase is not None
+                else None
+            ),
+            protection=protection,
+        )
 
     @classmethod
     def load(
@@ -136,7 +145,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             key = RSA.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
                 raise ValueError("The key is not a private key")
-            return cls(None, key=key)  # type: ignore
+            return cls(None, _key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
@@ -145,6 +154,9 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
+    _encodings = ("PEM", "DER", "OpenSSH")
+    _formats = ("SubjectPublicKeyInfo", "OpenSSH")
+
     def __init__(self, key):
         self._key = key
 
@@ -161,14 +173,14 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         return self._key.size_in_bits()
 
     def encryptor(self, padding=None) -> EncryptorContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = OAEP()
         return EncryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
     def verifier(self, padding=None) -> VerifierContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = PSS()
         return VerifierContext(
             get_padding_func(padding)(self._key, padding),
@@ -201,25 +213,27 @@ class RSAPublicKey(base.BaseRSAPublicKey):
                 if the encoding or format is not supported or invalid,
                 or OpenSSH encoding is not used with OpenSSH format.
         """
-        if format not in ("SubjectPublicKeyInfo", "OpenSSH"):
-            raise ValueError("Invalid format")
-        if format == "OpenSSH" and encoding != "OpenSSH":
+        if format not in self._formats:
+            raise ValueError(f"Invalid format: {format!r}")
+        if encoding not in self._encodings:
+            raise ValueError(f"Invalid encoding: {encoding!r}")
+        if "OpenSSH" in (encoding, format) and encoding != format:
             raise ValueError(
                 "OpenSSH format can be used only with OpenSSH encoding",
             )
-        return self._key.export_key(format=ENCODINGS[encoding])
+        return self._key.export_key(format=encoding)
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
         try:
             key = RSA.import_key(data)
-            if key.has_private():
-                raise ValueError("The key is not a public key")
-            return cls(key=key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Key format might be invalid."
+                f"Cannot deserialize key. Backend error message:\n{e}"
             ) from e
+        if key.has_private():
+            raise ValueError("The key is not a public key")
+        return cls(key=key)
 
 
 class EncryptorContext(base.BaseEncryptorContext):
