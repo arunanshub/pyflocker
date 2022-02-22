@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 import os
-import typing
 from itertools import product
+from typing import TYPE_CHECKING
 
 import pytest
 
@@ -11,7 +11,7 @@ from pyflocker.ciphers import modes
 from pyflocker.ciphers.backends import Backends
 from pyflocker.ciphers.exc import DecryptionError
 
-if typing.TYPE_CHECKING:
+if TYPE_CHECKING:
     from pathlib import Path
 
 ENCRYPTION_DECRYPTION_DATA = b"ENCRYPTION_DECRYPTION_DATA for testing"
@@ -76,7 +76,7 @@ class TestLocker:
             == ENCRYPTION_DECRYPTION_DATA
         )
 
-    def test_encrypt_decrypt(self, mode, backend1, backend2, tmp_path: "Path"):
+    def test_encrypt_decrypt(self, mode, backend1, backend2, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         decrypted_file_path = tmp_path / "decrypted_file"
@@ -106,7 +106,7 @@ class TestLocker:
             == ENCRYPTION_DECRYPTION_DATA
         )
 
-    def test_lockerf(self, mode, backend1, backend2, tmp_path: "Path"):
+    def test_lockerf(self, mode, backend1, backend2, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         decrypted_file_path = tmp_path / "decrypted_file"
@@ -142,7 +142,7 @@ class TestLocker:
             == ENCRYPTION_DECRYPTION_DATA
         )
 
-    def test_locker_newfile(self, mode, backend1, backend2, tmp_path: "Path"):
+    def test_locker_newfile(self, mode, backend1, backend2, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         decrypted_file_path = tmp_path / "decrypted_file"
@@ -175,7 +175,7 @@ class TestLocker:
         )
 
 
-def test_locker_auto_newfile_auto_encrypting(tmp_path: "Path"):
+def test_locker_auto_newfile_auto_encrypting(tmp_path: Path):
     infile_path = tmp_path / "infile"
     infile_path.write_bytes(ENCRYPTION_DECRYPTION_DATA)
 
@@ -200,7 +200,7 @@ def test_locker_auto_newfile_auto_encrypting(tmp_path: "Path"):
     assert not os.path.exists(outfile_path)
 
 
-def test_extract_header_from_file(tmp_path: "Path"):
+def test_extract_header_from_file(tmp_path: Path):
     infile_path = tmp_path / "infile"
     outfile_path = tmp_path / "outfile"
 
@@ -223,7 +223,7 @@ def test_extract_header_from_file(tmp_path: "Path"):
 
 
 class TestLockerErrors:
-    def test_encryptf_decryptf_unique_files_only(self, tmp_path: "Path"):
+    def test_encryptf_decryptf_unique_files_only(self, tmp_path: Path):
         file_path = tmp_path / "file"
 
         with file_path.open("w+b") as file:
@@ -237,7 +237,7 @@ class TestLockerErrors:
     def test_encryptf_decryptf_mode_special_error(
         self,
         mode,
-        tmp_path: "Path",
+        tmp_path: Path,
     ):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile_path"
@@ -252,7 +252,7 @@ class TestLockerErrors:
                 aes_mode=mode,
             )
 
-    def test_encryptf_max_metadata_len(self, tmp_path: "Path"):
+    def test_encryptf_max_metadata_len(self, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile_path"
 
@@ -266,7 +266,7 @@ class TestLockerErrors:
                 metadata=bytes(locker.MAX_METADATA_LEN + 1),
             )
 
-    def test_locker_newfile_ext_exculsive(self, tmp_path: "Path"):
+    def test_locker_newfile_ext_exculsive(self, tmp_path: Path):
         nonexistent_path = tmp_path / "nonexistent"
         with pytest.raises(ValueError):
             locker.locker(
@@ -276,7 +276,7 @@ class TestLockerErrors:
                 ext="ext",
             )
 
-    def test_header_validation(self, tmp_path: "Path"):
+    def test_header_validation(self, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         decrypted_file_path = tmp_path / "decrypted_file"
@@ -299,7 +299,7 @@ class TestLockerErrors:
                     ENCRYPTION_DECRYPTION_DATA,
                 )
 
-    def test_header_validation_metadata_mismatch(self, tmp_path: "Path"):
+    def test_header_validation_metadata_mismatch(self, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         decrypted_file_path = tmp_path / "decrypted_file"
@@ -326,7 +326,7 @@ class TestLockerErrors:
                     metadata=b"not TESTING_METADATA",
                 )
 
-    def test_incorrect_dklen(self, tmp_path: "Path"):
+    def test_incorrect_dklen(self, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
         with infile_path.open("wb") as infile, outfile_path.open(
@@ -341,7 +341,7 @@ class TestLockerErrors:
 
     def test_encrypt_decrypt_outfile_deleted_on_header_mismatch(
         self,
-        tmp_path: "Path",
+        tmp_path: Path,
     ):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
@@ -368,7 +368,7 @@ class TestLockerErrors:
 
     def test_encrypt_decrypt_outfile_deleted_on_decryption_error(
         self,
-        tmp_path: "Path",
+        tmp_path: Path,
     ):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
