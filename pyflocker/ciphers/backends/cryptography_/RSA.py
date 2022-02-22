@@ -30,10 +30,17 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         "TraditionalOpenSSL": PrivateFormat.TraditionalOpenSSL,
     }
 
-    def __init__(self, n: int, e: int = 65537, **kwargs):
-        if kwargs:
-            self._key = kwargs.pop("key")
+    def __init__(
+        self,
+        n: typing.Optional[int],
+        e: int = 65537,
+        _key: typing.Optional[rsa.RSAPrivateKey] = None,
+    ):
+        if _key is not None:
+            self._key = _key
         else:
+            if not isinstance(n, int):  # pragma: no cover
+                raise TypeError("n must be an integer value")
             self._key = rsa.generate_private_key(e, n)
 
         # numbers
@@ -74,7 +81,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         return RSAPublicKey(self._key.public_key())
 
     def decryptor(self, padding=None) -> DecryptorContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = OAEP()
         return DecryptorContext(
             self._key,
@@ -82,7 +89,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         )
 
     def signer(self, padding=None) -> SignerContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = PSS()
         return SignerContext(
             self._key,
@@ -158,7 +165,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             key = loader(memoryview(data), passphrase)
             if not isinstance(key, rsa.RSAPrivateKey):
                 raise ValueError("The key is not an RSA private key.")
-            return cls(None, key=key)  # type: ignore
+            return cls(None, _key=key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. Either Key format is invalid or "
@@ -185,7 +192,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     }
 
     def __init__(self, key):
-        if not isinstance(key, rsa.RSAPublicKey):
+        if not isinstance(key, rsa.RSAPublicKey):  # pragma: no cover
             raise ValueError("The key is not an RSA public key.")
         self._key = key
 
@@ -207,7 +214,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         return self._key.key_size
 
     def encryptor(self, padding=None) -> EncryptorContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = OAEP()
         return EncryptorContext(
             self._key,
@@ -215,7 +222,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         )
 
     def verifier(self, padding=None) -> VerifierContext:
-        if padding is None:
+        if padding is None:  # pragma: no cover
             padding = PSS()
         return VerifierContext(
             self._key,
@@ -274,7 +281,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
 
 class EncryptorContext(base.BaseEncryptorContext):
-    def __init__(self, key, padding):
+    def __init__(self, key: rsa.RSAPublicKey, padding):
         self._encrypt_func = partial(key.encrypt, padding=padding)
 
     def encrypt(self, plaintext: bytes) -> bytes:
@@ -282,7 +289,7 @@ class EncryptorContext(base.BaseEncryptorContext):
 
 
 class DecryptorContext(base.BaseDecryptorContext):
-    def __init__(self, key, padding):
+    def __init__(self, key: rsa.RSAPrivateKey, padding):
         self._decrypt_func = partial(key.decrypt, padding=padding)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
@@ -293,7 +300,7 @@ class DecryptorContext(base.BaseDecryptorContext):
 
 
 class SignerContext(base.BaseSignerContext):
-    def __init__(self, key, padding):
+    def __init__(self, key: rsa.RSAPrivateKey, padding):
         self._sign_func = partial(key.sign, padding=padding)
 
     def sign(self, msghash: base.BaseHash) -> bytes:
@@ -304,7 +311,7 @@ class SignerContext(base.BaseSignerContext):
 
 
 class VerifierContext(base.BaseVerifierContext):
-    def __init__(self, key, padding):
+    def __init__(self, key: rsa.RSAPublicKey, padding):
         self._verify_func = partial(key.verify, padding=padding)
 
     def verify(self, msghash: base.BaseHash, signature: bytes):
