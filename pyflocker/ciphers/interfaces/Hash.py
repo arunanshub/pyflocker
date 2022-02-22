@@ -1,11 +1,13 @@
 """Interface to hashing algorithms."""
+from __future__ import annotations
 
 import typing
+from typing import TYPE_CHECKING
 
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
-if typing.TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseHash
 
 
@@ -30,7 +32,7 @@ def new(
     custom: typing.Optional[bytes] = None,
     key: typing.Optional[bytes] = None,
     backend: typing.Optional[_Backends] = None,
-) -> "BaseHash":
+) -> BaseHash:
     """
     Instantiate a new hash instance ``hashname`` with initial data ``data``
     (default is empty ``bytes``). The Hash object created by this function can

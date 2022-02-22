@@ -1,13 +1,18 @@
 """Interface to Camellia cipher"""
+from __future__ import annotations
+
 import typing
+from typing import TYPE_CHECKING
 
-from .. import base as _base
-from ..backends import Backends as _Backends
+from ..backends import Backends
 from ..backends import load_algorithm as _load_algo
-from ..modes import Modes as _m
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .. import base
+    from ..modes import Modes
 
 
-def supported_modes(backend: _Backends) -> typing.Set[_m]:
+def supported_modes(backend: Backends) -> typing.Set[Modes]:
     """Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability and hence, varies from backend to backend.
 
@@ -24,14 +29,14 @@ def supported_modes(backend: _Backends) -> typing.Set[_m]:
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _m,
+    mode: Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
-    digestmod: typing.Union[str, _base.BaseHash] = "sha256",
+    digestmod: typing.Union[str, base.BaseHash] = "sha256",
     file: typing.Optional[typing.BinaryIO] = None,
-    backend: _Backends = _Backends.CRYPTOGRAPHY,
+    backend: Backends = Backends.CRYPTOGRAPHY,
 ):
     """Instantiate a new Camellia cipher wrapper object.
 

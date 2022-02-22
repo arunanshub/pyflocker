@@ -1,9 +1,14 @@
 """Interface to DH key exchange"""
-import typing
+from __future__ import annotations
 
-from .. import base
+import typing
+from typing import TYPE_CHECKING
+
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .. import base
 
 
 def _load_dhe(backend):

@@ -2,10 +2,11 @@
 from __future__ import annotations
 
 import typing
+from typing import TYPE_CHECKING
 
 from ..backends import load_algorithm as _load_algo
 
-if typing.TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from ..backends import Backends
     from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
@@ -41,7 +42,7 @@ def generate(
 def load_public_key(
     data: bytes,
     *,
-    backend: typing.Optional["Backends"] = None,
+    backend: typing.Optional[Backends] = None,
 ) -> BaseRSAPublicKey:
     """Loads the public key and returns a Key interface.
 

@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives import serialization as ser
+from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import (
     ec,
     ed448,
@@ -174,11 +174,11 @@ class ECCPrivateKey(base.BasePrivateKey):
             raise ValueError("The encoding or format is invalid.") from e
 
         if passphrase is None:
-            protection = ser.NoEncryption()
+            protection = serial.NoEncryption()
         else:
             if not isinstance(passphrase, (bytes, bytearray, memoryview)):
                 raise TypeError("passphrase must be a bytes-like object.")
-            protection = ser.BestAvailableEncryption(passphrase)
+            protection = serial.BestAvailableEncryption(passphrase)
         return self._key.private_bytes(encoding_, format_, protection)
 
     def exchange(
@@ -288,9 +288,9 @@ class ECCPrivateKey(base.BasePrivateKey):
             passphrase = memoryview(passphrase).tobytes()
 
         fmts = {
-            b"-----BEGIN OPENSSH PRIVATE KEY": ser.load_ssh_private_key,
-            b"-----": ser.load_pem_private_key,
-            b"0": ser.load_der_private_key,
+            b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
+            b"-----": serial.load_pem_private_key,
+            b"0": serial.load_der_private_key,
         }
 
         try:
@@ -449,9 +449,9 @@ class ECCPublicKey(base.BasePublicKey):
             ValueError: if the key could not be deserialized.
         """
         fmts = {
-            b"ecdsa-": ser.load_ssh_public_key,
-            b"-----": ser.load_pem_public_key,
-            b"0": ser.load_der_public_key,
+            b"ecdsa-": serial.load_ssh_public_key,
+            b"-----": serial.load_pem_public_key,
+            b"0": serial.load_der_public_key,
         }
 
         try:

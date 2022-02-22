@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import typing
 
-from cryptography.hazmat.primitives import serialization as ser
+from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -86,8 +86,8 @@ class DHParameters(base.BaseDHParameters):
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
         formats = {
-            b"-----BEGIN DH PARAMETERS": ser.load_pem_parameters,
-            b"0": ser.load_der_parameters,
+            b"-----BEGIN DH PARAMETERS": serial.load_pem_parameters,
+            b"0": serial.load_der_parameters,
         }
 
         try:
@@ -169,11 +169,11 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         format: str = "PKCS8",
         passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
-        protection: ser.KeySerializationEncryption
+        protection: serial.KeySerializationEncryption
         if passphrase is None:
-            protection = ser.NoEncryption()
+            protection = serial.NoEncryption()
         else:
-            protection = ser.BestAvailableEncryption(
+            protection = serial.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
 
@@ -199,8 +199,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         passphrase: typing.Optional[bytes] = None,
     ) -> DHPrivateKey:
         formats = {
-            b"-----": ser.load_pem_private_key,
-            b"0": ser.load_der_private_key,
+            b"-----": serial.load_pem_private_key,
+            b"0": serial.load_der_private_key,
         }
 
         try:
@@ -288,8 +288,8 @@ class DHPublicKey(base.BaseDHPublicKey):
     @classmethod
     def load(cls, data: bytes) -> DHPublicKey:
         formats = {
-            b"-----": ser.load_pem_public_key,
-            b"0": ser.load_der_public_key,
+            b"-----": serial.load_pem_public_key,
+            b"0": serial.load_der_public_key,
         }
 
         try:

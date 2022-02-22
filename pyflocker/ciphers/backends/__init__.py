@@ -1,11 +1,16 @@
+from __future__ import annotations
+
 import enum
-import types as _types
 import typing
 from importlib import import_module
+from typing import TYPE_CHECKING
 
 from .. import exc
 
 _DEFAULT_BACKEND = None
+
+if TYPE_CHECKING:  # pragma: no cover
+    import types
 
 
 class Backends(enum.Enum):
@@ -17,7 +22,7 @@ class Backends(enum.Enum):
 
 def load_algorithm(
     name: str, backend: typing.Optional[Backends] = None
-) -> _types.ModuleType:
+) -> types.ModuleType:
     """Load a specific algorithm from the given ``backend``.
 
     Args:
@@ -42,7 +47,7 @@ def load_algorithm(
 
 def load_backend(
     backend: typing.Optional[Backends] = None,
-) -> _types.ModuleType:
+) -> types.ModuleType:
     """Load a backend.
 
     Args:

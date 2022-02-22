@@ -1,16 +1,21 @@
 """Implementation of AES cipher."""
+from __future__ import annotations
 
 import contextlib
 import typing
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import AES
 
-from ... import base, exc, modes
+from ... import exc, modes
 from ...modes import Modes as _m
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
+
+if TYPE_CHECKING:  # pragma: no cover
+    from ... import base
 
 SUPPORTED = MappingProxyType(
     {

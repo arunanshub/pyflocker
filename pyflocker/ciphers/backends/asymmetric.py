@@ -1,11 +1,13 @@
 """Tools for asymmetric ciphers common to all the backends."""
+from __future__ import annotations
 
 import typing
 from dataclasses import dataclass, field
+from typing import TYPE_CHECKING
 
 from ..interfaces import Hash
 
-if typing.TYPE_CHECKING:  # pragma: no cover
+if TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseHash
 
 
@@ -29,7 +31,7 @@ class MGF1:
             A :any:`BaseHash` object. Defaults to 'sha256'.
     """
 
-    hashfunc: "BaseHash" = field(default_factory=_default_hash_factory)
+    hashfunc: BaseHash = field(default_factory=_default_hash_factory)
 
 
 @dataclass(frozen=True)
@@ -48,7 +50,7 @@ class OAEP:
     """
 
     mgf: MGF1 = field(default_factory=MGF1)
-    hashfunc: "BaseHash" = field(default_factory=_default_hash_factory)
+    hashfunc: BaseHash = field(default_factory=_default_hash_factory)
     label: typing.Optional[bytes] = None
 
 

@@ -1,17 +1,21 @@
 """Interface to AES cipher"""
+from __future__ import annotations
 
 import typing
+from typing import TYPE_CHECKING
 
-from .. import base as _base
-from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 from ..modes import Modes as _m
+
+if TYPE_CHECKING:  # pragma: no cover
+    from .. import base
+    from ..backends import Backends
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
 globals().update({val.name: val for val in list(_m)})
 
 
-def supported_modes(backend: _Backends) -> typing.Set[_m]:
+def supported_modes(backend: Backends) -> typing.Set[_m]:
     """Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability, and hence, varies from backend to backend.
 
@@ -33,10 +37,10 @@ def new(
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
-    digestmod: typing.Union[str, _base.BaseHash] = "sha256",
+    digestmod: typing.Union[str, base.BaseHash] = "sha256",
     file: typing.Optional[typing.IO[bytes]] = None,
-    backend: typing.Optional[_Backends] = None,
-) -> typing.Union[_base.BaseNonAEADCipher, _base.BaseAEADCipher]:
+    backend: typing.Optional[Backends] = None,
+) -> typing.Union[base.BaseNonAEADCipher, base.BaseAEADCipher]:
     """Instantiate a new AES cipher object.
 
     Args:
