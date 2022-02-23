@@ -15,6 +15,6 @@ __all__ = [
     "Camellia",
     "ChaCha20",
     "Hash",
-    # backends list
+    # New: easy import backend enum
     "Backends",
 ]
