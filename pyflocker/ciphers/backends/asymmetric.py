@@ -26,7 +26,7 @@ class MGF1:
     """
     Mask Generation Function.
 
-    Attributes:
+    Parameters:
         hashfunc:
             A :any:`BaseHash` object. Defaults to 'sha256'.
     """
@@ -40,7 +40,7 @@ class OAEP:
     PKCS#1 OAEP is an asymmetric cipher based on RSA and OAEP padding.
     It can encrypt messages slightly shorter than RSA modulus.
 
-    Attributes:
+    Parameters:
         mgf: Mask Generation Function. Defaults to MGF1.
         hashfunc:
             A :any:`BaseHash` object. Defaults to 'sha256'.
@@ -59,7 +59,7 @@ class PSS:
     """
     Probabilistic Digital Signature Scheme.
 
-    Attributes:
+    Parameters:
         mgf: A Mask Generation Function. Defaults to MGF1.
         salt_length:
             Length of the salt, in bytes.
