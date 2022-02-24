@@ -5,26 +5,26 @@ import typing
 from typing import TYPE_CHECKING
 
 from ..backends import load_algorithm as _load_algo
-from ..modes import Modes as _m
+from ..modes import Modes
 
 if TYPE_CHECKING:  # pragma: no cover
     from .. import base
     from ..backends import Backends
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
-globals().update({val.name: val for val in list(_m)})
+globals().update({val.name: val for val in list(Modes)})
 
 
-def supported_modes(backend: Backends) -> typing.Set[_m]:
-    """Lists all modes supported by the cipher. It is limited to backend's
+def supported_modes(backend: Backends) -> typing.Set[Modes]:
+    """
+    Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability, and hence, varies from backend to backend.
 
     Args:
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            An attribute from :any:`Backends` enum.
+        backend: The backend to inspect.
 
     Returns:
-        set: set of :any:`Modes` object supported by backend.
+        Set of :any:`Modes` supported by the backend.
     """
     return _load_algo("AES", backend).supported_modes()
 
@@ -32,7 +32,7 @@ def supported_modes(backend: Backends) -> typing.Set[_m]:
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _m,
+    mode: Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
@@ -44,35 +44,32 @@ def new(
     """Instantiate a new AES cipher object.
 
     Args:
-        encrypting (bool):
-            True is encryption and False is decryption.
-        key (bytes, bytearray, memoryview):
-            The key for the cipher.
-        mode (:class:`pyflocker.ciphers.modes.Modes`):
-            The mode to use for AES cipher. All backends may not support
-            that particular mode.
-        iv_or_nonce (bytes, bytearray, memoryview):
+        encrypting: True is encryption and False is decryption.
+        key: The key for the cipher.
+        mode:
+            The mode to use for AES cipher. All backends may not support that
+            particular mode.
+        iv_or_nonce:
             The Initialization Vector or Nonce for the cipher. It must not be
             repeated with the same key.
 
     Keyword Arguments:
-        use_hmac (bool):
-            Should the cipher use HMAC as authentication or not, if it does
-            not support AEAD. (Default: False)
-        tag_length (int, None):
+        use_hmac:
+            Should the cipher use HMAC as authentication or not, if it does not
+            support AEAD. (Default: False)
+        tag_length:
             Length of HMAC tag. By default, a **16 byte tag** is generated. If
             ``tag_length`` is ``None``, a **non-truncated** tag is generated.
             Length of non-truncated tag depends on the digest size of the
             underlying hash algorithm used by HMAC.
-        digestmod (str, BaseHash):
+        digestmod:
             The algorithm to use for HMAC. Defaults to ``sha256``.
             Specifying this value without setting ``use_hmac`` to True
             has no effect.
-        file (filelike):
-            The source file to read from. If ``file`` is specified
-            and the ``mode`` is not an AEAD mode, HMAC is always used.
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
+        file:
+            The source file to read from. If ``file`` is specified and the
+            ``mode`` is not an AEAD mode, HMAC is always used.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Important:
         The following arguments are ignored if the mode is an AEAD mode:
@@ -82,8 +79,7 @@ def new(
         - ``digestmod``
 
     Returns:
-        BaseSymmetricCipher:
-            AES cipher wrapper from the appropriate backend module.
+        AES cipher wrapper from the appropriate backend module.
 
     Raises:
         NotImplementedError:
