@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import hashlib
 from itertools import product
 
@@ -249,7 +251,7 @@ class TestPublicKeyEncoding:
         public_key2 = RSA.load_public_key(serialized, backend=backend2)
         assert public_key_equal(public_key, public_key2)
 
-    @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo", "OpenSSH"])
+    @pytest.mark.parametrize("format", ["OpenSSH"])
     def test_OpenSSH(self, public_key, format, backend, backend2):
         try:
             serialized = public_key.serialize(
@@ -260,10 +262,6 @@ class TestPublicKeyEncoding:
             return pytest.skip(
                 f"{backend} does not support format {format} for public key",
             )
-        except ValueError:
-            assert format != "OpenSSH"
-            return
-
         public_key2 = RSA.load_public_key(serialized, backend=backend2)
         assert public_key_equal(public_key, public_key2)
 
