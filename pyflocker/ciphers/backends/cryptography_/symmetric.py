@@ -1,5 +1,7 @@
 """Cryptography backend specific templates and tools for symmetric ciphers."""
 
+from __future__ import annotations
+
 import typing
 
 from cryptography import exceptions as bkx

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 from types import MappingProxyType
 
@@ -196,7 +198,7 @@ class Hash(base.BaseHash):
         *,
         custom: typing.Optional[bytes] = None,
         key: typing.Optional[bytes] = None,
-    ) -> "Hash":
+    ) -> Hash:
         return type(self)(
             self.name,
             data,

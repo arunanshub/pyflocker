@@ -5,6 +5,8 @@ These tests are meant to check the API and hence, do not use
 the official test vectors. The backends used by pyflocker
 implements the tests using the required test vectors.
 """
+from __future__ import annotations
+
 import hashlib
 from functools import partial
 from itertools import product

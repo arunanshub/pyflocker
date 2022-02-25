@@ -1,5 +1,7 @@
 """Cryptodome backend specific templates and tools for symmetric ciphers."""
 
+from __future__ import annotations
+
 import typing
 
 from ... import base, exc

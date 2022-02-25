@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import typing
 
 from Cryptodome.Cipher import ChaCha20 as _ChaCha20

@@ -1,6 +1,9 @@
 """Exceptions raised by the ciphers are defined here."""
 
 
+from __future__ import annotations
+
+
 class DecryptionError(Exception):
     """
     Can be raised in two cases:

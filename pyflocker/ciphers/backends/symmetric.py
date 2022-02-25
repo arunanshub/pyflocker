@@ -1,5 +1,7 @@
 """Tools for Symmetric ciphers common to all the backends."""
 
+from __future__ import annotations
+
 import hmac
 import typing
 from functools import partial

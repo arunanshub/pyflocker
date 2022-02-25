@@ -1,5 +1,7 @@
 """Implementation of AES cipher."""
 
+from __future__ import annotations
+
 import hmac
 import struct
 import typing

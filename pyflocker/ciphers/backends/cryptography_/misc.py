@@ -2,6 +2,8 @@
 Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 """
 
+from __future__ import annotations
+
 import typing
 
 from cryptography.hazmat.backends import default_backend as defb

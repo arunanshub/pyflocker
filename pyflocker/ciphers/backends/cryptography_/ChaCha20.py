@@ -1,5 +1,7 @@
 """ChaCha20 and ChaCha20Poly1305 cipher implementation classes."""
 
+from __future__ import annotations
+
 import typing
 
 from cryptography import exceptions as bkx
