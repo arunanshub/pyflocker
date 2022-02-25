@@ -454,7 +454,7 @@ class BaseAsymmetricPadding(metaclass=ABCMeta):
 
 class BaseMGF(metaclass=ABCMeta):
     """
-    Base class for mask generation function used by padding algorithms.
+    Base class for mask generation functions used by padding algorithms.
     """
 
 
