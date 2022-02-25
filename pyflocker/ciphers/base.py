@@ -211,7 +211,7 @@ class BaseHash(metaclass=ABCMeta):
         """Name of the hash function."""
 
     @abstractmethod
-    def new(self, data=b"") -> BaseHash:
+    def new(self, data: bytes = b"") -> BaseHash:
         """Create a fresh hash object."""
 
     def __repr__(self) -> str:  # pragma: no cover
@@ -261,7 +261,10 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
         """Size of the key, in bits."""
 
     @abstractmethod
-    def decryptor(self, padding) -> BaseDecryptorContext:
+    def decryptor(
+        self,
+        padding: typing.Optional[BaseAsymmetricPadding] = None,
+    ) -> BaseDecryptorContext:
         """Creates a decryption context.
 
         Args:
@@ -272,7 +275,10 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def signer(self, padding) -> BaseSignerContext:
+    def signer(
+        self,
+        padding: typing.Optional[BaseAsymmetricPadding] = None,
+    ) -> BaseSignerContext:
         """Create a signer context.
 
         Args:
@@ -367,7 +373,10 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
         """Size of the key, in bits."""
 
     @abstractmethod
-    def encryptor(self, padding) -> BaseEncryptorContext:
+    def encryptor(
+        self,
+        padding: typing.Optional[BaseAsymmetricPadding] = None,
+    ) -> BaseEncryptorContext:
         """Creates a encryption context.
 
         Args:
@@ -378,7 +387,10 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def verifier(self, padding) -> BaseVerifierContext:
+    def verifier(
+        self,
+        padding: typing.Optional[BaseAsymmetricPadding] = None,
+    ) -> BaseVerifierContext:
         """Creates a verifier context.
 
         Args:
@@ -427,6 +439,23 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
         Raises:
             ValueError: if the key could not be deserialized.
         """
+
+
+class BaseAsymmetricPadding(metaclass=ABCMeta):
+    """
+    Base class for padding schemes used by asymmetric algorithms.
+    """
+
+    @property
+    @abstractmethod
+    def name(self) -> str:
+        """Name of the padding scheme."""
+
+
+class BaseMGF(metaclass=ABCMeta):
+    """
+    Base class for mask generation function used by padding algorithms.
+    """
 
 
 class BaseSignerContext(metaclass=ABCMeta):
