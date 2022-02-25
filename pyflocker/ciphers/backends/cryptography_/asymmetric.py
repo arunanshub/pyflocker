@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import padding as padding_
@@ -6,8 +9,11 @@ from cryptography.hazmat.primitives.asymmetric import padding as padding_
 from .. import asymmetric
 from . import Hash
 
+if TYPE_CHECKING:
+    from ... import base
 
-def get_OAEP(padding):
+
+def get_OAEP(padding: base.BaseAsymmetricPadding):
     """Construct a pyca/cryptography specific OAEP object.
 
     Args:
@@ -31,7 +37,7 @@ def get_OAEP(padding):
     )
 
 
-def get_PSS(padding):
+def get_PSS(padding: base.BaseAsymmetricPadding):
     """Construct a pyca/cryptography specific PSS object.
 
     Args:

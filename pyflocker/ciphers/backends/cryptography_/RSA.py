@@ -80,7 +80,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def public_key(self) -> RSAPublicKey:
         return RSAPublicKey(self._key.public_key())
 
-    def decryptor(self, padding=None) -> DecryptorContext:
+    def decryptor(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> DecryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return DecryptorContext(
@@ -88,7 +91,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             get_padding_func(padding)(padding),
         )
 
-    def signer(self, padding=None) -> SignerContext:
+    def signer(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> SignerContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
         return SignerContext(
@@ -213,7 +219,10 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     def key_size(self) -> int:
         return self._key.key_size
 
-    def encryptor(self, padding=None) -> EncryptorContext:
+    def encryptor(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> EncryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return EncryptorContext(
@@ -221,7 +230,10 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             get_padding_func(padding)(padding),
         )
 
-    def verifier(self, padding=None) -> VerifierContext:
+    def verifier(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> VerifierContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
         return VerifierContext(

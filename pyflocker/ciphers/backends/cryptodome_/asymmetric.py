@@ -1,12 +1,18 @@
+from __future__ import annotations
+
 from types import MappingProxyType
+from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import PKCS1_OAEP
 from Cryptodome.Signature import DSS, pss
 
 from .. import asymmetric
 
+if TYPE_CHECKING:
+    from ... import base
 
-def get_OAEP(key, padding):
+
+def get_OAEP(key, padding: base.BaseAsymmetricPadding):
     """Construct a Cryptodome specific OAEP object.
 
     Args:
@@ -18,18 +24,24 @@ def get_OAEP(key, padding):
             An OAEP encryptor/decryptor object depending on the key, from the
             Cryptodome backend.
     """
+    if not isinstance(padding, asymmetric.OAEP):
+        raise TypeError("padding must be an OAEP object")
     if not isinstance(padding.mgf, asymmetric.MGF1):
         raise TypeError("mgf must be an MGF1 instance")
 
     return PKCS1_OAEP.new(
         key,
-        padding.hashfunc.new(),
-        lambda x, y: pss.MGF1(x, y, padding.mgf.hashfunc.new()),
+        padding.hashfunc.new(),  # type: ignore
+        lambda x, y: pss.MGF1(
+            x,
+            y,
+            padding.mgf.hashfunc.new(),  # type: ignore
+        ),
         padding.label or b"",
     )
 
 
-def get_PSS(key, padding):
+def get_PSS(key, padding: base.BaseAsymmetricPadding):
     """Construct a Cryptodome specific PSS object.
 
     Args:
@@ -39,16 +51,21 @@ def get_PSS(key, padding):
     Returns:
         PSS object: An PSS signer/verifier object, depending on the key.
     """
+    if not isinstance(padding, asymmetric.PSS):
+        raise TypeError("padding must be a PSS object")
     if not isinstance(padding.mgf, asymmetric.MGF1):
         raise TypeError("mgf must be an MGF1 instance")
 
     if padding.salt_length is None:
         return _SaltLengthMaximizer(key, padding)
 
-    mgf = lambda x, y: pss.MGF1(x, y, padding.mgf.hashfunc.new())  # noqa: E731
     return pss.new(
         key,
-        mask_func=mgf,  # type: ignore
+        mask_func=lambda x, y: pss.MGF1(  # type: ignore
+            x,
+            y,
+            padding.mgf.hashfunc.new(),  # type: ignore
+        ),
         salt_bytes=padding.salt_length,
     )
 

@@ -53,14 +53,20 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def key_size(self) -> int:
         return self._key.size_in_bits()
 
-    def decryptor(self, padding=None) -> DecryptorContext:
+    def decryptor(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> DecryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return DecryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
-    def signer(self, padding=None) -> SignerContext:
+    def signer(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> SignerContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
         return SignerContext(
@@ -172,14 +178,20 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     def key_size(self) -> int:
         return self._key.size_in_bits()
 
-    def encryptor(self, padding=None) -> EncryptorContext:
+    def encryptor(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> EncryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return EncryptorContext(
             get_padding_func(padding)(self._key, padding),
         )
 
-    def verifier(self, padding=None) -> VerifierContext:
+    def verifier(
+        self,
+        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+    ) -> VerifierContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
         return VerifierContext(
