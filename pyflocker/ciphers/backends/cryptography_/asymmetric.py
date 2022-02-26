@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.asymmetric import padding as padding_
 from .. import asymmetric
 from . import Hash
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ... import base
 
 

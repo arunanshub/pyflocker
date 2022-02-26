@@ -8,7 +8,7 @@ from Cryptodome.Signature import DSS, pss
 
 from .. import asymmetric
 
-if TYPE_CHECKING:
+if TYPE_CHECKING:  # pragma: no cover
     from ... import base
 
 
