@@ -6,6 +6,7 @@
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
 [![Python Versions](https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions)](https://pypi.org/project/PyFLocker)
 [![Documentation Status](https://readthedocs.org/projects/pyflocker/badge/?version=latest)](https://pyflocker.readthedocs.io/en/latest/?badge=latest)
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Farunanshub%2Fpyflocker.svg?type=shield)](https://app.fossa.com/projects/git%2Bgithub.com%2Farunanshub%2Fpyflocker?ref=badge_shield)
 
 Python Cryptographic (File Locking) Library
 
@@ -151,3 +152,6 @@ Find more examples [here][examples].
 [pycrypto]: https://github.com/Legrandin/pycryptodome
 [pyca]: https://github.com/pyca/cryptography
 [pyca_vs_self]: https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa.html#key-serialization
+
+
+[![FOSSA Status](https://app.fossa.com/api/projects/git%2Bgithub.com%2Farunanshub%2Fpyflocker.svg?type=large)](https://app.fossa.com/projects/git%2Bgithub.com%2Farunanshub%2Fpyflocker?ref=badge_large)
