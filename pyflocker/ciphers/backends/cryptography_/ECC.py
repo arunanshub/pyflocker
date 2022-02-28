@@ -20,14 +20,14 @@ from .asymmetric import get_ec_exchange_algorithm, get_ec_signature_algorithm
 CURVES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
     # p192 and aliases
     "NIST P-192": ec.SECP192R1,
-    "p192": ec.SECP192R1,
     "P-192": ec.SECP192R1,
+    "p192": ec.SECP192R1,
     "prime192v1": ec.SECP192R1,
     "secp192r1": ec.SECP192R1,
     # p224 and aliases
     "NIST P-224": ec.SECP224R1,
-    "p224": ec.SECP224R1,
     "P-224": ec.SECP224R1,
+    "p224": ec.SECP224R1,
     "prime224v1": ec.SECP224R1,
     "secp224r1": ec.SECP224R1,
     # p256 and aliases
@@ -79,10 +79,15 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
                 raise ValueError(f"Invalid curve: {e.args[0]!r}") from e
 
         self._key_size = self._key.key_size
+        self._curve = self._key.curve.name
 
     @property
     def key_size(self) -> int:
         return self._key_size
+
+    @property
+    def curve(self):
+        return self._curve
 
     def public_key(self) -> ECCPublicKey:
         return ECCPublicKey(self._key.public_key())
@@ -203,10 +208,15 @@ class ECCPublicKey(base.BaseECCPublicKey):
             raise TypeError("key is not an EC public key")
         self._key = key
         self._key_size = key.key_size
+        self._curve = key.curve.name
 
     @property
     def key_size(self):
         return self._key_size
+
+    @property
+    def curve(self):
+        return self._curve
 
     def verifier(
         self,
