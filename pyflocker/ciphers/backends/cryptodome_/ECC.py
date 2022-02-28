@@ -122,7 +122,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         encoding: str,
         protection: typing.Optional[str],
     ) -> None:
-        if protection is not None:
+        if protection is not None:  # pragma: no cover
             raise ValueError("protection is meaningful only for PKCS8")
         if encoding == "DER":
             raise ValueError("cannot use DER with PKCS1 format")
@@ -133,7 +133,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             base.BaseEllepticCurveSignatureAlgorithm
         ] = None,
     ) -> SignerContext:
-        if algorithm is None:
+        if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
         return SignerContext(
             get_ec_signature_algorithm(algorithm, self._key, algorithm),
@@ -189,7 +189,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         return self._key_size
 
     @property
-    def curve(self):
+    def curve(self):  # pragma: no cover
         return self._curve
 
     def serialize(
@@ -227,7 +227,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         if encoding not in self._encodings:
             raise ValueError(f"Invalid encoding: {encoding!r}")
         if format not in self._formats:
-            raise ValueError(f"Invalid format: {encoding!r}")
+            raise ValueError(f"Invalid format: {format!r}")
 
         self._validate_encoding_format_args(encoding, format)
 
@@ -239,11 +239,16 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
     @staticmethod
     def _validate_encoding_format_args(encoding: str, format: str):
-        if encoding not in ("SEC1", "OpenSSH"):
-            return
-        if encoding in (encoding, format) and encoding != format:
+        to_validate = ("SEC1", "OpenSSH")
+        is_encoding_present = encoding in to_validate
+        is_format_present = format in to_validate
+        if not is_encoding_present and not is_format_present:
+            return None
+        if encoding != format:
+            encoding_or_format = encoding if is_encoding_present else format
             raise ValueError(
-                f"{format!r} format can be used only with {format!r} encoding",
+                f"{encoding_or_format!r} format can be used only with"
+                f" {encoding_or_format!r} encoding",
             )
 
     def verifier(
