@@ -468,6 +468,19 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
     def key_size(self):
         """Size of ECC key, in bits."""
 
+    @property
+    @abstractmethod
+    def curve(self) -> str:
+        """Name of the curve that this key is on."""
+
+    @abstractmethod
+    def public_key(self) -> BaseECCPublicKey:
+        """Creates a public key from the private key.
+
+        Returns:
+            The public key.
+        """
+
     @abstractmethod
     def serialize(self, encoding: str, format: str) -> bytes:
         """Serialize the private key.
@@ -555,6 +568,11 @@ class BaseECCPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def key_size(self):
         """Size of ECC key, in bits."""
+
+    @property
+    @abstractmethod
+    def curve(self) -> str:
+        """Name of the curve that this key is on."""
 
     @abstractmethod
     def serialize(self, encoding: str, format: str) -> bytes:
