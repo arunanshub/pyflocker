@@ -5,29 +5,40 @@ import typing
 from Cryptodome.PublicKey import ECC
 
 from ... import base, exc
-from .asymmetric import ENCODINGS, FORMATS, PROTECTION_SCHEMES, get_DSS
+from ..asymmetric import ECDSA
+from .asymmetric import PROTECTION_SCHEMES, get_ec_signature_algorithm
 
 CURVES = {k: k for k in ECC._curves}
 
 
-class ECCPrivateKey(base.BasePrivateKey):
-    """ECC private key."""
+class ECCPrivateKey(base.BaseECCPrivateKey):
+    _encodings = ("PEM", "DER")
+    _formats = ("PKCS1", "PKCS8")
 
-    def __init__(self, curve: str, **kwargs):
-        if kwargs:
-            self._key = kwargs.pop("key")
+    def __init__(
+        self,
+        curve: typing.Optional[str],
+        _key: typing.Optional[ECC.EccKey] = None,
+    ):
+        if _key is not None:
+            self._key = _key
             return
+        if not isinstance(curve, str):
+            raise TypeError("curve must be a string")
         try:
             self._key = ECC.generate(curve=CURVES[curve])
         except KeyError as e:
             raise ValueError(f"Invalid curve: {curve}") from e
 
-    def public_key(self) -> ECCPublicKey:
-        """Creates a public key from the private key
+        # XXX: rough hack to get the key size from name as Cryptodome does not
+        # provide it.
+        self._key_size = int(self._key.curve[-3:])
 
-        Returns:
-            ECCPublicKey: A public key.
-        """
+    @property
+    def key_size(self) -> int:
+        return self._key_size
+
+    def public_key(self) -> ECCPublicKey:
         return ECCPublicKey(self._key.public_key())
 
     def serialize(
@@ -41,9 +52,9 @@ class ECCPrivateKey(base.BasePrivateKey):
         """Serialize the private key.
 
         Args:
-            encoding (str): PEM or DER (defaults to PEM).
-            format (str): PKCS8 (default) or PKCS1.
-            passphrase (bytes, bytearray, memoryview):
+            encoding: PEM or DER (defaults to PEM).
+            format: PKCS8 (default) or PKCS1.
+            passphrase:
                 A bytes-like object to protect the private key. If
                 ``passphrase`` is None, the private key will be exported
                 in the clear!
@@ -68,70 +79,71 @@ class ECCPrivateKey(base.BasePrivateKey):
                 if the passphrase is not a bytes-like object when protection
                 is supplied.
         """
-        if encoding not in ENCODINGS.keys() ^ {"OpenSSH"}:
-            raise TypeError("encoding must be PEM or DER")
+        if encoding not in self._encodings:
+            raise ValueError(f"Invalid encoding: {encoding!r}")
+        if format not in self._formats:
+            raise ValueError(f"Invalid format: {format!r}")
 
-        if format not in FORMATS:
-            raise ValueError("invalid format")
+        if (
+            protection is not None and protection not in PROTECTION_SCHEMES
+        ):  # pragma: no cover
+            raise ValueError("invalid protection scheme")
 
-        if protection is not None:
-            if format == "PKCS1":
-                raise TypeError("protection is meaningful only for PKCS8")
-            if protection not in PROTECTION_SCHEMES:
-                raise ValueError("invalid protection scheme")
+        if format == "PKCS1":
+            self._validate_pkcs1_args(encoding, protection)
+
+        protection_args = {}
+        if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
-            prot = {"protection": "PBKDF2WithHMAC-SHA1AndAES256-CBC"}
-        else:
-            prot = {"protection": protection}
+            protection_args = {
+                "protection": "PBKDF2WithHMAC-SHA1AndAES256-CBC",
+            }
 
-        if passphrase is not None:
-            # type checking of key
-            if not isinstance(passphrase, (bytes, bytearray, memoryview)):
-                raise TypeError("passphrase must be a bytes-like object.")
-            # check length afterwards
-            if not passphrase:
-                raise ValueError("passphrase cannot be empty bytes")
+        return self._key.export_key(
+            format=encoding,
+            use_pkcs8=format == "PKCS8",
+            passphrase=(
+                memoryview(passphrase).tobytes()  # type: ignore
+                if passphrase is not None
+                else None
+            ),
+            **protection_args,
+        )
 
-        try:
-            key = self._key.export_key(
-                format=ENCODINGS[encoding],
-                use_pkcs8=(format == "PKCS8"),
-                passphrase=passphrase,
-                **prot,
-            )
-        except KeyError as e:
-            raise ValueError(f"Invalid encoding: {e.args}") from e
-
-        if isinstance(key, bytes):
-            return key
-        return key.encode("utf-8")
+    @staticmethod
+    def _validate_pkcs1_args(
+        encoding: str,
+        protection: typing.Optional[str],
+    ) -> None:
+        if protection is not None:  # pragma: no cover
+            raise ValueError("protection is meaningful only for PKCS8")
+        if encoding == "DER":
+            raise ValueError("cannot use DER with PKCS1 format")
 
     def signer(
-        self, *, mode: str = "fips-186-3", encoding: str = "binary"
-    ) -> _SigVerContext:
-        """Create a signer context.
+        self,
+        algorithm: typing.Optional[
+            base.BaseEllepticCurveSignatureAlgorithm
+        ] = None,
+    ) -> SignerContext:
+        if algorithm is None:
+            algorithm = ECDSA()
+        return SignerContext(
+            get_ec_signature_algorithm(algorithm, self._key, algorithm),
+        )
 
-        Keyword Arguments:
-            mode (str):
-                The signature generation mode. It can be:
-
-                - "fips-186-3" (default)
-                - "deterministic-rfc6979"
-            encoding (str):
-                How the signature is encoded. It can be:
-
-                - "binary"
-                - "der"
-
-        Returns:
-            _SigVerContext: An object for signing messages.
-
-        Raises:
-            ValueError: if the mode or encoding is invalid or not supported.
-        """
-        return _SigVerContext(True, get_DSS(self._key, mode, encoding))
-
-    def exchange(self, peer_public_key: bytes) -> bytes:
+    def exchange(
+        self,
+        peer_public_key: typing.Union[
+            bytes,
+            ECCPublicKey,
+            base.BaseECCPublicKey,
+        ],
+        algorithm: typing.Optional[
+            base.BaseEllepticCurveExchangeAlgorithm
+        ] = None,
+    ) -> bytes:
+        del peer_public_key, algorithm
         raise NotImplementedError(
             "key exchange is currently not supported by the backend."
         )
@@ -142,96 +154,97 @@ class ECCPrivateKey(base.BasePrivateKey):
         data: bytes,
         passphrase: typing.Optional[bytes] = None,
     ) -> ECCPrivateKey:
-        """Loads the private key as binary object and returns the Key
-        interface.
-
-        Args:
-            data (bytes):
-                The key as bytes object.
-            passphrase (bytes, bytearray, memoryview):
-                The passphrase that deserializes the private key.
-                ``passphrase`` must be a ``bytes`` object if the key
-                was encrypted while serialization, otherwise ``None``.
-
-        Returns:
-            ECCPrivateKey: An ECC private key.
-
-        Raises:
-            ValueError: if the key could not be deserialized.
-        """
         try:
-            key = ECC.import_key(data, passphrase)
+            key = ECC.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
                 raise ValueError("The key is not a private key")
-            return cls(None, key=key)
+            return cls(None, _key=key)
         except ValueError as e:
             raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid "
-                "or passphrase is missing or incorrect."
+                "Cannot deserialize key. Either Key format is invalid or "
+                "passphrase is missing or incorrect."
             ) from e
 
 
-class ECCPublicKey(base.BasePublicKey):
+class ECCPublicKey(base.BaseECCPublicKey):
     """Represents ECC public key."""
 
-    def __init__(self, key):
+    _encodings = ("PEM", "DER", "OpenSSH", "SEC1")
+    _formats = ("SubjectPublicKeyInfo", "OpenSSH", "SEC1")
+
+    def __init__(self, key: ECC.EccKey):
         self._key = key
+        self._key_size = int(self._key.curve[-3:])
+
+    @property
+    def key_size(self) -> int:
+        return self._key_size
 
     def serialize(
-        self, encoding: str = "PEM", *, compress: bool = False
+        self,
+        encoding: str = "PEM",
+        format: str = "SubjectPublicKeyInfo",
+        *,
+        compress: bool = False,
     ) -> bytes:
-        """Serialize the private key.
+        """Serialize the public key.
 
         Args:
-            encoding (str): PEM or DER.
+            encoding: PEM, DER, OpenSSH or SEC1.
+            format: The supported formats are:
+
+                - SubjectPublicKeyInfo
+                - OpenSSH
+
+                Note:
+                    ``format`` argument is not actually used by Cryptodome. It
+                    is here to maintain compatibility with pyca/cryptography
+                    backend counterpart.
 
         Keyword Arguments:
-            compress (bool):
+            compress:
                 Whether to export the public key with a more compact
-                representation with only the x-coordinate. Default is
-                False.
+                representation with only the x-coordinate. Default is False.
 
         Returns:
-            bytes: The serialized public key as bytes object.
+            The serialized public key as bytes object.
 
         Raises:
             ValueError: if the encoding is not supported or invalid.
         """
-        try:
-            key = self._key.export_key(
-                format=ENCODINGS[encoding],
-                compress=compress,
+        if encoding not in self._encodings:
+            raise ValueError(f"Invalid encoding: {encoding!r}")
+        if format not in self._formats:
+            raise ValueError(f"Invalid format: {encoding!r}")
+
+        self._validate_encoding_format_args(encoding, format)
+
+        key = self._key.export_key(
+            format=encoding,
+            compress=compress,
+        )
+        return key if isinstance(key, bytes) else key.encode()
+
+    @staticmethod
+    def _validate_encoding_format_args(encoding: str, format: str):
+        if encoding not in ("SEC1", "OpenSSH"):
+            return
+        if encoding in (encoding, format) and encoding != format:
+            raise ValueError(
+                f"{format!r} format can be used only with {format!r} encoding",
             )
-        except KeyError as e:
-            raise ValueError(f"Invalid encoding: {e.args}") from e
-        if isinstance(key, bytes):
-            return key
-        return key.encode()
 
     def verifier(
-        self, *, mode: str = "fips-186-3", encoding: str = "binary"
-    ) -> _SigVerContext:
-        """Create a DSS verifier context.
-
-        Args:
-            mode:
-                The signature generation mode. It can be:
-
-                - "fips-186-3" (default)
-                - "deterministic-rfc6979"
-            encoding:
-                How the signature is encoded. It can be:
-
-                - "binary"
-                - "der"
-
-        Returns:
-            _SigVerContext: A verifier object.
-
-        Raises:
-            ValueError: if the mode or encoding is invalid or not supported.
-        """
-        return _SigVerContext(False, get_DSS(self._key, mode, encoding))
+        self,
+        algorithm: typing.Optional[
+            base.BaseEllepticCurveSignatureAlgorithm
+        ] = None,
+    ) -> VerifierContext:
+        if algorithm is None:
+            algorithm = ECDSA()
+        return VerifierContext(
+            get_ec_signature_algorithm(algorithm, self._key, algorithm),
+        )
 
     @classmethod
     def load(cls, data: bytes) -> ECCPublicKey:
@@ -259,48 +272,19 @@ class ECCPublicKey(base.BasePublicKey):
             ) from e
 
 
-class _SigVerContext:
-    def __init__(self, is_private, ctx):
-        self._is_private = is_private
+class SignerContext(base.BaseSignerContext):
+    def __init__(self, ctx):
         self._ctx = ctx
 
-    def sign(self, msghash):
-        """Return the signature of the message hash.
-
-        Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-
-        Returns:
-            bytes: signature of the message as bytes object.
-
-        Raises:
-            TypeError: if the key is a public key.
-        """
-        if not self._is_private:
-            raise TypeError("Only private keys can sign messages.")
+    def sign(self, msghash: base.BaseHash) -> bytes:
         return self._ctx.sign(msghash)
 
-    def verify(self, msghash, signature):
-        """Verifies the signature of the message hash.
 
-        Args:
-            msghash (:class:`pyflocker.ciphers.base.BaseHash`):
-                It must be a :any:`BaseHash` object, used to digest the
-                message to sign.
-            signature (bytes, bytearray):
-                signature must be a ``bytes`` or ``bytes-like`` object.
+class VerifierContext(base.BaseVerifierContext):
+    def __init__(self, ctx):
+        self._ctx = ctx
 
-        Returns:
-            None
-
-        Raises:
-            TypeError: if the key is a private key.
-            SignatureError: if the signature was incorrect.
-        """
-        if self._is_private:
-            raise TypeError("Only public keys can verify messages.")
+    def verify(self, msghash: base.BaseHash, signature: bytes):
         try:
             self._ctx.verify(msghash, signature)
         except ValueError as e:
@@ -312,10 +296,10 @@ def generate(curve: str) -> ECCPrivateKey:
     Generate a private key with given curve ``curve``.
 
     Args:
-        curve (str): The name of the curve to use.
+        curve: The name of the curve to use.
 
     Returns:
-        ECCPrivateKey: An ECC private key.
+        An ECC private key.
 
     Raises:
         ValueError: if the curve the name of the curve is invalid.
@@ -324,14 +308,13 @@ def generate(curve: str) -> ECCPrivateKey:
 
 
 def load_public_key(data: bytes) -> ECCPublicKey:
-    """Loads the public key and returns a Key interface.
+    """Loads the public key.
 
     Args:
-        data (bytes, bytearray):
-            The public key (a bytes-like object) to deserialize.
+        data: The public key (a bytes-like object) to deserialize.
 
     Returns:
-        ECCPublicKey: An ECC public key.
+        An ECC public key.
     """
     return ECCPublicKey.load(data)
 
@@ -342,16 +325,11 @@ def load_private_key(
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
-    If the private key was not encrypted duting the serialization,
-    ``passphrase`` must be ``None``, otherwise it must be a ``bytes-like``
-    object.
-
     Args:
-        data (bytes, bytearray):
-            The private key (a bytes-like object) to deserialize.
-        passphrase (bytes, bytearray):
-            The passphrase (in bytes) that was used to encrypt the
-            private key. `None` if the key was not encrypted.
+        data: The private key (a bytes-like object) to deserialize.
+        passphrase:
+            The passphrase (in bytes) that was used to encrypt the private key.
+            ``None`` if the key was not encrypted.
 
     Returns:
         ECCPrivateKey: An ECC private key.
