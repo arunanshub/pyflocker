@@ -59,12 +59,13 @@ version_files = [
 
 [tool.black]
 line-length = 79
-target-verson = "py39"
+target-verson = "py38"
 
 [tool.isort]
-multi_line_output = 3
+# multi_line_output = 3
+# include_trailing_comma = true
 line_length = 79
-include_trailing_comma = true
+profile = "black"
 add_imports = ["from __future__ import annotations"]
 
 [build-system]
