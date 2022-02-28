@@ -131,8 +131,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def serialize(
         self,
-        encoding: str,
-        format: str,
+        encoding: str = "PEM",
+        format: str = "PKCS8",
         passphrase: typing.Optional[bytes] = None,
     ) -> bytes:
         try:
