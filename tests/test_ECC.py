@@ -7,6 +7,7 @@ from itertools import product
 import pytest
 
 from pyflocker.ciphers import ECC, ECDSA, Backends, exc
+from pyflocker.ciphers.backends.asymmetric import ECDH
 from pyflocker.ciphers.interfaces import Hash
 
 ENCRYPTION_PASSPHRASE = hashlib.sha256(b"ENCRYPTION_PASSPHRASE").digest()
@@ -172,25 +173,29 @@ class TestSigningVerifying:
 
 @curve_fixture
 @backend_cross_fixture
-class TestDHExchange:
-    def test_exchange_bytes(
+class TestECCExchange:
+    def test_exchange_bytes_ECDH(
         self,
         private_key: base.BaseECCPrivateKey,
         backend,
         backend2,
     ):
+        algorithm = ECDH()
+
         try:
             private_key2 = ECC.generate(private_key.curve, backend=backend2)
             assert private_key.exchange(
                 private_key2.public_key().serialize(
                     "PEM",
                     "SubjectPublicKeyInfo",
-                )
+                ),
+                algorithm=algorithm,
             ) == private_key2.exchange(
                 private_key.public_key().serialize(
                     "PEM",
                     "SubjectPublicKeyInfo",
-                )
+                ),
+                algorithm=algorithm,
             )
         except NotImplementedError:
             assert Backends.CRYPTODOME in (backend, backend2)
