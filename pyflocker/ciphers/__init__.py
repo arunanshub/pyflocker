@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from .backends import Backends
-from .backends.asymmetric import MGF1, OAEP, PSS
+from .backends.asymmetric import ECDH, ECDSA, MGF1, OAEP, PSS
 from .interfaces import AES, DH, ECC, RSA, Camellia, ChaCha20, Hash
 
 __all__ = [
@@ -9,6 +9,9 @@ __all__ = [
     "MGF1",
     "OAEP",
     "PSS",
+    # asymmetric ECC algos
+    "ECDH",
+    "ECDSA",
     # algorithm loaders
     "AES",
     "DH",
