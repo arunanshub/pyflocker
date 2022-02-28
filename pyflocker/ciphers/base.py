@@ -408,7 +408,7 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
             Serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding or format is incorrect or unsupported.
+            ValueError: if the encoding or format is incorrect or unsupported.
 
         Important:
             The ``encoding`` and ``format`` supported by one backend may not be
@@ -568,7 +568,7 @@ class BaseECCPublicKey(metaclass=ABCMeta):
             Serialized public key as bytes object.
 
         Raises:
-            KeyError: if the encoding or format is incorrect or unsupported.
+            ValueError: if the encoding or format is incorrect or unsupported.
 
         Important:
             The ``encoding`` and ``format`` supported by one backend may not be
