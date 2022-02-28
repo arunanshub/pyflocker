@@ -71,7 +71,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         if _key is not None:
             self._key = _key
         else:
-            if not isinstance(curve, str):
+            if not isinstance(curve, str):  # pragma: no cover
                 raise TypeError("curve name must be a string")
             try:
                 self._key = ec.generate_private_key(CURVES[curve]())
@@ -103,7 +103,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             base.BaseEllepticCurveExchangeAlgorithm,
         ] = None,
     ):
-        if algorithm is None:
+        if algorithm is None:  # pragma: no cover
             algorithm = ECDH()
         algo = get_ec_exchange_algorithm(algorithm, algorithm)
         if isinstance(peer_public_key, bytes):
@@ -127,7 +127,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             base.BaseEllepticCurveSignatureAlgorithm
         ] = None,
     ):
-        if algorithm is None:
+        if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
         return SignerContext(
             self._key,
@@ -204,7 +204,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
     }
 
     def __init__(self, key: ec.EllipticCurvePublicKey):
-        if not isinstance(key, ec.EllipticCurvePublicKey):
+        if not isinstance(key, ec.EllipticCurvePublicKey):  # pragma: no cover
             raise TypeError("key is not an EC public key")
         self._key = key
         self._key_size = key.key_size
@@ -215,7 +215,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         return self._key_size
 
     @property
-    def curve(self):
+    def curve(self):  # pragma: no cover
         return self._curve
 
     def verifier(
@@ -224,7 +224,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
             base.BaseEllepticCurveSignatureAlgorithm
         ] = None,
     ):
-        if algorithm is None:
+        if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
         return VerifierContext(
             self._key,
