@@ -22,21 +22,27 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
     ):
         if _key is not None:
             self._key = _key
-            return
-        if not isinstance(curve, str):
-            raise TypeError("curve must be a string")
-        try:
-            self._key = ECC.generate(curve=CURVES[curve])
-        except KeyError as e:
-            raise ValueError(f"Invalid curve: {curve}") from e
+        else:
+            if not isinstance(curve, str):
+                raise TypeError("curve must be a string")
+            try:
+                self._key = ECC.generate(curve=CURVES[curve])
+            except KeyError as e:
+                raise ValueError(f"Invalid curve: {curve}") from e
 
         # XXX: rough hack to get the key size from name as Cryptodome does not
         # provide it.
         self._key_size = int(self._key.curve[-3:])
 
+        self._curve = self._key.curve
+
     @property
     def key_size(self) -> int:
         return self._key_size
+
+    @property
+    def curve(self):
+        return self._curve
 
     def public_key(self) -> ECCPublicKey:
         return ECCPublicKey(self._key.public_key())
@@ -93,13 +99,13 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             self._validate_pkcs1_args(encoding, protection)
 
         protection_args = {}
-        if passphrase is not None and protection is None:
+        if passphrase is not None and protection is None and format != "PKCS1":
             # use a curated encryption choice and not DES-EDE3-CBC
             protection_args = {
                 "protection": "PBKDF2WithHMAC-SHA1AndAES256-CBC",
             }
 
-        return self._key.export_key(
+        key = self._key.export_key(
             format=encoding,
             use_pkcs8=format == "PKCS8",
             passphrase=(
@@ -109,13 +115,14 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             ),
             **protection_args,
         )
+        return key if isinstance(key, bytes) else key.encode()
 
     @staticmethod
     def _validate_pkcs1_args(
         encoding: str,
         protection: typing.Optional[str],
     ) -> None:
-        if protection is not None:  # pragma: no cover
+        if protection is not None:
             raise ValueError("protection is meaningful only for PKCS8")
         if encoding == "DER":
             raise ValueError("cannot use DER with PKCS1 format")
@@ -175,10 +182,15 @@ class ECCPublicKey(base.BaseECCPublicKey):
     def __init__(self, key: ECC.EccKey):
         self._key = key
         self._key_size = int(self._key.curve[-3:])
+        self._curve = key.curve
 
     @property
     def key_size(self) -> int:
         return self._key_size
+
+    @property
+    def curve(self):
+        return self._curve
 
     def serialize(
         self,
