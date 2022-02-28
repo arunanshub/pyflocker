@@ -1,4 +1,4 @@
-"""Base classes for pyflocker."""
+"""Base classes for pyflocker. """
 
 from __future__ import annotations
 
@@ -216,14 +216,6 @@ class BaseHash(metaclass=ABCMeta):
 
     def __repr__(self) -> str:  # pragma: no cover
         return f"<{type(self).__name__} '{self.name}' at {hex(id(self))}>"
-
-
-class BasePrivateKey(metaclass=ABCMeta):
-    ...
-
-
-class BasePublicKey(metaclass=ABCMeta):
-    ...
 
 
 class BaseRSAPrivateKey(metaclass=ABCMeta):
@@ -456,6 +448,163 @@ class BaseMGF(metaclass=ABCMeta):
     """
     Base class for mask generation functions used by padding algorithms.
     """
+
+
+class BaseEllepticCurveExchangeAlgorithm(metaclass=ABCMeta):
+    """
+    Base class for exchange algorithm for elleptic keys.
+    """
+
+
+class BaseEllepticCurveSignatureAlgorithm(metaclass=ABCMeta):
+    """
+    Base class for signing algorithm for elleptic keys.
+    """
+
+
+class BaseECCPrivateKey(metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def key_size(self):
+        """Size of ECC key, in bits."""
+
+    @abstractmethod
+    def serialize(self, encoding: str, format: str) -> bytes:
+        """Serialize the private key.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+            passphrase:
+                A bytes object to use for encrypting the private key. If
+                ``passphrase`` is None, the private key will be exported in the
+                clear!
+
+        Returns:
+            Serialized key as a bytes object.
+
+        Raises:
+            ValueError: If the encoding or format is incorrect.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of the method for supported options.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(cls, data: bytes) -> BaseECCPrivateKey:
+        """Loads the private key as bytes object and returns the Key interface.
+
+        Args:
+            data: The key as bytes object.
+            passphrase:
+                The passphrase that deserializes the private key. It must be a
+                bytes-like object if the key was encrypted while serialization,
+                otherwise ``None``.
+
+        Returns:
+            RSA private key.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+
+    @abstractmethod
+    def exchange(
+        self,
+        peer_public_key: typing.Union[bytes, BaseECCPublicKey],
+        algorithm: typing.Optional[BaseEllepticCurveExchangeAlgorithm] = None,
+    ) -> bytes:
+        """Perform a key exchange.
+
+        Args:
+            peer_public_key:
+                The peer public key can be a bytes or an ECC public key object.
+            algorithm:
+                The algorithm to use for performing key exchange. Default is
+                ECDH.
+
+        Returns:
+            A shared key.
+
+        Raises:
+            TypeError:
+                if ``peer_public_key`` is not a bytes-like or ECC Public Key
+                object.
+        """
+
+    @abstractmethod
+    def signer(
+        self,
+        algorithm: BaseEllepticCurveSignatureAlgorithm,
+    ) -> BaseSignerContext:
+        """Creates a signer context.
+
+        Args:
+            algorithm: The signing algorithm to use. Default is ECDSA.
+
+        Returns:
+            signer object for signing.
+        """
+
+
+class BaseECCPublicKey(metaclass=ABCMeta):
+    @property
+    @abstractmethod
+    def key_size(self):
+        """Size of ECC key, in bits."""
+
+    @abstractmethod
+    def serialize(self, encoding: str, format: str) -> bytes:
+        """Serialize the public key.
+
+        Args:
+            encoding: The encoding to use.
+            format: The format to use.
+
+        Returns:
+            Serialized public key as bytes object.
+
+        Raises:
+            KeyError: if the encoding or format is incorrect or unsupported.
+
+        Important:
+            The ``encoding`` and ``format`` supported by one backend may not be
+            supported by the other. You should check the documentation of the
+            implementation of this method for supported options.
+        """
+
+    @classmethod
+    @abstractmethod
+    def load(cls, data: bytes) -> BaseECCPublicKey:
+        """Loads the public key as ``bytes`` object and returns
+        the Key interface.
+
+        Args:
+            data: The key as bytes object.
+
+        Returns:
+            The ECC public key.
+
+        Raises:
+            ValueError: if the key could not be deserialized.
+        """
+
+    @abstractmethod
+    def verifier(
+        self,
+        algorithm: typing.Optional[BaseEllepticCurveSignatureAlgorithm] = None,
+    ) -> BaseVerifierContext:
+        """Creates a verifier context.
+
+        Args:
+            algorithm: The signing algorithm to use. Default is ECDSA.
+
+        Returns:
+            verifier object for verification.
+        """
 
 
 class BaseSignerContext(metaclass=ABCMeta):
