@@ -15,7 +15,7 @@ from cryptography.hazmat.primitives.serialization import (
 from ... import base, exc
 from ..asymmetric import OAEP, PSS
 from . import Hash
-from .asymmetric import get_padding_func
+from .asymmetric import get_padding_algorithm
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
@@ -88,7 +88,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             padding = OAEP()
         return DecryptorContext(
             self._key,
-            get_padding_func(padding)(padding),
+            get_padding_algorithm(padding, padding),
         )
 
     def signer(
@@ -99,7 +99,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             padding = PSS()
         return SignerContext(
             self._key,
-            get_padding_func(padding)(padding),
+            get_padding_algorithm(padding, padding),
         )
 
     def serialize(
@@ -227,7 +227,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             padding = OAEP()
         return EncryptorContext(
             self._key,
-            get_padding_func(padding)(padding),
+            get_padding_algorithm(padding, padding),
         )
 
     def verifier(
@@ -238,7 +238,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             padding = PSS()
         return VerifierContext(
             self._key,
-            get_padding_func(padding)(padding),
+            get_padding_algorithm(padding, padding),
         )
 
     def serialize(

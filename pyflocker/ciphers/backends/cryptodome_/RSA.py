@@ -6,7 +6,7 @@ from Cryptodome.PublicKey import RSA
 
 from ... import base, exc
 from ..asymmetric import OAEP, PSS
-from .asymmetric import PROTECTION_SCHEMES, get_padding_func
+from .asymmetric import PROTECTION_SCHEMES, get_padding_algorithm
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
@@ -60,7 +60,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return DecryptorContext(
-            get_padding_func(padding)(self._key, padding),
+            get_padding_algorithm(padding, self._key, padding),
         )
 
     def signer(
@@ -70,7 +70,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         if padding is None:  # pragma: no cover
             padding = PSS()
         return SignerContext(
-            get_padding_func(padding)(self._key, padding),
+            get_padding_algorithm(padding, self._key, padding),
         )
 
     def public_key(self) -> RSAPublicKey:
@@ -192,7 +192,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         if padding is None:  # pragma: no cover
             padding = OAEP()
         return EncryptorContext(
-            get_padding_func(padding)(self._key, padding),
+            get_padding_algorithm(padding, self._key, padding),
         )
 
     def verifier(
@@ -202,7 +202,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         if padding is None:  # pragma: no cover
             padding = PSS()
         return VerifierContext(
-            get_padding_func(padding)(self._key, padding),
+            get_padding_algorithm(padding, self._key, padding),
         )
 
     def serialize(
