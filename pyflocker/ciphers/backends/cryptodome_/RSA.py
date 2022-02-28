@@ -121,10 +121,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             raise ValueError("invalid protection scheme")
 
         if format == "PKCS1":
-            if protection is not None:  # pragma: no cover
-                raise ValueError("protection is meaningful only for PKCS8")
-            if encoding == "DER":
-                raise ValueError("cannot use DER with PKCS1 format")
+            self._validate_pkcs1_args(encoding, protection)
 
         if passphrase is not None and protection is None:
             # use a curated encryption choice and not DES-EDE3-CBC
@@ -140,6 +137,16 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             ),
             protection=protection,
         )
+
+    @staticmethod
+    def _validate_pkcs1_args(
+        encoding: str,
+        protection: typing.Optional[str],
+    ):
+        if protection is not None:  # pragma: no cover
+            raise ValueError("protection is meaningful only for PKCS8")
+        if encoding == "DER":
+            raise ValueError("cannot use DER with PKCS1 format")
 
     @classmethod
     def load(
