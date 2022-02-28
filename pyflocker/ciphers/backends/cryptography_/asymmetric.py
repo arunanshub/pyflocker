@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from types import MappingProxyType
+import typing
 from typing import TYPE_CHECKING
 
-from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import padding as padding_
+from cryptography.hazmat.primitives.asymmetric.ec import ECDH, ECDSA
 
 from .. import asymmetric
 from . import Hash
@@ -58,62 +58,77 @@ def get_PSS(padding: base.BaseAsymmetricPadding):
     )
 
 
-PADDINGS = MappingProxyType(
-    {
-        asymmetric.OAEP: get_OAEP,
-        asymmetric.PSS: get_PSS,
-    }
-)
+def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm):
+    """Return an ECDH object for key exchange.
+
+    Args:
+        algorithm: The algorithm to use.
+
+    Returns: ECDH key exchange object.
+    """
+    if not isinstance(algorithm, asymmetric.ECDH):
+        raise TypeError("algorithm must be an instance of ECDH")
+    return ECDH()
 
 
-ENCODINGS = MappingProxyType(
-    {
-        "PEM": serial.Encoding.PEM,
-        "DER": serial.Encoding.DER,
-        "OpenSSH": serial.Encoding.OpenSSH,
-        "Raw": serial.Encoding.Raw,
-        "X962": serial.Encoding.X962,
-    }
-)
+def get_ECDSA(algorithm: base.BaseEllepticCurveSignatureAlgorithm):
+    """Return an ECDSA callable for signing/verification.
+
+    The object is not constructed until the key is signing/verifying.
+
+    Args:
+        algorithm: The algorithm to use.
+
+    Returns: Signer/Verifier callable.
+    """
+    if not isinstance(algorithm, asymmetric.ECDSA):
+        raise TypeError("algorithm must be an instance of ECDSA")
+    return ECDSA
 
 
-try:
-    _fmt = {"OpenSSH": serial.PrivateFormat.OpenSSH}
-except AttributeError:
-    _fmt = {}
-
-PRIVATE_FORMATS = MappingProxyType(
-    {
-        "PKCS8": serial.PrivateFormat.PKCS8,
-        "TraditionalOpenSSL": serial.PrivateFormat.TraditionalOpenSSL,
-        "Raw": serial.PrivateFormat.Raw,
-        # PKCS1 name compat with Cryptodome
-        "PKCS1": serial.PrivateFormat.TraditionalOpenSSL,
-        **_fmt,
-    }
-)
+PADDINGS: typing.Dict[
+    typing.Type[base.BaseAsymmetricPadding],
+    typing.Callable,
+] = {
+    asymmetric.OAEP: get_OAEP,
+    asymmetric.PSS: get_PSS,
+}
 
 
-PUBLIC_FORMATS = MappingProxyType(
-    {
-        "SubjectPublicKeyInfo": serial.PublicFormat.SubjectPublicKeyInfo,
-        "PKCS1": serial.PublicFormat.PKCS1,
-        "OpenSSH": serial.PublicFormat.OpenSSH,
-        "CompressedPoint": serial.PublicFormat.CompressedPoint,
-        "UncompressedPoint": serial.PublicFormat.UncompressedPoint,
-        "Raw": serial.PublicFormat.Raw,
-    }
-)
+EC_EXCHANGE_ALGORITHMS: typing.Dict[
+    typing.Type[base.BaseEllepticCurveExchangeAlgorithm],
+    typing.Callable,
+] = {
+    asymmetric.ECDH: get_ECDH,
+}
 
-PARAMETER_FORMATS = MappingProxyType(
-    {
-        "PKCS3": serial.ParameterFormat.PKCS3,
-    }
-)
-
-del MappingProxyType, _fmt
+EC_SIGNATURE_ALGORITHMS: typing.Dict[
+    typing.Type[base.BaseEllepticCurveSignatureAlgorithm],
+    typing.Callable,
+] = {
+    asymmetric.ECDSA: get_ECDSA,
+}
 
 
-def get_padding_func(padding):
-    """Return the appropriate padding factory function based on ``padding``."""
-    return PADDINGS[type(padding)]
+def get_padding_algorithm(
+    padding: base.BaseAsymmetricPadding,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any],
+):
+    return PADDINGS[type(padding)](*args, **kwargs)
+
+
+def get_ec_exchange_algorithm(
+    algorithm: base.BaseEllepticCurveExchangeAlgorithm,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any],
+):
+    return EC_EXCHANGE_ALGORITHMS[type(algorithm)](*args, **kwargs)
+
+
+def get_ec_signature_algorithm(
+    algorithm: base.BaseEllepticCurveSignatureAlgorithm,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any],
+):
+    return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)

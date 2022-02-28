@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from types import MappingProxyType
+import typing
 from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import PKCS1_OAEP
@@ -9,20 +9,22 @@ from Cryptodome.Signature import DSS, pss
 from .. import asymmetric
 
 if TYPE_CHECKING:  # pragma: no cover
+    from Cryptodome.PublicKey.ECC import EccKey
+    from Cryptodome.PublicKey.RSA import RsaKey
+
     from ... import base
 
 
-def get_OAEP(key, padding: base.BaseAsymmetricPadding):
+def get_OAEP(key: RsaKey, padding: base.BaseAsymmetricPadding):
     """Construct a Cryptodome specific OAEP object.
 
     Args:
         key: Public/Private key (from the Cryptodome backend).
-        padding (OAEP): An OAEP object.
+        padding: An OAEP object.
 
     Returns:
-        OAEP object:
-            An OAEP encryptor/decryptor object depending on the key, from the
-            Cryptodome backend.
+        An OAEP encryptor/decryptor object depending on the key, from the
+        Cryptodome backend.
     """
     if not isinstance(padding, asymmetric.OAEP):
         raise TypeError("padding must be an OAEP object")
@@ -41,15 +43,15 @@ def get_OAEP(key, padding: base.BaseAsymmetricPadding):
     )
 
 
-def get_PSS(key, padding: base.BaseAsymmetricPadding):
+def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding):
     """Construct a Cryptodome specific PSS object.
 
     Args:
         key: Public/Private key (from the Cryptodome backend).
-        padding (PSS): A PSS object.
+        padding: A PSS object.
 
     Returns:
-        PSS object: An PSS signer/verifier object, depending on the key.
+        An PSS signer/verifier object, depending on the key.
     """
     if not isinstance(padding, asymmetric.PSS):
         raise TypeError("padding must be a PSS object")
@@ -70,36 +72,24 @@ def get_PSS(key, padding: base.BaseAsymmetricPadding):
     )
 
 
-def get_DSS(key, mode, encoding):
-    """Construct a Cryptodome specific DSS object.
+def get_ECDSA(
+    key: EccKey,
+    algorithm: asymmetric.BaseEllepticCurveSignatureAlgorithm,
+):
+    """Construct a DSS object for signing/verification.
+
+    Note that, unlike pyca/cryptography, Cryptodome uses ``mode`` and
+    ``encoding`` explicitly for its operation.
 
     Args:
-        key: The private/public key from Cryptodome backend.
-        mode (str):
-            The mode can be:
+        key: An ECC key object from ``Cryptodome`` backend.
+        algorithm: The algorithm to use.
 
-            - 'fips-186-3'
-            - 'deterministic-rfc6979'
-        encoding:
-            How the signature is encoded. Values are:
-
-            - 'binary'
-            - 'der'
-
-    Returns:
-        DSS object: DSS object from Cryptodome backend.
-
-    Raises:
-        ValueError: if the mode or encoding is invalid.
+    Returns: Signer/Verifier instance.
     """
-    try:
-        return DSS.new(
-            key,
-            mode=DSS_MODES[mode],
-            encoding=DSS_ENCODINGS[encoding],
-        )
-    except KeyError as e:
-        raise ValueError(f"The mode or encoding is invalid: {e.args}")
+    if not isinstance(algorithm, asymmetric.ECDSA):
+        raise TypeError("algorithm must be an instance of ECDH")
+    return DSS.new(key, mode="fips-186-3", encoding="der")
 
 
 class _SaltLengthMaximizer:
@@ -133,28 +123,20 @@ class _SaltLengthMaximizer:
         return self._sign_or_verify(msghash, signature)
 
 
-PADDINGS = MappingProxyType(
-    {
-        asymmetric.OAEP: get_OAEP,
-        asymmetric.PSS: get_PSS,
-    }
-)
+PADDINGS: typing.Dict[
+    typing.Type[base.BaseAsymmetricPadding],
+    typing.Callable,
+] = {
+    asymmetric.OAEP: get_OAEP,
+    asymmetric.PSS: get_PSS,
+}
 
-
-ENCODINGS = MappingProxyType(
-    {
-        "PEM": "PEM",
-        "DER": "DER",
-        "OpenSSH": "OpenSSH",
-    }
-)
-
-FORMATS = MappingProxyType(
-    {
-        "PKCS1": 1,
-        "PKCS8": 8,
-    }
-)
+EC_SIGNATURE_ALGORITHMS: typing.Dict[
+    typing.Type[base.BaseEllepticCurveSignatureAlgorithm],
+    typing.Callable,
+] = {
+    asymmetric.ECDSA: get_ECDSA,
+}
 
 # PKCS8 password derivation mechanisms
 PROTECTION_SCHEMES = frozenset(
@@ -170,24 +152,17 @@ PROTECTION_SCHEMES = frozenset(
 )
 
 
-DSS_ENCODINGS = MappingProxyType(
-    {
-        "binary": "binary",
-        "der": "der",
-    }
-)
-
-DSS_MODES = MappingProxyType(
-    {
-        "fips-186-3": "fips-186-3",
-        "deterministic-rfc6979": "deterministic-rfc6979",
-    }
-)
+def get_padding_algorithm(
+    padding: base.BaseAsymmetricPadding,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any],
+):
+    return PADDINGS[type(padding)](*args, **kwargs)
 
 
-def get_padding_func(padding):
-    """Return the appropriate padding factory function based on ``padding``."""
-    return PADDINGS[type(padding)]
-
-
-del MappingProxyType
+def get_ec_signature_algorithm(
+    algorithm: base.BaseEllepticCurveSignatureAlgorithm,
+    *args: typing.Any,
+    **kwargs: typing.Dict[str, typing.Any],
+):
+    return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)
