@@ -5,7 +5,12 @@ import typing
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..base import BaseAsymmetricPadding, BaseMGF
+from ..base import (
+    BaseAsymmetricPadding,
+    BaseEllepticCurveExchangeAlgorithm,
+    BaseEllepticCurveSignatureAlgorithm,
+    BaseMGF,
+)
 from ..interfaces import Hash
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -70,3 +75,17 @@ class PSS(BaseAsymmetricPadding):
     mgf: BaseMGF = field(default_factory=MGF1)
     salt_length: typing.Optional[int] = None
     name: typing.ClassVar[str] = "PSS"
+
+
+@dataclass(frozen=True)
+class ECDSA(BaseEllepticCurveSignatureAlgorithm):
+    """
+    Elleptic Curve Digital Signature Algorithm.
+    """
+
+
+@dataclass(frozen=True)
+class ECDH(BaseEllepticCurveExchangeAlgorithm):
+    """
+    Elleptic Curve Diffie Hellmann Algorithm.
+    """
