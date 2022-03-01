@@ -334,7 +334,7 @@ def load_private_key(
     return ECCPrivateKey.load(data, passphrase)
 
 
-def load_public_key(data: bytes) -> ECCPublicKey:
+def load_public_key(data: bytes, **kwargs) -> ECCPublicKey:
     """Loads the public key.
 
     Args:
@@ -343,4 +343,5 @@ def load_public_key(data: bytes) -> ECCPublicKey:
     Returns:
         An ECC public key.
     """
+    del kwargs
     return ECCPublicKey.load(data)
