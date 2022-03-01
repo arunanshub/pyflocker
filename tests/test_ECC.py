@@ -41,6 +41,7 @@ c42Kpw==
 -----END PUBLIC KEY-----
 """
 
+# encrpyted ECC private key. passphrase is "helloworld"
 TESTING_ENCRYPTED_PRIVATE_KEY = b"""\
 -----BEGIN ENCRYPTED PRIVATE KEY-----
 MIIBXTBXBgkqhkiG9w0BBQ0wSjApBgkqhkiG9w0BBQwwHAQIiPDccoM2IRkCAggA
@@ -139,12 +140,6 @@ class TestPrivateKeyEncoding:
         )
         assert private_key_equal(private_key, private_key2)
 
-    def _test_PEM_OpenSSH(
-        self,
-        private_key: base.BaseECCPrivateKey,
-    ):
-        pass
-
     @pytest.mark.parametrize("format", ["PKCS1", "PKCS8"])
     @pytest.mark.parametrize("passphrase", [None, ENCRYPTION_PASSPHRASE])
     def test_DER(
@@ -199,6 +194,25 @@ class TestPublicKeyEncoding:
             )
 
         public_key2 = ECC.load_public_key(serialized, backend=backend2)
+        assert public_key_equal(public_key, public_key2)
+
+    def test_SEC1_SEC1(self, public_key, backend, backend2):
+        try:
+            serialized = public_key.serialize("SEC1", "SEC1")
+        except ValueError:
+            assert backend == Backends.CRYPTOGRAPHY
+            return pytest.skip("SEC1 format unsupported by Cryptography")
+
+        try:
+            public_key2 = ECC.load_public_key(
+                serialized,
+                backend=backend2,
+                curve=public_key.curve,
+            )
+        except ValueError:
+            assert backend2 == Backends.CRYPTOGRAPHY
+            return pytest.skip("SEC1 format unsupported by Cryptography")
+
         assert public_key_equal(public_key, public_key2)
 
 
@@ -284,14 +298,46 @@ class TestECCExchange:
 
 curve_p256_fixture = pytest.mark.parametrize("curve", ["p256"], scope="module")
 
+backend_list_fixture = pytest.mark.parametrize(
+    "backend", list(Backends), scope="module"
+)
 
-@pytest.mark.parametrize("backend", list(Backends), scope="module")
+
 class TestECCErrors:
+    @curve_p256_fixture
+    @pytest.mark.parametrize(
+        "backend",
+        [Backends.CRYPTOGRAPHY],
+        scope="module",
+    )
+    def test_PEM_OpenSSH_password_less_than_72_bytes_cryptography(
+        self,
+        private_key,
+    ):
+        with pytest.raises(ValueError):
+            private_key.serialize("PEM", "OpenSSH", passphrase=bytes(73))
+
+    @pytest.mark.parametrize(
+        "curve",
+        ["p192", "p224"],
+        scope="module",
+    )
+    @pytest.mark.parametrize(
+        "backend",
+        [Backends.CRYPTOGRAPHY],
+        scope="module",
+    )
+    def test_PEM_OpenSSH_unsupported_curves(self, private_key):
+        with pytest.raises(ValueError):
+            private_key.serialize("PEM", "OpenSSH")
+
+    @backend_list_fixture
     def test_invalid_curve_name(self, backend):
         with pytest.raises(ValueError):
             ECC.generate("invalid-curve", backend=backend)
 
     @curve_p256_fixture
+    @backend_list_fixture
     def test_private_key_invalid_encoding_format(self, private_key):
         with pytest.raises(ValueError):
             private_key.serialize(encoding="nonexistent")
@@ -299,6 +345,7 @@ class TestECCErrors:
             private_key.serialize(format="nonexistent")
 
     @curve_p256_fixture
+    @backend_list_fixture
     def test_public_key_serialize_invalid_encoding_format(self, private_key):
         public_key = private_key.public_key()
         with pytest.raises(ValueError):
@@ -306,6 +353,7 @@ class TestECCErrors:
         with pytest.raises(ValueError):
             public_key.serialize(format="nonexistent")
 
+    @backend_list_fixture
     def test_private_key_load_invalid_data(self, backend):
         with pytest.raises(ValueError):
             ECC.load_private_key(b"invalid-data", backend=backend)
@@ -316,6 +364,7 @@ class TestECCErrors:
                 passphrase=b"invalid",
             )
 
+    @backend_list_fixture
     def test_private_key_load_invalid_password(self, backend):
         with pytest.raises(ValueError):
             ECC.load_private_key(
@@ -342,6 +391,7 @@ class TestECCErrors:
         with pytest.raises(ValueError):
             ECC.load_private_key(TESTING_PUBLIC_KEY, backend=backend)
 
+    @backend_list_fixture
     def test_public_key_load_invalid_data(self, backend):
         with pytest.raises(ValueError):
             ECC.load_public_key(b"invalid-data", backend=backend)
@@ -362,6 +412,7 @@ class TestECCErrors:
             )
 
     @curve_p256_fixture
+    @backend_list_fixture
     def test_public_key_openssh_not_with_openssh(self, private_key):
         public_key = private_key.public_key()
         with pytest.raises(ValueError):
