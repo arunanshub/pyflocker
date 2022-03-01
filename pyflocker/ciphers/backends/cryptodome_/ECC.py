@@ -264,12 +264,17 @@ class ECCPublicKey(base.BaseECCPublicKey):
         )
 
     @classmethod
-    def load(cls, data: bytes) -> ECCPublicKey:
+    def load(
+        cls,
+        data: bytes,
+        *,
+        curve: typing.Optional[str] = None,
+    ) -> ECCPublicKey:
         """Loads the public key as binary object and returns the Key object.
 
         Args:
-            data (bytes, bytearray):
-                The key as bytes object.
+            data: The key as bytes object.
+            curve: The name of the curve. Only for SEC1 keys.
 
         Returns:
             ECCPublicKey: An ECC public key.
@@ -278,7 +283,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
             ValueError: if the key could not be deserialized.
         """
         try:
-            key = ECC.import_key(data)
+            key = ECC.import_key(data, curve_name=curve)
             if key.has_private():
                 raise ValueError("The key is not a private key")
             return cls(key=key)
@@ -324,7 +329,11 @@ def generate(curve: str) -> ECCPrivateKey:
     return ECCPrivateKey(curve)
 
 
-def load_public_key(data: bytes) -> ECCPublicKey:
+def load_public_key(
+    data: bytes,
+    *,
+    curve: typing.Optional[str] = None,
+) -> ECCPublicKey:
     """Loads the public key.
 
     Args:
@@ -333,7 +342,7 @@ def load_public_key(data: bytes) -> ECCPublicKey:
     Returns:
         An ECC public key.
     """
-    return ECCPublicKey.load(data)
+    return ECCPublicKey.load(data, curve=curve)
 
 
 def load_private_key(

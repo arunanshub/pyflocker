@@ -7,7 +7,7 @@ from ..backends import load_algorithm as _load_algo
 
 if typing.TYPE_CHECKING:
     from .. import base
-    from ..backends import Backends as _Backends
+    from ..backends import Backends
 
 
 def _load_ecc_cpr(backend):
@@ -18,7 +18,7 @@ def _load_ecc_cpr(backend):
 def generate(
     curve: str,
     *,
-    backend: typing.Optional[_Backends] = None,
+    backend: typing.Optional[Backends] = None,
 ) -> base.BaseECCPrivateKey:
     """
     Generate a private key with given curve ``curve``.
@@ -43,12 +43,14 @@ def generate(
 def load_public_key(
     data: bytes,
     *,
-    backend: typing.Optional[_Backends] = None,
+    curve: typing.Optional[str] = None,
+    backend: typing.Optional[Backends] = None,
 ) -> base.BaseECCPublicKey:
     """Loads the public key and returns a Key interface.
 
     Args:
         data: The public key (a bytes-like object) to deserialize.
+        curve: The name of the curve. Required only for ``SEC1`` keys.
 
     Keyword Arguments:
         backend: The backend to use. It must be a value from :any:`Backends`.
@@ -56,14 +58,17 @@ def load_public_key(
     Returns:
         An ECC public key.
     """
-    return _load_ecc_cpr(backend).load_public_key(data)
+    return _load_ecc_cpr(backend).load_public_key(
+        data,
+        curve=curve,
+    )
 
 
 def load_private_key(
     data: bytes,
     passphrase: typing.Optional[bytes] = None,
     *,
-    backend: typing.Optional[_Backends] = None,
+    backend: typing.Optional[Backends] = None,
 ) -> base.BaseECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
