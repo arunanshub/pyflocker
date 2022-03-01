@@ -111,15 +111,16 @@ import typing
 from collections import namedtuple
 from functools import partial
 from hashlib import pbkdf2_hmac
-from typing import TYPE_CHECKING
 
 from .ciphers import exc
 from .ciphers.interfaces import AES
 from .ciphers.modes import AEAD, SPECIAL, Modes
 
-if TYPE_CHECKING:  # pragma: no cover
-    PathLike = typing.Union[str, os.PathLike[str]]
-    KDFunc = typing.Callable[[bytes, bytes, int], bytes]
+#: A KDF callable
+KDFunc = typing.Callable[[bytes, bytes, int], bytes]
+PathLike = typing.Union[str, os.PathLike[str]]
+
+if typing.TYPE_CHECKING:  # pragma: no cover
     from .ciphers.backends import Backends
 
 #: Maximum possible length of the metadata.
