@@ -539,6 +539,7 @@ def locker(
         raise ValueError("newfile and ext are mutually exclusive")
 
     ext = ext or EXTENSION
+    file = os.fspath(file)
 
     # guess encrypting if not provided
     if encrypting is None:
