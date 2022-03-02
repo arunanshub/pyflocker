@@ -21,20 +21,24 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
     _encrypting: bool
     _ctx: typing.Any
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         return self._ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._ctx.update_into(data, out)
 
-    def finalize(self):
+    def finalize(self) -> None:
         if not self._ctx:
             raise exc.AlreadyFinalized
 
@@ -57,29 +61,33 @@ class AEADCipherTemplate(base.BaseAEADCipher):
     _encrypting: bool
     _ctx: typing.Any
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
         return self._ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
         self._ctx.update_into(data, out)
 
-    def authenticate(self, data):
+    def authenticate(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if self._updated:
             raise TypeError
         self._ctx.authenticate_additional_data(data)
 
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -97,7 +105,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
             ctx.finalize()
             self._tag = ctx.tag
 
-    def calculate_tag(self):
+    def calculate_tag(self) -> typing.Optional[bytes]:
         if self._ctx is not None:
             raise exc.NotFinalized
 

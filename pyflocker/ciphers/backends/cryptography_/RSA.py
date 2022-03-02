@@ -17,6 +17,9 @@ from ..asymmetric import OAEP, PSS
 from . import Hash
 from .asymmetric import get_padding_algorithm
 
+if typing.TYPE_CHECKING:
+    from cryptography.hazmat.primitives.asymmetric import padding as _padding
+
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
     _encodings = {
@@ -35,7 +38,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         n: typing.Optional[int],
         e: int = 65537,
         _key: typing.Optional[rsa.RSAPrivateKey] = None,
-    ):
+    ) -> None:
         if _key is not None:
             self._key = _key
         else:
@@ -197,7 +200,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
     }
 
-    def __init__(self, key):
+    def __init__(self, key: rsa.RSAPublicKey) -> None:
         if not isinstance(key, rsa.RSAPublicKey):  # pragma: no cover
             raise ValueError("The key is not an RSA public key.")
         self._key = key
@@ -293,7 +296,11 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
 
 class EncryptorContext(base.BaseEncryptorContext):
-    def __init__(self, key: rsa.RSAPublicKey, padding):
+    def __init__(
+        self,
+        key: rsa.RSAPublicKey,
+        padding: _padding.AsymmetricPadding,
+    ) -> None:
         self._encrypt_func = partial(key.encrypt, padding=padding)
 
     def encrypt(self, plaintext: bytes) -> bytes:
@@ -301,7 +308,11 @@ class EncryptorContext(base.BaseEncryptorContext):
 
 
 class DecryptorContext(base.BaseDecryptorContext):
-    def __init__(self, key: rsa.RSAPrivateKey, padding):
+    def __init__(
+        self,
+        key: rsa.RSAPrivateKey,
+        padding: _padding.AsymmetricPadding,
+    ) -> None:
         self._decrypt_func = partial(key.decrypt, padding=padding)
 
     def decrypt(self, ciphertext: bytes) -> bytes:
@@ -312,7 +323,11 @@ class DecryptorContext(base.BaseDecryptorContext):
 
 
 class SignerContext(base.BaseSignerContext):
-    def __init__(self, key: rsa.RSAPrivateKey, padding):
+    def __init__(
+        self,
+        key: rsa.RSAPrivateKey,
+        padding: _padding.AsymmetricPadding,
+    ) -> None:
         self._sign_func = partial(key.sign, padding=padding)
 
     def sign(self, msghash: base.BaseHash) -> bytes:
@@ -323,10 +338,12 @@ class SignerContext(base.BaseSignerContext):
 
 
 class VerifierContext(base.BaseVerifierContext):
-    def __init__(self, key: rsa.RSAPublicKey, padding):
+    def __init__(
+        self, key: rsa.RSAPublicKey, padding: _padding.AsymmetricPadding
+    ) -> None:
         self._verify_func = partial(key.verify, padding=padding)
 
-    def verify(self, msghash: base.BaseHash, signature: bytes):
+    def verify(self, msghash: base.BaseHash, signature: bytes) -> None:
         try:
             return self._verify_func(
                 signature=signature,

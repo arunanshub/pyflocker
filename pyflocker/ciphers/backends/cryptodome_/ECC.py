@@ -19,7 +19,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         self,
         curve: typing.Optional[str],
         _key: typing.Optional[ECC.EccKey] = None,
-    ):
+    ) -> None:
         if _key is not None:
             self._key = _key
         else:
@@ -41,7 +41,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         return self._key_size
 
     @property
-    def curve(self):
+    def curve(self) -> str:
         return self._curve
 
     def public_key(self) -> ECCPublicKey:
@@ -179,7 +179,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
     _encodings = ("PEM", "DER", "OpenSSH", "SEC1")
     _formats = ("SubjectPublicKeyInfo", "OpenSSH", "SEC1")
 
-    def __init__(self, key: ECC.EccKey):
+    def __init__(self, key: ECC.EccKey) -> None:
         self._key = key
         self._key_size = int(self._key.curve[-3:])
         self._curve = key.curve
@@ -189,7 +189,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         return self._key_size
 
     @property
-    def curve(self):  # pragma: no cover
+    def curve(self) -> str:  # pragma: no cover
         return self._curve
 
     def serialize(
@@ -238,7 +238,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         return key if isinstance(key, bytes) else key.encode()
 
     @staticmethod
-    def _validate_encoding_format_args(encoding: str, format: str):
+    def _validate_encoding_format_args(encoding: str, format: str) -> None:
         to_validate = ("SEC1", "OpenSSH")
         is_encoding_present = encoding in to_validate
         is_format_present = format in to_validate
@@ -295,7 +295,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
 
 class SignerContext(base.BaseSignerContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
     def sign(self, msghash: base.BaseHash) -> bytes:
@@ -303,10 +303,10 @@ class SignerContext(base.BaseSignerContext):
 
 
 class VerifierContext(base.BaseVerifierContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
-    def verify(self, msghash: base.BaseHash, signature: bytes):
+    def verify(self, msghash: base.BaseHash, signature: bytes) -> None:
         try:
             self._ctx.verify(msghash, signature)
         except ValueError as e:

@@ -37,7 +37,7 @@ def new(
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
     file: typing.Optional[typing.IO[bytes]] = None,
     backend: Backends = Backends.CRYPTOGRAPHY,
-):
+) -> typing.Union[base.BaseAEADCipher, base.BaseNonAEADCipher]:
     """Instantiate a new Camellia cipher object.
 
     Args:

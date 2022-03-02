@@ -17,7 +17,7 @@ from cryptography.hazmat.primitives.ciphers import modes
 
 from ... import base, exc
 from ... import modes as modes_
-from ...modes import Modes as _m
+from ...modes import Modes as _Modes
 from ..symmetric import (
     FileCipherWrapper,
     HMACWrapper,
@@ -29,13 +29,13 @@ from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
 SUPPORTED = MappingProxyType(
     {
-        _m.MODE_GCM: modes.GCM,
-        _m.MODE_EAX: None,  # not defined by backend
-        _m.MODE_CTR: modes.CTR,
-        _m.MODE_CFB8: modes.CFB8,
-        _m.MODE_CFB: modes.CFB,
-        _m.MODE_OFB: modes.OFB,
-        _m.MODE_CCM: aead.AESCCM,
+        _Modes.MODE_GCM: modes.GCM,
+        _Modes.MODE_EAX: None,  # not defined by backend
+        _Modes.MODE_CTR: modes.CTR,
+        _Modes.MODE_CFB8: modes.CFB8,
+        _Modes.MODE_CFB: modes.CFB,
+        _Modes.MODE_OFB: modes.OFB,
+        _Modes.MODE_CCM: aead.AESCCM,
     }
 )
 
@@ -43,7 +43,13 @@ del MappingProxyType
 
 
 class AEAD(AEADCipherTemplate):
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         self._encrypting = encrypting
         self._updated = False
         self._tag = None
@@ -57,13 +63,19 @@ class AEAD(AEADCipherTemplate):
             self._ctx = cipher.decryptor()
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
 
 class NonAEAD(NonAEADCipherTemplate):
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         self._encrypting = encrypting
         self._mode = mode
 
@@ -75,13 +87,19 @@ class NonAEAD(NonAEADCipherTemplate):
             self._ctx = cipher.decryptor()
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
 
 class AEADOneShot(base.BaseAEADCipher):
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         cipher = _aes_cipher(key, mode, nonce)
 
         self._mode = mode
@@ -95,19 +113,23 @@ class AEADOneShot(base.BaseAEADCipher):
         self._tag_length = 16
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
-    def authenticate(self, data):
+    def authenticate(self, data: bytes) -> None:
         if self._update_func is None:
             raise exc.AlreadyFinalized
         self._aad += data
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def update(self, data, tag=None):
+    def update(
+        self,
+        data: bytes,
+        tag: typing.Optional[bytes] = None,
+    ) -> typing.Optional[bytes]:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -127,10 +149,17 @@ class AEADOneShot(base.BaseAEADCipher):
         finally:
             self.finalize(tag)
 
-    def update_into(self, data, out, tag=None):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+        tag: typing.Optional[bytes] = None,
+    ) -> None:
+        del tag, out, data
         raise NotImplementedError
 
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+        del tag
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -138,7 +167,7 @@ class AEADOneShot(base.BaseAEADCipher):
         if self._raise_on_tag_err:
             raise exc.DecryptionError
 
-    def calculate_tag(self):
+    def calculate_tag(self) -> typing.Optional[bytes]:
         if self._update_func is not None:
             raise exc.NotFinalized
         return self._tag
@@ -149,13 +178,13 @@ class _AuthWrapper:
 
     __slots__ = ("_auth",)
 
-    def __init__(self, auth):
+    def __init__(self, auth: typing.Any):
         self._auth = auth
 
-    def update(self, data):
+    def update(self, data: bytes) -> None:
         self._auth.update(bytes(data))
 
-    def __getattr__(self, name):
+    def __getattr__(self, name: str) -> typing.Any:
         return getattr(self._auth, name)
 
 
@@ -173,9 +202,9 @@ class _EAX:
         "__tag",
     )
 
-    def __init__(self, key, nonce, mac_len=16):
+    def __init__(self, key: bytes, nonce: bytes, mac_len: int = 16):
         self._mac_len = mac_len
-        self._omac = [cmac.CMAC(algo.AES(key), defb()) for i in range(3)]
+        self._omac = [cmac.CMAC(algo.AES(key), defb()) for _ in range(3)]
 
         for i in range(3):
             self._omac[i].update(
@@ -202,7 +231,7 @@ class _EAX:
         self.__tag = None
 
     @property
-    def _ctx(self):
+    def _ctx(self) -> typing.Any:
         """The Cipher context used by the backend.
         Maintains compatibility across pyca/cryptography style
         cipher instances.
@@ -211,14 +240,14 @@ class _EAX:
             return self.__ctx._ctx
         return None
 
-    def authenticate_additional_data(self, data):
+    def authenticate_additional_data(self, data: bytes) -> None:
         if self.__ctx is None:
             raise bkx.AlreadyFinalized
         if self._updated:
             raise ValueError  # pragma: no cover
         self._auth.update(data)
 
-    def encryptor(self):
+    def encryptor(self) -> _EAX:
         self.__ctx = _EncryptionCtx(
             self._cipher.encryptor(),
             _AuthWrapper(self._omac[2]),
@@ -226,25 +255,29 @@ class _EAX:
         )
         return self
 
-    def decryptor(self):
+    def decryptor(self) -> _EAX:
         self.__ctx = _DecryptionCtx(
             self._cipher.decryptor(), _AuthWrapper(self._omac[2])
         )
         return self
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         if self.__ctx is None:
             raise bkx.AlreadyFinalized
         self._updated = True
         return self.__ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         if self.__ctx is None:
             raise bkx.AlreadyFinalized
         self._updated = True
         self.__ctx.update_into(data, out)
 
-    def finalize(self):
+    def finalize(self) -> None:
         """Finalizes the cipher."""
         if self.__ctx is None:
             raise bkx.AlreadyFinalized
@@ -258,13 +291,13 @@ class _EAX:
                 tag = strxor(tag, self._omac_cache[i])
         self.__tag, self.__ctx = tag[: self._mac_len], None
 
-    def finalize_with_tag(self, tag):
+    def finalize_with_tag(self, tag: bytes) -> None:
         self.finalize()
         if not hmac.compare_digest(tag, self.__tag):
             raise bkx.InvalidTag  # pragma: no cover
 
     @property
-    def tag(self):
+    def tag(self) -> typing.Optional[bytes]:
         if self.__ctx is not None:
             raise bkx.NotYetFinalized
         return self.__tag
@@ -278,7 +311,7 @@ def strxor(x: bytes, y: bytes) -> bytes:
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _m,
+    mode: _Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
@@ -364,7 +397,7 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.Set[_m]:
+def supported_modes() -> typing.Set[_Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
@@ -373,10 +406,10 @@ def supported_modes() -> typing.Set[_m]:
     return set(SUPPORTED)
 
 
-def _aes_cipher(key, mode, nonce_or_iv):
-    if mode == _m.MODE_EAX:
+def _aes_cipher(key: bytes, mode: _Modes, nonce_or_iv: bytes) -> typing.Any:
+    if mode == _Modes.MODE_EAX:
         return _EAX(key, nonce_or_iv)
-    if mode in modes_.SPECIAL and mode == _m.MODE_CCM:
+    if mode in modes_.SPECIAL and mode == _Modes.MODE_CCM:
         if not 7 <= len(nonce_or_iv) <= 13:
             raise ValueError("Length of nonce must be between 7 and 13 bytes")
         return SUPPORTED[mode](key)
@@ -384,7 +417,14 @@ def _aes_cipher(key, mode, nonce_or_iv):
     return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv), defb())
 
 
-def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
+def _wrap_hmac(
+    encrypting: bool,
+    key: bytes,
+    mode: _Modes,
+    iv_or_nonce: bytes,
+    digestmod: typing.Any,
+    tag_length: int,
+) -> HMACWrapper:
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     return HMACWrapper(
         NonAEAD(encrypting, ckey, mode, iv_or_nonce),

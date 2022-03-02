@@ -359,7 +359,7 @@ def encrypt(
     outfile: str,
     password: bytes,
     remove: bool = True,
-    **kwargs,
+    **kwargs: typing.Any,
 ) -> None:
     """
     Read from the file specified by the file-path ``infile`` and encrypt and
@@ -403,7 +403,7 @@ def decrypt(
     outfile: str,
     password: bytes,
     remove: bool = True,
-    **kwargs,
+    **kwargs: typing.Any,
 ) -> None:
     """
     Read from the file specified by the file-path ``infile`` and decrypt and
@@ -447,7 +447,7 @@ def lockerf(
     outfile: typing.IO[bytes],
     password: bytes,
     encrypting: bool,
-    **kwargs,
+    **kwargs: typing.Any,
 ) -> None:
     """Utility tool for encrypting files.
 
@@ -489,7 +489,7 @@ def locker(
     *,
     ext: typing.Optional[str] = None,
     newfile: typing.Optional[str] = None,
-    **kwargs,
+    **kwargs: typing.Any,
 ) -> None:
     """Encrypts or decrypts files with AES algorithm.
 
@@ -591,7 +591,7 @@ def _encrypt_or_decrypt(
     outfile: str,
     password: bytes,
     remove: bool = True,
-    **kwargs,
+    **kwargs: typing.Any,
 ) -> None:
     try:
         with open(infile, "rb") as fin, open(outfile, "xb") as fout:

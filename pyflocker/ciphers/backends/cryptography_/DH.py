@@ -27,13 +27,10 @@ class DHParameters(base.BaseDHParameters):
         self,
         key_size: typing.Optional[int],
         generator: int = 2,
-        **kwargs,
-    ):
-        if kwargs:
-            params = kwargs.pop("parameter")
-            if not isinstance(params, dh.DHParameters):  # pragma: no cover
-                raise TypeError("The parameter is not a DH parameter object.")
-            self._params = params
+        _params: typing.Optional[dh.DHParameters] = None,
+    ) -> None:
+        if _params is not None:
+            self._params = _params
         else:
             if not isinstance(key_size, int):  # pragma: no cover
                 raise TypeError("key_size must be an integer")
@@ -99,7 +96,7 @@ class DHParameters(base.BaseDHParameters):
             params = loader(data)
             if not isinstance(params, dh.DHParameters):  # pragma: no cover
                 raise ValueError("Invalid parameter format.")
-            return cls(None, parameter=params)
+            return cls(None, _params=params)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. The parameter format is invalid. "
@@ -114,7 +111,7 @@ class DHParameters(base.BaseDHParameters):
         q: typing.Optional[int] = None,
     ) -> DHParameters:
         param_nos = dh.DHParameterNumbers(p, g, q)
-        return cls(None, parameter=param_nos.parameters())
+        return cls(None, _params=param_nos.parameters())
 
 
 class DHPrivateKey(base.BaseDHPrivateKey):
@@ -126,7 +123,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         "PKCS8": PrivateFormat.PKCS8,
     }
 
-    def __init__(self, key):
+    def __init__(self, key: dh.DHPrivateKey) -> None:
         if not isinstance(key, dh.DHPrivateKey):  # pragma: no cover
             raise ValueError("The key is not a DH private key.")
         self._key = key
@@ -135,7 +132,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         self._x = numbers.x
 
     def parameters(self) -> DHParameters:
-        return DHParameters(None, parameter=self._key.parameters())
+        return DHParameters(None, _params=self._key.parameters())
 
     @property
     def key_size(self) -> int:
@@ -241,14 +238,14 @@ class DHPublicKey(base.BaseDHPublicKey):
         "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
     }
 
-    def __init__(self, key):
+    def __init__(self, key: dh.DHPublicKey) -> None:
         if not isinstance(key, dh.DHPublicKey):  # pragma: no cover
             raise ValueError("The key is not a DH public key.")
         self._key = key
         self._y = key.public_numbers().y
 
     def parameters(self) -> DHParameters:
-        return DHParameters(None, parameter=self._key.parameters())
+        return DHParameters(None, _params=self._key.parameters())
 
     @property
     def key_size(self) -> int:

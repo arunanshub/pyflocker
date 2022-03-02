@@ -8,10 +8,12 @@ from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
 if TYPE_CHECKING:  # pragma: no cover
+    from types import ModuleType
+
     from .. import base
 
 
-def _load_dhe(backend):
+def _load_dhe(backend: _Backends) -> ModuleType:
     return _load_algo("DH", backend)
 
 
@@ -20,7 +22,7 @@ def generate(
     g: int = 2,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
-):
+) -> base.BaseDHParameters:
     """
     Generate DHE parameter with prime number's bit size ``bits`` and
     generator ``g`` (default 2). Recommended size of ``bits`` > 1024.
@@ -45,7 +47,7 @@ def load_from_parameters(
     q: typing.Optional[int] = None,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
-):
+) -> base.BaseDHParameters:
     """Create a DH Parameter object from the given parameters.
 
     Args:
@@ -65,7 +67,7 @@ def load_from_parameters(
 def load_parameters(
     data: bytes,
     *,
-    backend=_Backends.CRYPTOGRAPHY,
+    backend: _Backends = _Backends.CRYPTOGRAPHY,
 ) -> base.BaseDHParameters:
     """Deserialize the DH parameters and load a parameter object.
 

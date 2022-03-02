@@ -21,7 +21,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         n: typing.Optional[int],
         e: int = 65537,
         _key: typing.Optional[RSA.RsaKey] = None,
-    ):
+    ) -> None:
         if _key is not None:
             self._key = _key
         else:
@@ -142,7 +142,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def _validate_pkcs1_args(
         encoding: str,
         protection: typing.Optional[str],
-    ):
+    ) -> None:
         if protection is not None:  # pragma: no cover
             raise ValueError("protection is meaningful only for PKCS8")
         if encoding == "DER":
@@ -170,7 +170,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
     _encodings = ("PEM", "DER", "OpenSSH")
     _formats = ("SubjectPublicKeyInfo", "OpenSSH")
 
-    def __init__(self, key):
+    def __init__(self, key: RSA.RsaKey) -> None:
         self._key = key
 
     @property
@@ -256,7 +256,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
 
 class EncryptorContext(base.BaseEncryptorContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
     def encrypt(self, plaintext: bytes) -> bytes:
@@ -264,7 +264,7 @@ class EncryptorContext(base.BaseEncryptorContext):
 
 
 class DecryptorContext(base.BaseDecryptorContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
     def decrypt(self, plaintext: bytes) -> bytes:
@@ -275,7 +275,7 @@ class DecryptorContext(base.BaseDecryptorContext):
 
 
 class SignerContext(base.BaseSignerContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
     def sign(self, msghash: base.BaseHash) -> bytes:
@@ -283,10 +283,10 @@ class SignerContext(base.BaseSignerContext):
 
 
 class VerifierContext(base.BaseVerifierContext):
-    def __init__(self, ctx):
+    def __init__(self, ctx: typing.Any) -> None:
         self._ctx = ctx
 
-    def verify(self, msghash: base.BaseHash, signature: bytes):
+    def verify(self, msghash: base.BaseHash, signature: bytes) -> None:
         try:
             self._ctx.verify(msghash, signature)
         except ValueError as e:

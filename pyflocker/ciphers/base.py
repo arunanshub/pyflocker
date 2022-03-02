@@ -249,7 +249,7 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def key_size(self):
+    def key_size(self) -> int:
         """Size of the key, in bits."""
 
     @abstractmethod
@@ -465,7 +465,7 @@ class BaseEllepticCurveSignatureAlgorithm(metaclass=ABCMeta):
 class BaseECCPrivateKey(metaclass=ABCMeta):
     @property
     @abstractmethod
-    def key_size(self):
+    def key_size(self) -> int:
         """Size of ECC key, in bits."""
 
     @property
@@ -566,7 +566,7 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
 class BaseECCPublicKey(metaclass=ABCMeta):
     @property
     @abstractmethod
-    def key_size(self):
+    def key_size(self) -> int:
         """Size of ECC key, in bits."""
 
     @property
@@ -642,7 +642,7 @@ class BaseSignerContext(metaclass=ABCMeta):
 
 class BaseVerifierContext(metaclass=ABCMeta):
     @abstractmethod
-    def verify(self, msghash: BaseHash, signature: bytes):
+    def verify(self, msghash: BaseHash, signature: bytes) -> None:
         """Verifies the signature of the message hash.
 
         Args:

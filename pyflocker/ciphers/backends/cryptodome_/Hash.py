@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import typing
-from types import MappingProxyType
 
 from Cryptodome.Hash import (
     SHA3_224,
@@ -25,32 +24,31 @@ from Cryptodome.Hash import (
 
 from ... import base, exc
 
-HASHES = MappingProxyType(
-    {
-        "sha224": SHA224.new,
-        "sha256": SHA256.new,
-        "sha384": SHA384.new,
-        "sha512": SHA512.new,
-        "sha512_224": lambda data=b"": SHA512.new(data, "224"),
-        "sha512_256": lambda data=b"": SHA512.new(data, "256"),
-        "sha3_224": SHA3_224.new,
-        "sha3_256": SHA3_256.new,
-        "sha3_384": SHA3_384.new,
-        "sha3_512": SHA3_512.new,
-        # Blakes
-        "blake2b": BLAKE2b.new,
-        "blake2s": BLAKE2s.new,
-        # TupleHashes: similar to Blakes' API
-        "tuplehash128": TupleHash128.new,
-        "tuplehash256": TupleHash256.new,
-        # XOFS
-        "shake128": SHAKE128.new,
-        "shake256": SHAKE256.new,
-        "cshake128": cSHAKE128.new,
-        "cshake256": cSHAKE256.new,
-        "kangarootwelve": KangarooTwelve.new,
-    }
-)
+HASHES = {
+    "sha224": SHA224.new,
+    "sha256": SHA256.new,
+    "sha384": SHA384.new,
+    "sha512": SHA512.new,
+    "sha512_224": lambda data=b"": SHA512.new(data, "224"),
+    "sha512_256": lambda data=b"": SHA512.new(data, "256"),
+    "sha3_224": SHA3_224.new,
+    "sha3_256": SHA3_256.new,
+    "sha3_384": SHA3_384.new,
+    "sha3_512": SHA3_512.new,
+    # Blakes
+    "blake2b": BLAKE2b.new,
+    "blake2s": BLAKE2s.new,
+    # TupleHashes: similar to Blakes' API
+    "tuplehash128": TupleHash128.new,
+    "tuplehash256": TupleHash256.new,
+    # XOFS
+    "shake128": SHAKE128.new,
+    "shake256": SHAKE256.new,
+    "cshake128": cSHAKE128.new,
+    "cshake256": cSHAKE256.new,
+    "kangarootwelve": KangarooTwelve.new,
+}
+
 
 # Names of hash functions that support variable digest sizes.
 VAR_DIGEST_SIZE = frozenset(
@@ -122,7 +120,7 @@ class Hash(base.BaseHash):
         custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
         key: typing.Optional[bytes] = None,  # for blakes
         _copy: typing.Any = None,
-    ):
+    ) -> None:
         if _copy is not None:
             self._ctx = _copy
         else:
@@ -140,15 +138,15 @@ class Hash(base.BaseHash):
         self._oid = getattr(self._ctx, "oid", NotImplemented)
 
     @property
-    def digest_size(self):
-        return self._digest_size
+    def digest_size(self) -> int:
+        return self._digest_size  # type: ignore
 
     @property
-    def block_size(self):
+    def block_size(self) -> int:
         return self._block_size
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
@@ -158,12 +156,12 @@ class Hash(base.BaseHash):
             raise AttributeError(f"OID not available for {self.name!r}")
         return self._oid  # type: ignore
 
-    def update(self, data: bytes):
+    def update(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._ctx.update(data)
 
-    def digest(self):
+    def digest(self) -> bytes:
         if self._ctx is None:
             return self._digest
         ctx, self._ctx = self._ctx, None
@@ -176,7 +174,7 @@ class Hash(base.BaseHash):
         self._digest = digest
         return digest
 
-    def copy(self):
+    def copy(self) -> Hash:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -217,7 +215,7 @@ class Hash(base.BaseHash):
         *,
         custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
         key: typing.Optional[bytes] = None,  # for blakes
-    ):
+    ) -> typing.Any:
         """
         Creates a Cryptodome based hash function object.
         """

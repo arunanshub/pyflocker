@@ -67,7 +67,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         self,
         curve: typing.Optional[str] = None,
         _key: typing.Optional[ec.EllipticCurvePrivateKey] = None,
-    ):
+    ) -> None:
         if _key is not None:
             self._key = _key
         else:
@@ -86,7 +86,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         return self._key_size
 
     @property
-    def curve(self):
+    def curve(self) -> str:
         return self._curve
 
     def public_key(self) -> ECCPublicKey:
@@ -102,7 +102,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         algorithm: typing.Optional[
             base.BaseEllepticCurveExchangeAlgorithm,
         ] = None,
-    ):
+    ) -> bytes:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDH()
         algo = get_ec_exchange_algorithm(algorithm, algorithm)
@@ -126,7 +126,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         algorithm: typing.Optional[
             base.BaseEllepticCurveSignatureAlgorithm
         ] = None,
-    ):
+    ) -> SignerContext:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
         return SignerContext(
@@ -203,7 +203,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
     }
 
-    def __init__(self, key: ec.EllipticCurvePublicKey):
+    def __init__(self, key: ec.EllipticCurvePublicKey) -> None:
         if not isinstance(key, ec.EllipticCurvePublicKey):  # pragma: no cover
             raise TypeError("key is not an EC public key")
         self._key = key
@@ -211,11 +211,11 @@ class ECCPublicKey(base.BaseECCPublicKey):
         self._curve = key.curve.name
 
     @property
-    def key_size(self):
+    def key_size(self) -> int:
         return self._key_size
 
     @property
-    def curve(self):  # pragma: no cover
+    def curve(self) -> str:  # pragma: no cover
         return self._curve
 
     def verifier(
@@ -223,7 +223,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         algorithm: typing.Optional[
             base.BaseEllepticCurveSignatureAlgorithm
         ] = None,
-    ):
+    ) -> VerifierContext:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
         return VerifierContext(
@@ -269,11 +269,15 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
 
 class VerifierContext(base.BaseVerifierContext):
-    def __init__(self, key: ec.EllipticCurvePublicKey, signature_algorithm):
+    def __init__(
+        self,
+        key: ec.EllipticCurvePublicKey,
+        signature_algorithm: typing.Any,
+    ) -> None:
         self._verify_func = key.verify
         self._signature_algorithm = signature_algorithm
 
-    def verify(self, msghash: base.BaseHash, signature: bytes):
+    def verify(self, msghash: base.BaseHash, signature: bytes) -> None:
         try:
             return self._verify_func(
                 signature=signature,
@@ -287,11 +291,13 @@ class VerifierContext(base.BaseVerifierContext):
 
 
 class SignerContext(base.BaseSignerContext):
-    def __init__(self, key: ec.EllipticCurvePrivateKey, signature_algorithm):
+    def __init__(
+        self, key: ec.EllipticCurvePrivateKey, signature_algorithm: typing.Any
+    ) -> None:
         self._sign_func = key.sign
         self._signature_algorithm = signature_algorithm
 
-    def sign(self, msghash: base.BaseHash):
+    def sign(self, msghash: base.BaseHash) -> bytes:
         return self._sign_func(
             data=msghash.digest(),
             signature_algorithm=self._signature_algorithm(
@@ -300,7 +306,7 @@ class SignerContext(base.BaseSignerContext):
         )
 
 
-def generate(curve: str):
+def generate(curve: str) -> ECCPrivateKey:
     """
     Generate a private key with given curve ``curve``.
 
@@ -334,7 +340,10 @@ def load_private_key(
     return ECCPrivateKey.load(data, passphrase)
 
 
-def load_public_key(data: bytes, **kwargs) -> ECCPublicKey:
+def load_public_key(
+    data: bytes,
+    **kwargs: typing.Any,
+) -> ECCPublicKey:
     """Loads the public key.
 
     Args:

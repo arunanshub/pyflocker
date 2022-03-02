@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from Cryptodome.Cipher import AES
 
 from ... import exc, modes
-from ...modes import Modes as _m
+from ...modes import Modes as _Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
@@ -20,30 +20,34 @@ if TYPE_CHECKING:  # pragma: no cover
 SUPPORTED = MappingProxyType(
     {
         # classic modes
-        _m.MODE_CTR: AES.MODE_CTR,
-        _m.MODE_CFB: AES.MODE_CFB,
-        _m.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
-        _m.MODE_OFB: AES.MODE_OFB,
+        _Modes.MODE_CTR: AES.MODE_CTR,
+        _Modes.MODE_CFB: AES.MODE_CFB,
+        _Modes.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
+        _Modes.MODE_OFB: AES.MODE_OFB,
         # AEAD modes
-        _m.MODE_GCM: AES.MODE_GCM,
-        _m.MODE_EAX: AES.MODE_EAX,
-        _m.MODE_SIV: AES.MODE_SIV,
-        _m.MODE_CCM: AES.MODE_CCM,
-        _m.MODE_OCB: AES.MODE_OCB,
+        _Modes.MODE_GCM: AES.MODE_GCM,
+        _Modes.MODE_EAX: AES.MODE_EAX,
+        _Modes.MODE_SIV: AES.MODE_SIV,
+        _Modes.MODE_CCM: AES.MODE_CCM,
+        _Modes.MODE_OCB: AES.MODE_OCB,
     }
 )
 
 del MappingProxyType
 
 
-def _get_aes_cipher(key, mode, iv_or_nonce):
+def _get_aes_cipher(
+    key: bytes,
+    mode: _Modes,
+    iv_or_nonce: bytes,
+) -> typing.Any:
     args = (iv_or_nonce,)
     kwargs = {}
 
-    if mode == _m.MODE_CFB:
+    if mode == _Modes.MODE_CFB:
         # compat with pyca/cryptography's CFB(...) mode
         kwargs = {"segment_size": 128}
-    elif mode == _m.MODE_CTR:
+    elif mode == _Modes.MODE_CTR:
         kwargs = {
             # initial value of Cryptodome is nonce for pyca/cryptography
             "initial_value": int.from_bytes(iv_or_nonce, "big"),
@@ -52,7 +56,7 @@ def _get_aes_cipher(key, mode, iv_or_nonce):
 
         args = ()
 
-    return AES.new(key, SUPPORTED[mode], *args, **kwargs)
+    return AES.new(key, SUPPORTED[mode], *args, **kwargs)  # type: ignore
 
 
 class AEAD(AEADCipherTemplate):
@@ -61,7 +65,13 @@ class AEAD(AEADCipherTemplate):
     Adapts the AES cipher from Cryptodome backend.
     """
 
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -72,7 +82,7 @@ class AEAD(AEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
@@ -83,7 +93,13 @@ class NonAEAD(NonAEADCipherTemplate):
     Adapts the AES cipher from Cryptodome backend.
     """
 
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -95,7 +111,7 @@ class NonAEAD(NonAEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
@@ -107,7 +123,13 @@ class AEADOneShot(AEAD):
     operation.
     """
 
-    def __init__(self, encrypting, key, mode, nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        nonce: bytes,
+    ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -117,23 +139,31 @@ class AEADOneShot(AEAD):
         self._update_func = self._get_update_func(encrypting, self._cipher)
 
     @property
-    def mode(self) -> _m:
+    def mode(self) -> _Modes:
         """The AES mode."""
         return self._mode
 
     @staticmethod
-    def _get_update_func(encrypting, cipher):
+    def _get_update_func(
+        encrypting: bool,
+        cipher: typing.Any,
+    ) -> typing.Callable:
         if encrypting:
             func = cipher.encrypt_and_digest
-            return lambda data, tag=None, **k: func(data, **k)[0]
+            return lambda data, _=None, **k: func(data, **k)[0]
 
         func = cipher.decrypt_and_verify
         return lambda data, tag, **k: func(data, tag, **k)
 
-    def update(self, data, tag=None):
-        return self.update_into(data, None, tag)
+    def update(self, data: bytes, tag: typing.Optional[bytes] = None) -> bytes:
+        return self.update_into(data, None, tag)  # type: ignore
 
-    def update_into(self, data, out, tag=None):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+        tag: typing.Optional[bytes] = None,
+    ) -> bytes:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -160,7 +190,7 @@ class AEADOneShot(AEAD):
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _m,
+    mode: _Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
@@ -250,7 +280,7 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.Set[_m]:
+def supported_modes() -> typing.Set[_Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
@@ -259,12 +289,19 @@ def supported_modes() -> typing.Set[_m]:
     return set(SUPPORTED)
 
 
-def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
-    ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
+def _wrap_hmac(
+    encrypting: bool,
+    key: bytes,
+    mode: _Modes,
+    iv_or_nonce: bytes,
+    hashalgo: typing.Any,
+    tag_length: typing.Optional[int],
+) -> HMACWrapper:
+    ckey, hkey = derive_hkdf_key(key, len(key), hashalgo, iv_or_nonce)
     return HMACWrapper(
         NonAEAD(encrypting, ckey, mode, iv_or_nonce),
         hkey,
         iv_or_nonce,
-        digestmod,
+        hashalgo,
         tag_length=tag_length,
     )

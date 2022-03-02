@@ -6,11 +6,13 @@ import typing
 from ..backends import load_algorithm as _load_algo
 
 if typing.TYPE_CHECKING:
+    from types import ModuleType
+
     from .. import base
     from ..backends import Backends
 
 
-def _load_ecc_cpr(backend):
+def _load_ecc_cpr(backend: Backends) -> ModuleType:
     """Load the cipher module from the backend."""
     return _load_algo("ECC", backend)
 

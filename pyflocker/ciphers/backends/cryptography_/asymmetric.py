@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ... import base
 
 
-def get_OAEP(padding: base.BaseAsymmetricPadding):
+def get_OAEP(padding: base.BaseAsymmetricPadding) -> padding_.OAEP:
     """Construct a pyca/cryptography specific OAEP object.
 
     Args:
@@ -37,7 +37,7 @@ def get_OAEP(padding: base.BaseAsymmetricPadding):
     )
 
 
-def get_PSS(padding: base.BaseAsymmetricPadding):
+def get_PSS(padding: base.BaseAsymmetricPadding) -> padding_.PSS:
     """Construct a pyca/cryptography specific PSS object.
 
     Args:
@@ -58,7 +58,7 @@ def get_PSS(padding: base.BaseAsymmetricPadding):
     )
 
 
-def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm):
+def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm) -> ECDH:
     """Return an ECDH object for key exchange.
 
     Args:
@@ -71,7 +71,9 @@ def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm):
     return ECDH()
 
 
-def get_ECDSA(algorithm: base.BaseEllepticCurveSignatureAlgorithm):
+def get_ECDSA(
+    algorithm: base.BaseEllepticCurveSignatureAlgorithm,
+) -> typing.Type[ECDSA]:
     """Return an ECDSA callable for signing/verification.
 
     The object is not constructed until the key is signing/verifying.
@@ -113,22 +115,22 @@ EC_SIGNATURE_ALGORITHMS: typing.Dict[
 def get_padding_algorithm(
     padding: base.BaseAsymmetricPadding,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any],
-):
+    **kwargs: typing.Any,
+) -> padding_.AsymmetricPadding:
     return PADDINGS[type(padding)](*args, **kwargs)
 
 
 def get_ec_exchange_algorithm(
     algorithm: base.BaseEllepticCurveExchangeAlgorithm,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any],
-):
+    **kwargs: typing.Any,
+) -> typing.Any:
     return EC_EXCHANGE_ALGORITHMS[type(algorithm)](*args, **kwargs)
 
 
 def get_ec_signature_algorithm(
     algorithm: base.BaseEllepticCurveSignatureAlgorithm,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any],
-):
+    **kwargs: typing.Any,
+) -> typing.Any:
     return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)

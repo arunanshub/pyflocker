@@ -8,8 +8,11 @@ from functools import partial
 
 from .. import base, exc
 
+if typing.TYPE_CHECKING:
+    import io
 
-class FileCipherWrapper(base.BaseAEADCipher):
+
+class FileCipherWrapper:
     """
     Wraps ciphers that support BaseAEADCipher interface and provides
     file encryption and decryption facility.
@@ -18,7 +21,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
     def __init__(
         self,
         cipher: base.BaseAEADCipher,
-        file: typing.BinaryIO,
+        file: io.BufferedReader,
         offset: int = 0,
     ):
         """Initialize a file cipher wrapper.
@@ -42,15 +45,15 @@ class FileCipherWrapper(base.BaseAEADCipher):
         self._encrypting = self._ctx.is_encrypting()
         self._offset = offset
 
-    def authenticate(self, data):
+    def authenticate(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         return self._ctx.authenticate(data)
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def update(self, blocksize: int = 16384) -> bytes:
+    def update(self, blocksize: int = 16384) -> typing.Optional[bytes]:
         """
         Reads at most ``blocksize`` bytes from ``file``, passes through the
         cipher and returns the cipher's output.
@@ -71,7 +74,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
     def update_into(
         self,
-        file: typing.BinaryIO,
+        file: typing.IO[bytes],
         tag: typing.Optional[bytes] = None,
         blocksize: int = 16384,
     ) -> None:
@@ -118,7 +121,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
 
         self.finalize(tag)
 
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -127,7 +130,7 @@ class FileCipherWrapper(base.BaseAEADCipher):
         finally:
             self._tag, self._ctx = self._ctx.calculate_tag(), None
 
-    def calculate_tag(self):
+    def calculate_tag(self) -> typing.Optional[bytes]:
         if self._ctx is not None:
             raise exc.NotFinalized("Cipher has already been finalized.")
         return self._tag
@@ -171,10 +174,10 @@ class HMACWrapper(base.BaseAEADCipher):
             self._auth.digest_size if tag_length is None else tag_length
         )
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def authenticate(self, data):
+    def authenticate(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if self._updated:
@@ -185,21 +188,25 @@ class HMACWrapper(base.BaseAEADCipher):
         self._auth.update(data)
         self._len_aad += len(data)
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
         self._len_ct += len(data)
         return self._ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._updated = True
         self._ctx.update_into(data, out)
         self._len_ct += len(data)
 
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -222,7 +229,7 @@ class HMACWrapper(base.BaseAEADCipher):
         ):
             raise exc.DecryptionError
 
-    def calculate_tag(self):
+    def calculate_tag(self) -> typing.Optional[bytes]:
         if self._ctx is not None:
             raise exc.NotFinalized
 
@@ -230,37 +237,54 @@ class HMACWrapper(base.BaseAEADCipher):
             return self._auth.digest()[: self._tag_length]
 
     @staticmethod
-    def _get_mac_ctx(cipher: base.BaseNonAEADCipher, auth, offset):
+    def _get_mac_ctx(
+        cipher: base.BaseNonAEADCipher,
+        auth: typing.Any,
+        offset: int,
+    ) -> typing.Union[_EncryptionCtx, _DecryptionCtx]:
         if cipher.is_encrypting():
             return _EncryptionCtx(cipher, auth, offset)
         return _DecryptionCtx(cipher, auth)
 
 
 class _EncryptionCtx:
-    def __init__(self, cipher: base.BaseNonAEADCipher, auth, offset):
+    def __init__(
+        self,
+        cipher: base.BaseNonAEADCipher,
+        auth: typing.Any,
+        offset: int,
+    ):
         self._ctx = cipher
         self._auth = auth
         self._offset = -offset or None
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         ctxt = self._ctx.update(data)
         self._auth.update(ctxt)
         return ctxt
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         self._ctx.update_into(data, out)
         self._auth.update(out[: self._offset])
 
 
 class _DecryptionCtx:
-    def __init__(self, cipher: base.BaseNonAEADCipher, auth):
+    def __init__(self, cipher: base.BaseNonAEADCipher, auth: typing.Any):
         self._ctx = cipher
         self._auth = auth
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         self._auth.update(data)
         return self._ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[bytearray, memoryview],
+    ) -> None:
         self._auth.update(data)
         self._ctx.update_into(data, out)

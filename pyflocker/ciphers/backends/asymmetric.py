@@ -17,7 +17,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseHash
 
 
-def _default_hash_factory():
+def _default_hash_factory() -> BaseHash:
     """SHA-256 Hash object factory.
 
     The import is delayed because we want the backends to be loaded

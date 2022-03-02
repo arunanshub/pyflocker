@@ -3,14 +3,14 @@ from __future__ import annotations
 import enum
 import typing
 from importlib import import_module
-from typing import TYPE_CHECKING
 
 from .. import exc
 
 _DEFAULT_BACKEND = None
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
     import types
+    from types import ModuleType
 
 
 class Backends(enum.Enum):
@@ -81,11 +81,11 @@ def load_backend(
     return _import_helper(backend)
 
 
-def _import_helper(backend):
+def _import_helper(backend: Backends) -> ModuleType:
     return import_module(f".{backend.name.lower()}_", __spec__.parent)
 
 
-def _find_backend():
+def _find_backend() -> typing.Optional[ModuleType]:
     errors = 0
 
     for i in list(Backends):

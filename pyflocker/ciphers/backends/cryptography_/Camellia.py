@@ -9,19 +9,21 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.ciphers import modes
 
-from ...modes import Modes as _m
+from ...modes import Modes as _Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import NonAEADCipherTemplate
 
 if TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from ... import base
 
 SUPPORTED = MappingProxyType(
     {
-        _m.MODE_CFB: modes.CFB,
-        _m.MODE_CTR: modes.CTR,
-        _m.MODE_OFB: modes.OFB,
+        _Modes.MODE_CFB: modes.CFB,
+        _Modes.MODE_CTR: modes.CTR,
+        _Modes.MODE_OFB: modes.OFB,
     }
 )
 
@@ -31,7 +33,13 @@ del MappingProxyType
 class Camellia(NonAEADCipherTemplate):
     """Camellia cipher class."""
 
-    def __init__(self, encrypting, key, mode, iv_or_nonce):
+    def __init__(
+        self,
+        encrypting: bool,
+        key: bytes,
+        mode: _Modes,
+        iv_or_nonce: bytes,
+    ):
         cipher = Cipher(
             algo.Camellia(key),
             SUPPORTED[mode](iv_or_nonce),
@@ -45,13 +53,13 @@ class Camellia(NonAEADCipherTemplate):
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _m,
+    mode: _Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[Camellia, FileCipherWrapper, HMACWrapper]:
     """Instantiate a new Camellia cipher wrapper object.
 
@@ -118,7 +126,7 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.Set[_m]:
+def supported_modes() -> typing.Set[_Modes]:
     """Lists all modes supported by Camellia cipher of this backend.
 
     Returns:
@@ -127,7 +135,14 @@ def supported_modes() -> typing.Set[_m]:
     return set(SUPPORTED)
 
 
-def _wrap_hmac(encrypting, key, mode, iv_or_nonce, digestmod, tag_length):
+def _wrap_hmac(
+    encrypting: bool,
+    key: bytes,
+    mode: _Modes,
+    iv_or_nonce: bytes,
+    digestmod: typing.Any,
+    tag_length: typing.Optional[int],
+) -> HMACWrapper:
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     return HMACWrapper(
         Camellia(encrypting, ckey, mode, iv_or_nonce),

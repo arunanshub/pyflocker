@@ -15,7 +15,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from ... import base
 
 
-def get_OAEP(key: RsaKey, padding: base.BaseAsymmetricPadding):
+def get_OAEP(
+    key: RsaKey,
+    padding: base.BaseAsymmetricPadding,
+) -> PKCS1_OAEP.PKCS1OAEP_Cipher:
     """Construct a Cryptodome specific OAEP object.
 
     Args:
@@ -43,7 +46,7 @@ def get_OAEP(key: RsaKey, padding: base.BaseAsymmetricPadding):
     )
 
 
-def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding):
+def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding) -> typing.Any:
     """Construct a Cryptodome specific PSS object.
 
     Args:
@@ -75,7 +78,7 @@ def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding):
 def get_ECDSA(
     key: EccKey,
     algorithm: asymmetric.BaseEllepticCurveSignatureAlgorithm,
-):
+) -> DSS.FipsEcDsaSigScheme:
     """Construct a DSS object for signing/verification.
 
     Note that, unlike pyca/cryptography, Cryptodome uses ``mode`` and
@@ -89,7 +92,7 @@ def get_ECDSA(
     """
     if not isinstance(algorithm, asymmetric.ECDSA):
         raise TypeError("algorithm must be an instance of ECDH")
-    return DSS.new(key, mode="fips-186-3", encoding="der")
+    return DSS.new(key, mode="fips-186-3", encoding="der")  # type: ignore
 
 
 class _SaltLengthMaximizer:
@@ -100,11 +103,15 @@ class _SaltLengthMaximizer:
     digest applied to the message.
     """
 
-    def __init__(self, key, padding):
+    def __init__(self, key: RsaKey, padding: typing.Any) -> None:
         self._key = key
         self._padding = padding
 
-    def _sign_or_verify(self, msghash, signature=None):
+    def _sign_or_verify(
+        self,
+        msghash: typing.Any,
+        signature: typing.Optional[bytes] = None,
+    ) -> typing.Any:
         salt_length = self._key.size_in_bytes() - msghash.digest_size - 2
         pss = get_PSS(
             self._key,
@@ -114,12 +121,12 @@ class _SaltLengthMaximizer:
             return pss.sign(msghash)
         return pss.verify(msghash, signature)
 
-    def sign(self, msghash):
+    def sign(self, msghash: typing.Any) -> bytes:
         if not self._key.has_private():
             raise TypeError("The key is not a private key.")
         return self._sign_or_verify(msghash)
 
-    def verify(self, msghash, signature):
+    def verify(self, msghash: typing.Any, signature: bytes) -> None:
         return self._sign_or_verify(msghash, signature)
 
 
@@ -139,30 +146,28 @@ EC_SIGNATURE_ALGORITHMS: typing.Dict[
 }
 
 # PKCS8 password derivation mechanisms
-PROTECTION_SCHEMES = frozenset(
-    (
-        "PBKDF2WithHMAC-SHA1AndAES128-CBC",
-        "PBKDF2WithHMAC-SHA1AndAES192-CBC",
-        "PBKDF2WithHMAC-SHA1AndAES256-CBC",
-        "PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC",
-        "scryptAndAES128-CBC",
-        "scryptAndAES192-CBC",
-        "scryptAndAES256-CBC",
-    )
-)
+PROTECTION_SCHEMES = {
+    "PBKDF2WithHMAC-SHA1AndAES128-CBC",
+    "PBKDF2WithHMAC-SHA1AndAES192-CBC",
+    "PBKDF2WithHMAC-SHA1AndAES256-CBC",
+    "PBKDF2WithHMAC-SHA1AndDES-EDE3-CBC",
+    "scryptAndAES128-CBC",
+    "scryptAndAES192-CBC",
+    "scryptAndAES256-CBC",
+}
 
 
 def get_padding_algorithm(
     padding: base.BaseAsymmetricPadding,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any],
-):
+    **kwargs: typing.Any,
+) -> typing.Any:
     return PADDINGS[type(padding)](*args, **kwargs)
 
 
 def get_ec_signature_algorithm(
     algorithm: base.BaseEllepticCurveSignatureAlgorithm,
     *args: typing.Any,
-    **kwargs: typing.Dict[str, typing.Any],
-):
+    **kwargs: typing.Any,
+) -> typing.Any:
     return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)

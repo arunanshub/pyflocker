@@ -15,11 +15,14 @@ from ..symmetric import FileCipherWrapper, _DecryptionCtx, _EncryptionCtx
 from .misc import derive_poly1305_key
 from .symmetric import NonAEADCipherTemplate
 
+if typing.TYPE_CHECKING:
+    import io
+
 
 class ChaCha20Poly1305(base.BaseAEADCipher):
     """ChaCha20Poly1305 Cipher class."""
 
-    def __init__(self, encrypting, key, nonce):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         if not len(nonce) in (8, 12):
             raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
@@ -44,20 +47,24 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         self._tag = None
 
     @staticmethod
-    def _get_auth_ctx(encrypting, ctx, auth):
+    def _get_auth_ctx(
+        encrypting: bool,
+        ctx: typing.Any,
+        auth: typing.Any,
+    ) -> typing.Union[_EncryptionCtx, _DecryptionCtx]:
         if encrypting:
             return _EncryptionCtx(ctx, auth, 0)
         return _DecryptionCtx(ctx, auth)
 
-    def _pad_aad(self):
+    def _pad_aad(self) -> None:
         if not self._updated and self._len_aad & 0x0F:
             self._auth.update(bytes(16 - (self._len_aad & 0x0F)))
         self._updated = True
 
-    def is_encrypting(self):
+    def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def authenticate(self, data):
+    def authenticate(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if self._updated:
@@ -65,21 +72,25 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         self._len_aad += len(data)
         self._auth.update(data)
 
-    def update(self, data):
+    def update(self, data: bytes) -> bytes:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._pad_aad()
         self._len_ct += len(data)
         return self._ctx.update(data)
 
-    def update_into(self, data, out):
+    def update_into(
+        self,
+        data: bytes,
+        out: typing.Union[memoryview, bytearray],
+    ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._pad_aad()
         self._len_ct += len(out)
         self._ctx.update_into(data, out)
 
-    def finalize(self, tag=None):
+    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self.is_encrypting() and tag is None:
@@ -103,7 +114,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         else:
             self._tag = self._auth.finalize()
 
-    def calculate_tag(self):
+    def calculate_tag(self) -> typing.Optional[bytes]:
         if self._ctx is not None:
             raise exc.NotFinalized
 
@@ -119,7 +130,7 @@ class ChaCha20(NonAEADCipherTemplate):
     use ``ChaCha20Poly1305``.
     """
 
-    def __init__(self, encrypting, key, nonce):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         if not len(nonce) in (8, 12):
             raise ValueError("A 8 or 12 byte nonce is required")
         if len(nonce) == 8:
@@ -144,7 +155,7 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 

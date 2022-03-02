@@ -7,11 +7,13 @@ from typing import TYPE_CHECKING
 from ..backends import load_algorithm as _load_algo
 
 if TYPE_CHECKING:  # pragma: no cover
+    from types import ModuleType
+
     from ..backends import Backends
     from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 
-def _load_rsa(backend):
+def _load_rsa(backend: Backends) -> ModuleType:
     """Load the cipher module from the backend."""
     return _load_algo("RSA", backend)
 

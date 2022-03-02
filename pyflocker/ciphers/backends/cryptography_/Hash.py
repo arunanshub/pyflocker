@@ -77,7 +77,7 @@ class Hash(base.BaseHash):
         *,
         digest_size: typing.Optional[int] = None,
         _copy: typing.Optional[hashes.Hash] = None,
-    ):
+    ) -> None:
         if _copy is not None:
             self._ctx = _copy
         else:
@@ -93,15 +93,15 @@ class Hash(base.BaseHash):
         self._oid = OIDS.get(name, NotImplemented)
 
     @property
-    def digest_size(self):
-        return self._digest_size
+    def digest_size(self) -> int:
+        return self._digest_size  # type: ignore
 
     @property
-    def block_size(self):
+    def block_size(self) -> typing.Optional[int]:
         return self._block_size
 
     @property
-    def name(self):
+    def name(self) -> str:
         return self._name
 
     @property
@@ -121,19 +121,19 @@ class Hash(base.BaseHash):
 
         return self._oid  # type: ignore
 
-    def update(self, data: bytes):
+    def update(self, data: bytes) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         self._ctx.update(data)
 
-    def digest(self):
+    def digest(self) -> bytes:
         if self._ctx is None:
             return self._digest
         ctx, self._ctx = self._ctx, None
         self._digest = ctx.finalize()
         return self._digest
 
-    def copy(self):
+    def copy(self) -> Hash:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -193,7 +193,7 @@ def new(
     data: bytes = b"",
     *,
     digest_size: typing.Optional[int] = None,
-    **kwargs,  # only for compatibility with Cryptodome
+    **kwargs: typing.Any,  # only for compatibility with Cryptodome
 ) -> Hash:
     """
     Instantiate a hash object.

@@ -8,6 +8,9 @@ from Cryptodome.Cipher import ChaCha20_Poly1305 as _ChaCha20_Poly1305
 from ..symmetric import FileCipherWrapper
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
+if typing.TYPE_CHECKING:
+    import io
+
 
 class ChaCha20(NonAEADCipherTemplate):
     """ChaCha20 Cipher class.
@@ -17,7 +20,7 @@ class ChaCha20(NonAEADCipherTemplate):
     use ``ChaCha20Poly1305``.
     """
 
-    def __init__(self, encrypting, key, nonce):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         self._cipher = _ChaCha20.new(key=key, nonce=nonce)
         self._encrypting = encrypting
         self._update_func = (
@@ -28,7 +31,7 @@ class ChaCha20(NonAEADCipherTemplate):
 class ChaCha20Poly1305(AEADCipherTemplate):
     """ChaCha20Poly1305 Cipher class."""
 
-    def __init__(self, encrypting, key, nonce):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         self._cipher = _ChaCha20_Poly1305.new(key=key, nonce=nonce)
         self._encrypting = encrypting
         self._update_func = (
@@ -43,7 +46,7 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
