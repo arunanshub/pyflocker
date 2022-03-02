@@ -118,7 +118,6 @@ from .ciphers.modes import AEAD, SPECIAL, Modes
 
 #: A KDF callable
 KDFunc = typing.Callable[[bytes, bytes, int], bytes]
-PathLike = typing.Union[str, os.PathLike[str]]
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from .ciphers.backends import Backends
@@ -356,8 +355,8 @@ def decryptf(
 
 
 def encrypt(
-    infile: PathLike,
-    outfile: PathLike,
+    infile: str,
+    outfile: str,
     password: bytes,
     remove: bool = True,
     **kwargs,
@@ -400,8 +399,8 @@ def encrypt(
 
 
 def decrypt(
-    infile: PathLike,
-    outfile: PathLike,
+    infile: str,
+    outfile: str,
     password: bytes,
     remove: bool = True,
     **kwargs,
@@ -483,13 +482,13 @@ def lockerf(
 
 
 def locker(
-    file: PathLike,
+    file: str,
     password: bytes,
     encrypting: typing.Optional[bool] = None,
     remove: bool = True,
     *,
     ext: typing.Optional[str] = None,
-    newfile: typing.Optional[PathLike] = None,
+    newfile: typing.Optional[str] = None,
     **kwargs,
 ) -> None:
     """Encrypts or decrypts files with AES algorithm.
@@ -540,7 +539,6 @@ def locker(
         raise ValueError("newfile and ext are mutually exclusive")
 
     ext = ext or EXTENSION
-    file = os.fspath(file)
 
     # guess encrypting if not provided
     if encrypting is None:
@@ -561,7 +559,7 @@ def locker(
 
 
 def extract_header_from_file(
-    path: PathLike,
+    path: str,
     metadata: bytes = METADATA,
 ) -> _Header:
     """Extract the header from the file ``file``.
@@ -588,8 +586,8 @@ def _assert_unique_files(
 
 def _encrypt_or_decrypt(
     callable: typing.Callable[..., None],
-    infile: PathLike,
-    outfile: PathLike,
+    infile: str,
+    outfile: str,
     password: bytes,
     remove: bool = True,
     **kwargs,
