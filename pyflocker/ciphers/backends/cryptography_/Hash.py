@@ -78,6 +78,9 @@ class Hash(base.BaseHash):
         digest_size: typing.Optional[int] = None,
         _copy: typing.Optional[hashes.Hash] = None,
     ) -> None:
+        self._ctx: typing.Optional[hashes.Hash]
+        self._digest: bytes
+
         if _copy is not None:
             self._ctx = _copy
         else:
@@ -89,7 +92,11 @@ class Hash(base.BaseHash):
             "digest_size",
             digest_size,
         )
-        self._block_size = getattr(self._ctx.algorithm, "block_size", None)
+        self._block_size = getattr(
+            self._ctx.algorithm,
+            "block_size",
+            NotImplemented,
+        )
         self._oid = OIDS.get(name, NotImplemented)
 
     @property
@@ -97,7 +104,7 @@ class Hash(base.BaseHash):
         return self._digest_size  # type: ignore
 
     @property
-    def block_size(self) -> typing.Optional[int]:
+    def block_size(self) -> int:
         return self._block_size
 
     @property

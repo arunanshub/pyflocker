@@ -136,6 +136,7 @@ class Hash(base.BaseHash):
         self._digest_size = getattr(self._ctx, "digest_size", digest_size)
         self._block_size = getattr(self._ctx, "block_size", NotImplemented)
         self._oid = getattr(self._ctx, "oid", NotImplemented)
+        self._digest = b""
 
     @property
     def digest_size(self) -> int:
@@ -167,9 +168,9 @@ class Hash(base.BaseHash):
         ctx, self._ctx = self._ctx, None
 
         if self.name in XOFS:
-            digest = ctx.read(self.digest_size)  # type: ignore
+            digest = ctx.read(self.digest_size)
         else:
-            digest = ctx.digest()  # type: ignore
+            digest = ctx.digest()
 
         self._digest = digest
         return digest

@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
     from ..backends import Backends
 
 
-def _load_ecc_cpr(backend: Backends) -> ModuleType:
+def _load_ecc_cpr(backend: typing.Optional[Backends]) -> ModuleType:
     """Load the cipher module from the backend."""
     return _load_algo("ECC", backend)
 

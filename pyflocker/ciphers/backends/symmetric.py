@@ -41,7 +41,7 @@ class FileCipherWrapper:
         # the cipher already has an internal context
         self._ctx = cipher
         self._file = file
-        self._tag = None
+        self._tag: typing.Optional[bytes] = None
         self._encrypting = self._ctx.is_encrypting()
         self._offset = offset
 
@@ -59,7 +59,7 @@ class FileCipherWrapper:
         cipher and returns the cipher's output.
 
         Args:
-            blocksize (int): Maximum amount of data to read in a single call.
+            blocksize: Maximum amount of data to read in a single call.
 
         Returns:
             bytes: Encrypted or decrypted data.
@@ -71,6 +71,7 @@ class FileCipherWrapper:
             raise exc.AlreadyFinalized
         if data := self._file.read(blocksize):
             return self._ctx.update(data)
+        return None
 
     def update_into(
         self,
@@ -110,13 +111,13 @@ class FileCipherWrapper:
         offset = self._offset
         write = file.write
         reads = iter(partial(self._file.readinto, rbuf), 0)
-        update = self._ctx.update_into
+        update_into = self._ctx.update_into
 
         for i in reads:
             if i < blocksize:
                 rbuf = rbuf[:i]
                 buf = buf[: i + offset]
-            update(rbuf, buf)
+            update_into(rbuf, buf)
             write(rbuf)
 
         self.finalize(tag)
@@ -128,7 +129,10 @@ class FileCipherWrapper:
         try:
             self._ctx.finalize(tag)
         finally:
-            self._tag, self._ctx = self._ctx.calculate_tag(), None
+            self._tag, self._ctx = (
+                self._ctx.calculate_tag(),
+                None,  # type: ignore
+            )
 
     def calculate_tag(self) -> typing.Optional[bytes]:
         if self._ctx is not None:
@@ -148,8 +152,8 @@ class HMACWrapper(base.BaseAEADCipher):
     def __init__(
         self,
         cipher: base.BaseNonAEADCipher,
-        hkey: bytes,
-        rand: bytes,
+        hmac_key: bytes,
+        hmac_random: bytes,
         digestmod: typing.Union[str, base.BaseHash] = "sha256",
         offset: int = 0,
         tag_length: typing.Optional[int] = 16,
@@ -160,9 +164,11 @@ class HMACWrapper(base.BaseAEADCipher):
         if isinstance(digestmod, base.BaseHash):
             # always use a fresh hash object.
             digestmod = digestmod.new()
-        self._auth = hmac.new(hkey, digestmod=digestmod)
+        self._auth = hmac.new(hmac_key, digestmod=digestmod)  # type: ignore
 
-        self._auth.update(rand)
+        self._auth.update(hmac_random)
+
+        self._ctx: typing.Optional[typing.Any]
         self._ctx = self._get_mac_ctx(cipher, self._auth, offset)
 
         self._encrypting = cipher.is_encrypting()
@@ -225,7 +231,7 @@ class HMACWrapper(base.BaseAEADCipher):
 
         if not self._encrypting and not hmac.compare_digest(
             self._auth.digest()[: self._tag_length],
-            tag,
+            tag,  # type: ignore
         ):
             raise exc.DecryptionError
 
@@ -235,6 +241,7 @@ class HMACWrapper(base.BaseAEADCipher):
 
         if self.is_encrypting():
             return self._auth.digest()[: self._tag_length]
+        return None
 
     @staticmethod
     def _get_mac_ctx(

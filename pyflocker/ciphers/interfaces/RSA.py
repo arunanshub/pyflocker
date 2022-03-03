@@ -13,7 +13,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 
-def _load_rsa(backend: Backends) -> ModuleType:
+def _load_rsa(backend: typing.Optional[Backends]) -> ModuleType:
     """Load the cipher module from the backend."""
     return _load_algo("RSA", backend)
 
