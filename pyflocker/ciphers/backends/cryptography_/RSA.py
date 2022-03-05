@@ -172,7 +172,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
         try:
             key = loader(memoryview(data), passphrase)
-            if not isinstance(key, rsa.RSAPrivateKey):
+            if not isinstance(key, rsa.RSAPrivateKey):  # pragma: no cover
                 raise ValueError("The key is not an RSA private key.")
             return cls(None, _key=key)
         except ValueError as e:
