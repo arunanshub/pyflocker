@@ -288,7 +288,10 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             raise ValueError("Invalid format.") from None
 
         try:
-            return cls(loader(memoryview(data)))
+            key = loader(memoryview(data))
+            if not isinstance(key, rsa.RSAPublicKey):
+                raise ValueError("The key is not an RSA public key")
+            return cls(key)
         except ValueError as e:
             raise ValueError(
                 "Cannot deserialize key. The key format might be invalid."
