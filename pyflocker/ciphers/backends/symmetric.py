@@ -14,8 +14,7 @@ if typing.TYPE_CHECKING:
 
 class FileCipherWrapper:
     """
-    Wraps ciphers that support BaseAEADCipher interface and provides
-    file encryption and decryption facility.
+    Wraps AEAD ciphers and provides file encryption and decryption facility.
     """
 
     def __init__(
