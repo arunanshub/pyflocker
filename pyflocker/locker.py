@@ -120,6 +120,8 @@ from .ciphers.modes import AEAD, SPECIAL, Modes
 KDFunc = typing.Callable[[bytes, bytes, int], bytes]
 
 if typing.TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from .ciphers.backends import Backends
 
 #: Maximum possible length of the metadata.
@@ -163,7 +165,7 @@ _Header = namedtuple("_Header", "magic mode nonce tag metadata salt")
 
 
 def encryptf(
-    infile: typing.IO[bytes],
+    infile: io.BufferedReader,
     outfile: typing.IO[bytes],
     password: bytes,
     *,
@@ -270,7 +272,7 @@ def encryptf(
 
 
 def decryptf(
-    infile: typing.IO[bytes],
+    infile: io.BufferedReader,
     outfile: typing.IO[bytes],
     password: bytes,
     *,
@@ -443,7 +445,7 @@ def decrypt(
 
 
 def lockerf(
-    infile: typing.IO[bytes],
+    infile: io.BufferedReader,
     outfile: typing.IO[bytes],
     password: bytes,
     encrypting: bool,
