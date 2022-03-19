@@ -15,6 +15,8 @@ from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
 if TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from ... import base
 
 SUPPORTED = MappingProxyType(
@@ -196,7 +198,7 @@ def new(
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[AEAD, NonAEAD, AEADOneShot, FileCipherWrapper, HMACWrapper]:
     """Create a new backend specific AES cipher.
 

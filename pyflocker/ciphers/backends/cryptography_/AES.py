@@ -27,6 +27,9 @@ from ..symmetric import (
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
+if typing.TYPE_CHECKING:
+    import io
+
 SUPPORTED = MappingProxyType(
     {
         _Modes.MODE_GCM: modes.GCM,
@@ -317,7 +320,7 @@ def new(
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[AEAD, NonAEAD, FileCipherWrapper, HMACWrapper]:
     """Create a new backend specific AES cipher.
 
@@ -414,7 +417,7 @@ def _aes_cipher(key: bytes, mode: _Modes, nonce_or_iv: bytes) -> typing.Any:
             raise ValueError("Length of nonce must be between 7 and 13 bytes")
         return SUPPORTED[mode](key)
 
-    return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv), defb())
+    return CrCipher(algo.AES(key), SUPPORTED[mode](nonce_or_iv))
 
 
 def _wrap_hmac(
