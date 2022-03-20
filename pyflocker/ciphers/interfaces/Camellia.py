@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import typing
-from typing import TYPE_CHECKING
 
 from ..backends import Backends
 from ..backends import load_algorithm as _load_algo
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from .. import base
+    from ..backends.symmetric import FileCipherWrapper
     from ..modes import Modes
 
 
@@ -35,9 +37,13 @@ def new(
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[typing.IO[bytes]] = None,
+    file: typing.Optional[io.BufferedReader] = None,
     backend: Backends = Backends.CRYPTOGRAPHY,
-) -> typing.Union[base.BaseAEADCipher, base.BaseNonAEADCipher]:
+) -> typing.Union[
+    base.BaseAEADCipher,
+    base.BaseNonAEADCipher,
+    FileCipherWrapper,
+]:
     """Instantiate a new Camellia cipher object.
 
     Args:

@@ -2,13 +2,15 @@
 from __future__ import annotations
 
 import typing
-from typing import TYPE_CHECKING
 
 from ..backends import load_algorithm as _load_algo
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from .. import base
     from ..backends import Backends
+    from ..backends.symmetric import FileCipherWrapper
 
 
 def new(
@@ -17,9 +19,13 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[typing.BinaryIO] = None,
+    file: typing.Optional[io.BufferedReader] = None,
     backend: typing.Optional[Backends] = None,
-) -> typing.Union[base.BaseNonAEADCipher, base.BaseAEADCipher]:
+) -> typing.Union[
+    base.BaseNonAEADCipher,
+    base.BaseAEADCipher,
+    FileCipherWrapper,
+]:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:

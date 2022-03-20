@@ -2,14 +2,17 @@
 from __future__ import annotations
 
 import typing
-from typing import TYPE_CHECKING
 
 from ..backends import load_algorithm as _load_algo
 from ..modes import Modes
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
+    import io
+
     from .. import base
     from ..backends import Backends
+    from ..backends.symmetric import FileCipherWrapper
+
 
 # shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
 globals().update({val.name: val for val in list(Modes)})
@@ -38,9 +41,13 @@ def new(
     use_hmac: bool = False,
     tag_length: typing.Optional[int] = 16,
     digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[typing.IO[bytes]] = None,
+    file: typing.Optional[io.BufferedReader] = None,
     backend: typing.Optional[Backends] = None,
-) -> typing.Union[base.BaseNonAEADCipher, base.BaseAEADCipher]:
+) -> typing.Union[
+    base.BaseAEADCipher,
+    base.BaseNonAEADCipher,
+    FileCipherWrapper,
+]:
     """Instantiate a new AES cipher object.
 
     Args:
