@@ -73,7 +73,7 @@ class Hash(base.BaseHash):
     def __init__(
         self,
         name: str,
-        data: bytes = None,
+        data: typing.Optional[bytes] = None,
         *,
         digest_size: typing.Optional[int] = None,
         _copy: typing.Optional[hashes.Hash] = None,
