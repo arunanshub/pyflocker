@@ -113,6 +113,7 @@ from functools import partial
 from hashlib import pbkdf2_hmac
 
 from .ciphers import exc
+from .ciphers.backends.symmetric import FileCipherWrapper
 from .ciphers.interfaces import AES
 from .ciphers.modes import AEAD, SPECIAL, Modes
 
@@ -252,6 +253,7 @@ def encryptf(
         backend=backend,
         tag_length=None,
     )
+    assert isinstance(cipher, FileCipherWrapper)
 
     # authenticate the payload
     cipher.authenticate(
@@ -268,7 +270,7 @@ def encryptf(
 
     # put the tag back in the header
     outfile.seek(struct.calcsize(">I H 16s"))
-    outfile.write(cipher.calculate_tag())
+    outfile.write(cipher.calculate_tag())  # type: ignore
 
 
 def decryptf(
@@ -341,6 +343,7 @@ def decryptf(
         backend=backend,
         tag_length=None,
     )
+    assert isinstance(cipher, FileCipherWrapper)
 
     # authenticate the payload
     cipher.authenticate(
