@@ -1,14 +1,13 @@
 from __future__ import annotations
 
 import typing
-from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import PKCS1_OAEP
 from Cryptodome.Signature import DSS, pss
 
 from .. import asymmetric
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
     from Cryptodome.PublicKey.ECC import EccKey
     from Cryptodome.PublicKey.RSA import RsaKey
 
@@ -29,7 +28,7 @@ def get_OAEP(
         An OAEP encryptor/decryptor object depending on the key, from the
         Cryptodome backend.
     """
-    if not isinstance(padding, asymmetric.OAEP):
+    if not isinstance(padding, asymmetric.OAEP):  # pragma: no cover
         raise TypeError("padding must be an OAEP object")
     if not isinstance(padding.mgf, asymmetric.MGF1):
         raise TypeError("mgf must be an MGF1 instance")
@@ -56,7 +55,7 @@ def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding) -> typing.Any:
     Returns:
         An PSS signer/verifier object, depending on the key.
     """
-    if not isinstance(padding, asymmetric.PSS):
+    if not isinstance(padding, asymmetric.PSS):  # pragma: no cover
         raise TypeError("padding must be a PSS object")
     if not isinstance(padding.mgf, asymmetric.MGF1):
         raise TypeError("mgf must be an MGF1 instance")
@@ -90,7 +89,7 @@ def get_ECDSA(
 
     Returns: Signer/Verifier instance.
     """
-    if not isinstance(algorithm, asymmetric.ECDSA):
+    if not isinstance(algorithm, asymmetric.ECDSA):  # pragma: no cover
         raise TypeError("algorithm must be an instance of ECDH")
     return DSS.new(key, mode="fips-186-3", encoding="der")  # type: ignore
 
@@ -162,7 +161,12 @@ def get_padding_algorithm(
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> typing.Any:
-    return PADDINGS[type(padding)](*args, **kwargs)
+    try:
+        return PADDINGS[type(padding)](*args, **kwargs)
+    except KeyError as e:
+        raise TypeError(
+            f"Invalid padding algorithm type: {type(padding)}"
+        ) from e
 
 
 def get_ec_signature_algorithm(
@@ -170,4 +174,9 @@ def get_ec_signature_algorithm(
     *args: typing.Any,
     **kwargs: typing.Any,
 ) -> typing.Any:
-    return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)
+    try:
+        return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)
+    except KeyError as e:
+        raise TypeError(
+            f"Invalid signature algorithm type: {type(algorithm)}"
+        ) from e
