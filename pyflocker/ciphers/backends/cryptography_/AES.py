@@ -325,29 +325,26 @@ def new(
     """Create a new backend specific AES cipher.
 
     Args:
-        encrypting (bool):
-            True is encryption and False is decryption.
-        key (bytes, bytearray, memoryview):
-            The key for the cipher.
-        mode (:any:`Modes`):
-            The mode to use for AES cipher.
-        iv_or_nonce (bytes, bytearray, memoryview):
+        encrypting: True is encryption and False is decryption.
+        key: The key for the cipher.
+        mode: The mode to use for AES cipher.
+        iv_or_nonce:
             The Initialization Vector or Nonce for the cipher. It must not be
             repeated with the same key.
 
     Keyword Arguments:
-        use_hmac (bool):
+        use_hmac:
             Should the cipher use HMAC as authentication or not, if it does not
             support AEAD. (Default: False)
-        tag_length (int, None):
+        tag_length:
             Length of HMAC tag. By default, a **16 byte tag** is generated. If
             ``tag_length`` is ``None``, a **non-truncated** tag is generated.
             Length of non-truncated tag depends on the digest size of the
             underlying hash algorithm used by HMAC.
-        digestmod (str, BaseHash):
+        digestmod:
             The algorithm to use for HMAC. Defaults to ``sha256``. Specifying
             this value without setting ``use_hmac`` to True has no effect.
-        file (filelike):
+        file:
             The source file to read from. If `file` is specified and the `mode`
             is not an AEAD mode, HMAC is always used.
 
@@ -359,7 +356,7 @@ def new(
         - ``digestmod``
 
     Returns:
-        :any:`BaseSymmetricCipher`: AES cipher.
+        AES cipher.
 
     Raises:
         NotImplementedError:
@@ -404,7 +401,7 @@ def supported_modes() -> typing.Set[_Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
-        set: set of :any:`Modes` object supported by backend.
+        set of :any:`Modes` object supported by backend.
     """
     return set(SUPPORTED)
 
@@ -426,7 +423,7 @@ def _wrap_hmac(
     mode: _Modes,
     iv_or_nonce: bytes,
     digestmod: typing.Any,
-    tag_length: int,
+    tag_length: typing.Optional[int],
 ) -> HMACWrapper:
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     return HMACWrapper(

@@ -29,26 +29,20 @@ def new(
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:
-        encrypting (bool):
-            True is encryption and False is decryption.
-        key (bytes, bytearray, memoryview):
-            The key for the cipher.
-        nonce (bytes, bytearray, memoryview):
-            The Nonce for the cipher.
-            It must not be repeated with the same key.
+        encrypting: True is encryption and False is decryption.
+        key: The key for the cipher.
+        nonce:
+            The Nonce for the cipher. It must not be repeated with the same
+            key.
 
     Keyword Arguments:
-        use_poly1305 (bool):
-            Whether Poly1305 MAC will be used (``True``) or not (``False``).
-            Default is ``True``.
-        file (filelike):
-            The source file to read from.
-        backend (:class:`pyflocker.ciphers.backends.Backends`):
-            The backend to use. It must be a value from :any:`Backends`.
+        use_poly1305:
+            Whether Poly1305 MAC will be used or not. Default is ``True``.
+        file: The source file to read from.
+        backend: The backend to use. It must be a value from :any:`Backends`.
 
     Returns:
-        BaseSymmetricCipher:
-            ChaCha20(Poly1305) cipher from the appropriate backend module.
+        ChaCha20-(Poly1305) cipher from the appropriate backend module.
 
     Note:
         Any other error that is raised is from the backend itself.

@@ -107,6 +107,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         self._ctx = None
 
         if not self.is_encrypting():
+            assert tag is not None
             try:
                 self._auth.verify(tag)
             except bkx.InvalidSignature as e:
@@ -157,24 +158,21 @@ def new(
     use_poly1305: bool = True,
     file: typing.Optional[io.BufferedReader] = None,
 ) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
-    """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
+    """Instantiate a new ChaCha20(-Poly1305) cipher object.
 
     Args:
-        encrypting (bool):
-            True is encryption and False is decryption.
-        key (bytes, bytearray, memoryview):
-            The key for the cipher.
-        nonce (bytes, bytearray, memoryview):
-            The Nonce for the cipher.
-            It must not be repeated with the same key.
+        encrypting: True is encryption and False is decryption.
+        key: The key for the cipher.
+        nonce:
+            The Nonce for the cipher. It must not be repeated with the same
+            key.
 
     Keyword Arguments:
-        use_poly1305 (bool): Whether to use Poly1305 MAC with ChaCha20 cipher.
-        file (filelike): The source file to read from.
+        use_poly1305: Whether to use Poly1305 MAC with ChaCha20 cipher.
+        file: The source file to read from.
 
     Returns:
-        :any:`BaseSymmetricCipher`:
-            ChaCha20(-Poly1305) cipher wrapper object.
+        ChaCha20(-Poly1305) cipher wrapper object.
 
     Note:
         Any other error that is raised is from the backend itself.
