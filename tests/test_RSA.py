@@ -396,3 +396,59 @@ class TestRSAErrors:
             public_key.serialize("OpenSSH", "SubjectPublicKeyInfo")
         with pytest.raises(ValueError):
             public_key.serialize("PEM", "OpenSSH")
+
+    @bits_1024_fixture
+    def test_private_key_decryptor_invalid_algorithm(self, private_key):
+        class FakeOAEP(object):
+            pass
+
+        with pytest.raises(TypeError):
+            private_key.decryptor(FakeOAEP())  # type: ignore
+
+        class FakeMGF:
+            pass
+
+        with pytest.raises(TypeError):
+            private_key.decryptor(OAEP(mgf=FakeMGF()))  # type: ignore
+
+    @bits_1024_fixture
+    def test_private_key_signer_invalid_algorithm(self, private_key):
+        class FakePSS:
+            pass
+
+        with pytest.raises(TypeError):
+            private_key.signer(FakePSS())  # type: ignore
+
+        class FakeMGF:
+            pass
+
+        with pytest.raises(TypeError):
+            private_key.signer(PSS(mgf=FakeMGF()))  # type: ignore
+
+    @bits_1024_fixture
+    def test_public_key_encryptor_invalid_algorithm(self, public_key):
+        class FakeOAEP(object):
+            pass
+
+        with pytest.raises(TypeError):
+            public_key.encryptor(FakeOAEP())  # type: ignore
+
+        class FakeMGF:
+            pass
+
+        with pytest.raises(TypeError):
+            public_key.encryptor(OAEP(mgf=FakeMGF()))  # type: ignore
+
+    @bits_1024_fixture
+    def test_public_key_signer_invalid_algorithm(self, public_key):
+        class FakePSS:
+            pass
+
+        with pytest.raises(TypeError):
+            public_key.verifier(FakePSS())  # type: ignore
+
+        class FakeMGF:
+            pass
+
+        with pytest.raises(TypeError):
+            public_key.verifier(PSS(mgf=FakeMGF()))  # type: ignore
