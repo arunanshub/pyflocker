@@ -82,7 +82,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         format: str = "PKCS8",
         passphrase: typing.Optional[bytes] = None,
         *,
-        protection: str = None,
+        protection: typing.Optional[str] = None,
     ) -> bytes:
         """Serialize the private key.
 
