@@ -103,6 +103,7 @@ def _check_equal_and_check_finalize_once(
     assert h1.hexdigest() == h2.hexdigest()
 
     for each in h1, h2:
+        assert each.block_size is not None
         with pytest.raises(exc.AlreadyFinalized):
             each.update(b"")
         with pytest.raises(exc.AlreadyFinalized):
