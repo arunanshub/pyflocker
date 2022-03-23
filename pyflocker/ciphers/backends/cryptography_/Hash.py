@@ -92,10 +92,13 @@ class Hash(base.BaseHash):
             "digest_size",
             digest_size,
         )
-        self._block_size = getattr(
-            self._ctx.algorithm,
-            "block_size",
-            NotImplemented,
+        self._block_size = (
+            getattr(
+                self._ctx.algorithm,
+                "block_size",
+                NotImplemented,
+            )
+            or NotImplemented
         )
         self._oid = OIDS.get(name, NotImplemented)
 
