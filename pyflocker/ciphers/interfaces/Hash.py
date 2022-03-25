@@ -1,7 +1,6 @@
 """Interface to hashing algorithms."""
 from __future__ import annotations
 
-import typing
 from typing import TYPE_CHECKING
 
 from ..backends import Backends as _Backends
@@ -12,8 +11,8 @@ if TYPE_CHECKING:  # pragma: no cover
 
 
 def algorithms_available(
-    backend: typing.Optional[_Backends] = None,
-) -> typing.Set[str]:
+    backend: _Backends | None = None,
+) -> set[str]:
     """Returns all available hashes supported by backend."""
     if backend is not None:
         return _load_algo("Hash", backend).algorithms_available()
@@ -26,12 +25,12 @@ def algorithms_available(
 
 def new(
     hashname: str,
-    data: typing.Optional[bytes] = None,
-    digest_size: typing.Optional[int] = None,
+    data: bytes | None = None,
+    digest_size: int | None = None,
     *,
-    custom: typing.Optional[bytes] = None,
-    key: typing.Optional[bytes] = None,
-    backend: typing.Optional[_Backends] = None,
+    custom: bytes | None = None,
+    key: bytes | None = None,
+    backend: _Backends | None = None,
 ) -> BaseHash:
     """
     Instantiate a new hash instance ``hashname`` with initial data ``data``

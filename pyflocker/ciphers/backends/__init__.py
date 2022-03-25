@@ -21,7 +21,7 @@ class Backends(enum.Enum):
 
 
 def load_algorithm(
-    name: str, backend: typing.Optional[Backends] = None
+    name: str, backend: Backends | None = None
 ) -> types.ModuleType:
     """Load a specific algorithm from the given ``backend``.
 
@@ -46,7 +46,7 @@ def load_algorithm(
 
 
 def load_backend(
-    backend: typing.Optional[Backends] = None,
+    backend: Backends | None = None,
 ) -> types.ModuleType:
     """Load a backend.
 
@@ -85,7 +85,7 @@ def _import_helper(backend: Backends) -> ModuleType:
     return import_module(f".{backend.name.lower()}_", __spec__.parent)
 
 
-def _find_backend() -> typing.Optional[ModuleType]:
+def _find_backend() -> ModuleType | None:
     errors = 0
 
     for i in list(Backends):

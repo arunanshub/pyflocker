@@ -4,8 +4,6 @@ Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 
 from __future__ import annotations
 
-import typing
-
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
@@ -19,11 +17,11 @@ from .Hash import _get_hash_algorithm
 def derive_hkdf_key(
     master_key: bytes,
     dklen: int,
-    hashalgo: typing.Union[str, BaseHash],
+    hashalgo: str | BaseHash,
     salt: bytes,
     cipher_ctx: bytes = b"enc-key",
     auth_ctx: bytes = b"auth-key",
-) -> typing.Tuple[bytes, bytes]:
+) -> tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
     Args:

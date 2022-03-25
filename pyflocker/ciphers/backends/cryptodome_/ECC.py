@@ -17,8 +17,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def __init__(
         self,
-        curve: typing.Optional[str],
-        _key: typing.Optional[ECC.EccKey] = None,
+        curve: str | None,
+        _key: ECC.EccKey | None = None,
     ) -> None:
         if _key is not None:
             self._key = _key
@@ -51,9 +51,9 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
         *,
-        protection: typing.Optional[str] = None,
+        protection: str | None = None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -120,7 +120,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
     @staticmethod
     def _validate_pkcs1_args(
         encoding: str,
-        protection: typing.Optional[str],
+        protection: str | None,
     ) -> None:
         if protection is not None:  # pragma: no cover
             raise ValueError("protection is meaningful only for PKCS8")
@@ -129,9 +129,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def signer(
         self,
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveSignatureAlgorithm
-        ] = None,
+        algorithm: None | base.BaseEllepticCurveSignatureAlgorithm = None,
     ) -> SignerContext:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
@@ -141,14 +139,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.Union[
-            bytes,
-            ECCPublicKey,
-            base.BaseECCPublicKey,
-        ],
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveExchangeAlgorithm
-        ] = None,
+        peer_public_key: bytes | ECCPublicKey | base.BaseECCPublicKey,
+        algorithm: None | base.BaseEllepticCurveExchangeAlgorithm = None,
     ) -> bytes:
         del peer_public_key, algorithm
         raise NotImplementedError(
@@ -159,7 +151,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> ECCPrivateKey:
         try:
             key = ECC.import_key(data, passphrase)  # type: ignore
@@ -253,9 +245,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
     def verifier(
         self,
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveSignatureAlgorithm
-        ] = None,
+        algorithm: None | base.BaseEllepticCurveSignatureAlgorithm = None,
     ) -> VerifierContext:
         if algorithm is None:
             algorithm = ECDSA()
@@ -268,7 +258,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
         cls,
         data: bytes,
         *,
-        curve: typing.Optional[str] = None,
+        curve: str | None = None,
     ) -> ECCPublicKey:
         """Loads the public key as binary object and returns the Key object.
 
@@ -332,7 +322,7 @@ def generate(curve: str) -> ECCPrivateKey:
 def load_public_key(
     data: bytes,
     *,
-    curve: typing.Optional[str] = None,
+    curve: str | None = None,
 ) -> ECCPublicKey:
     """Loads the public key.
 
@@ -347,7 +337,7 @@ def load_public_key(
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 

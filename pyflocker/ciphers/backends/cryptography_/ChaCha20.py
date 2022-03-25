@@ -51,7 +51,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         encrypting: bool,
         ctx: typing.Any,
         auth: typing.Any,
-    ) -> typing.Union[_EncryptionCtx, _DecryptionCtx]:
+    ) -> _EncryptionCtx | _DecryptionCtx:
         if encrypting:
             return _EncryptionCtx(ctx, auth, 0)
         return _DecryptionCtx(ctx, auth)
@@ -82,7 +82,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[memoryview, bytearray],
+        out: memoryview | bytearray,
     ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
@@ -90,7 +90,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         self._len_ct += len(out)
         self._ctx.update_into(data, out)
 
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self.is_encrypting() and tag is None:
@@ -115,7 +115,7 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         else:
             self._tag = self._auth.finalize()
 
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
             raise exc.NotFinalized
 
@@ -156,8 +156,8 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[io.BufferedReader] = None,
-) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
+    file: io.BufferedReader | None = None,
+) -> ChaCha20 | ChaCha20Poly1305 | FileCipherWrapper:
     """Instantiate a new ChaCha20(-Poly1305) cipher object.
 
     Args:

@@ -17,7 +17,7 @@ from ..asymmetric import ECDH, ECDSA
 from . import Hash
 from .asymmetric import get_ec_exchange_algorithm, get_ec_signature_algorithm
 
-CURVES: typing.Dict[str, typing.Type[ec.EllipticCurve]] = {
+CURVES: dict[str, type[ec.EllipticCurve]] = {
     # p192 and aliases
     "NIST P-192": ec.SECP192R1,
     "P-192": ec.SECP192R1,
@@ -65,8 +65,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def __init__(
         self,
-        curve: typing.Optional[str] = None,
-        _key: typing.Optional[ec.EllipticCurvePrivateKey] = None,
+        curve: str | None = None,
+        _key: ec.EllipticCurvePrivateKey | None = None,
     ) -> None:
         if _key is not None:
             self._key = _key
@@ -94,14 +94,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.Union[
-            bytes,
-            ECCPublicKey,
-            base.BaseECCPublicKey,
-        ],
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveExchangeAlgorithm,
-        ] = None,
+        peer_public_key: bytes | ECCPublicKey | base.BaseECCPublicKey,
+        algorithm: None | base.BaseEllepticCurveExchangeAlgorithm = None,
     ) -> bytes:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDH()
@@ -123,9 +117,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
 
     def signer(
         self,
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveSignatureAlgorithm
-        ] = None,
+        algorithm: None | base.BaseEllepticCurveSignatureAlgorithm = None,
     ) -> SignerContext:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
@@ -138,7 +130,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> bytes:
         try:
             encd = self._encodings[encoding]
@@ -161,7 +153,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> ECCPrivateKey:
         formats = {
             b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
@@ -220,9 +212,7 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
     def verifier(
         self,
-        algorithm: typing.Optional[
-            base.BaseEllepticCurveSignatureAlgorithm
-        ] = None,
+        algorithm: None | base.BaseEllepticCurveSignatureAlgorithm = None,
     ) -> VerifierContext:
         if algorithm is None:  # pragma: no cover
             algorithm = ECDSA()
@@ -324,7 +314,7 @@ def generate(curve: str) -> ECCPrivateKey:
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 

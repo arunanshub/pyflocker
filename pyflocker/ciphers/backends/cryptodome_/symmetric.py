@@ -32,7 +32,7 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         if self._update_func is None:
             raise exc.AlreadyFinalized
@@ -58,7 +58,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
 
     # these are *not* class variables
     _updated: bool = False
-    _tag: typing.Optional[bytes] = None
+    _tag: bytes | None = None
 
     _encrypting: bool
     _update_func: typing.Callable
@@ -76,7 +76,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         self._updated = True
         if self._update_func is None:
@@ -90,7 +90,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
             raise TypeError
         self._cipher.update(data)
 
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -108,7 +108,7 @@ class AEADCipherTemplate(base.BaseAEADCipher):
             self._tag, self._cipher = self._cipher.digest(), None
             self._update_func = None  # type: ignore
 
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         if self._update_func is not None:
             raise exc.NotFinalized
 

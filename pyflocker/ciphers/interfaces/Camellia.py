@@ -14,7 +14,7 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from ..modes import Modes
 
 
-def supported_modes(backend: Backends) -> typing.Set[Modes]:
+def supported_modes(backend: Backends) -> set[Modes]:
     """
     Lists all modes supported by the cipher. It is limited to backend's
     implementation and capability, and hence, varies from backend to backend.
@@ -35,15 +35,11 @@ def new(
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
-    tag_length: typing.Optional[int] = 16,
-    digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[io.BufferedReader] = None,
+    tag_length: int | None = 16,
+    digestmod: str | base.BaseHash = "sha256",
+    file: io.BufferedReader | None = None,
     backend: Backends = Backends.CRYPTOGRAPHY,
-) -> typing.Union[
-    base.BaseAEADCipher,
-    base.BaseNonAEADCipher,
-    FileCipherWrapper,
-]:
+) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     """Instantiate a new Camellia cipher object.
 
     Args:

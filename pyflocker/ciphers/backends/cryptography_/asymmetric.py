@@ -73,7 +73,7 @@ def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm) -> ECDH:
 
 def get_ECDSA(
     algorithm: base.BaseEllepticCurveSignatureAlgorithm,
-) -> typing.Type[ECDSA]:
+) -> type[ECDSA]:
     """Return an ECDSA callable for signing/verification.
 
     The object is not constructed until the key is signing/verifying.
@@ -88,24 +88,21 @@ def get_ECDSA(
     return ECDSA
 
 
-PADDINGS: typing.Dict[
-    typing.Type[base.BaseAsymmetricPadding],
-    typing.Callable,
-] = {
+PADDINGS: dict[type[base.BaseAsymmetricPadding], typing.Callable] = {
     asymmetric.OAEP: get_OAEP,
     asymmetric.PSS: get_PSS,
 }
 
 
-EC_EXCHANGE_ALGORITHMS: typing.Dict[
-    typing.Type[base.BaseEllepticCurveExchangeAlgorithm],
+EC_EXCHANGE_ALGORITHMS: dict[
+    type[base.BaseEllepticCurveExchangeAlgorithm],
     typing.Callable,
 ] = {
     asymmetric.ECDH: get_ECDH,
 }
 
-EC_SIGNATURE_ALGORITHMS: typing.Dict[
-    typing.Type[base.BaseEllepticCurveSignatureAlgorithm],
+EC_SIGNATURE_ALGORITHMS: dict[
+    type[base.BaseEllepticCurveSignatureAlgorithm],
     typing.Callable,
 ] = {
     asymmetric.ECDSA: get_ECDSA,

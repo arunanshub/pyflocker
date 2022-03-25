@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import typing
 from itertools import combinations, product
 from typing import TYPE_CHECKING
 
@@ -49,7 +48,7 @@ def hashfuncs(
     key: bytes,
     backend1: Backends,
     backend2: Backends,
-) -> typing.Tuple[BaseHash, BaseHash]:
+) -> tuple[BaseHash, BaseHash]:
     hashes = []
     for backend in (backend1, backend2):
         try:
@@ -120,7 +119,7 @@ def _check_equal_and_check_finalize_once(
     list(combinations(Backends, 2)),
 )
 def test_oid_matches_except_blakes(
-    hashfuncs: typing.Tuple[BaseHash, BaseHash],
+    hashfuncs: tuple[BaseHash, BaseHash],
 ):
     h1, h2 = hashfuncs
     assert h1.oid == h2.oid  # type: ignore
@@ -136,7 +135,7 @@ def test_oid_matches_except_blakes(
     list(product(Backends, repeat=2)),
 )
 def test_fixed_digest_size_hash_matches(
-    hashfuncs: typing.Tuple[BaseHash, BaseHash],
+    hashfuncs: tuple[BaseHash, BaseHash],
     do_update: bool,
 ):
     h1, h2 = hashfuncs
@@ -153,7 +152,7 @@ def test_fixed_digest_size_hash_matches(
     list(product(Backends, repeat=2)),
 )
 def test_xofs_with_custom_hash_matches(
-    hashfuncs: typing.Tuple[BaseHash, BaseHash],
+    hashfuncs: tuple[BaseHash, BaseHash],
     do_update: bool,
 ):
     h1, h2 = hashfuncs
@@ -170,7 +169,7 @@ def test_xofs_with_custom_hash_matches(
     list(product(Backends, repeat=2)),
 )
 def test_blake2s_with_key_hash_matches(
-    hashfuncs: typing.Tuple[BaseHash, BaseHash],
+    hashfuncs: tuple[BaseHash, BaseHash],
     do_update: bool,
 ):
     h1, h2 = hashfuncs
@@ -187,7 +186,7 @@ def test_blake2s_with_key_hash_matches(
     list(product(Backends, repeat=2)),
 )
 def test_blake2b_with_key_hash_matches(
-    hashfuncs: typing.Tuple[BaseHash, BaseHash],
+    hashfuncs: tuple[BaseHash, BaseHash],
     do_update: bool,
 ):
     h1, h2 = hashfuncs

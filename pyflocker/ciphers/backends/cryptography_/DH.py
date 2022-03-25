@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import typing
-
 from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.serialization import (
@@ -25,9 +23,9 @@ class DHParameters(base.BaseDHParameters):
 
     def __init__(
         self,
-        key_size: typing.Optional[int],
+        key_size: int | None,
         generator: int = 2,
-        _params: typing.Optional[dh.DHParameters] = None,
+        _params: dh.DHParameters | None = None,
     ) -> None:
         if _params is not None:
             self._params = _params
@@ -50,7 +48,7 @@ class DHParameters(base.BaseDHParameters):
         return self._p
 
     @property
-    def q(self) -> typing.Optional[int]:
+    def q(self) -> int | None:
         return self._q
 
     def private_key(self) -> DHPrivateKey:
@@ -108,7 +106,7 @@ class DHParameters(base.BaseDHParameters):
         cls,
         p: int,
         g: int = 2,
-        q: typing.Optional[int] = None,
+        q: int | None = None,
     ) -> DHParameters:
         param_nos = dh.DHParameterNumbers(p, g, q)
         return cls(None, _params=param_nos.parameters())
@@ -143,11 +141,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
 
     def exchange(
         self,
-        peer_public_key: typing.Union[
-            bytes,
-            DHPublicKey,
-            base.BaseDHPublicKey,
-        ],
+        peer_public_key: bytes | DHPublicKey | base.BaseDHPublicKey,
     ) -> bytes:
         if isinstance(peer_public_key, bytes):
             return self._key.exchange(DHPublicKey.load(peer_public_key)._key)
@@ -164,7 +158,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> bytes:
         protection: serial.KeySerializationEncryption
         if passphrase is None:
@@ -193,7 +187,7 @@ class DHPrivateKey(base.BaseDHPrivateKey):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> DHPrivateKey:
         formats = {
             b"-----": serial.load_pem_private_key,
@@ -326,7 +320,7 @@ def generate(key_size: int, g: int = 2) -> DHParameters:
 def load_from_parameters(
     p: int,
     g: int = 2,
-    q: typing.Optional[int] = None,
+    q: int | None = None,
 ) -> DHParameters:
     """Create a DH Parameter object from the given parameters.
 
@@ -367,7 +361,7 @@ def load_public_key(data: bytes) -> DHPublicKey:
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
 ) -> DHPrivateKey:
     """Loads the private key and returns a private key object.
 

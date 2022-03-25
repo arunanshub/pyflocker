@@ -109,7 +109,7 @@ class _SaltLengthMaximizer:
     def _sign_or_verify(
         self,
         msghash: typing.Any,
-        signature: typing.Optional[bytes] = None,
+        signature: bytes | None = None,
     ) -> typing.Any:
         salt_length = self._key.size_in_bytes() - msghash.digest_size - 2
         pss = get_PSS(
@@ -129,16 +129,13 @@ class _SaltLengthMaximizer:
         return self._sign_or_verify(msghash, signature)
 
 
-PADDINGS: typing.Dict[
-    typing.Type[base.BaseAsymmetricPadding],
-    typing.Callable,
-] = {
+PADDINGS: dict[type[base.BaseAsymmetricPadding], typing.Callable] = {
     asymmetric.OAEP: get_OAEP,
     asymmetric.PSS: get_PSS,
 }
 
-EC_SIGNATURE_ALGORITHMS: typing.Dict[
-    typing.Type[base.BaseEllepticCurveSignatureAlgorithm],
+EC_SIGNATURE_ALGORITHMS: dict[
+    type[base.BaseEllepticCurveSignatureAlgorithm],
     typing.Callable,
 ] = {
     asymmetric.ECDSA: get_ECDSA,

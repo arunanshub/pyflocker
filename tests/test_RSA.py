@@ -399,7 +399,7 @@ class TestRSAErrors:
 
     @bits_1024_fixture
     def test_private_key_decryptor_invalid_algorithm(self, private_key):
-        class FakeOAEP(object):
+        class FakeOAEP:
             pass
 
         with pytest.raises(TypeError):
@@ -427,7 +427,7 @@ class TestRSAErrors:
 
     @bits_1024_fixture
     def test_public_key_encryptor_invalid_algorithm(self, public_key):
-        class FakeOAEP(object):
+        class FakeOAEP:
             pass
 
         with pytest.raises(TypeError):

@@ -141,14 +141,14 @@ class AEADOneShot(AEAD):
         func = cipher.decrypt_and_verify
         return lambda data, tag, **k: func(data, tag, **k)
 
-    def update(self, data: bytes, tag: typing.Optional[bytes] = None) -> bytes:
+    def update(self, data: bytes, tag: bytes | None = None) -> bytes:
         return self.update_into(data, None, tag)  # type: ignore
 
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
-        tag: typing.Optional[bytes] = None,
+        out: bytearray | memoryview,
+        tag: bytes | None = None,
     ) -> bytes:
         if self._update_func is None:
             raise exc.AlreadyFinalized
@@ -180,10 +180,10 @@ def new(
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
-    tag_length: typing.Optional[int] = 16,
-    digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[io.BufferedReader] = None,
-) -> typing.Union[AEAD, NonAEAD, AEADOneShot, FileCipherWrapper, HMACWrapper]:
+    tag_length: int | None = 16,
+    digestmod: str | base.BaseHash = "sha256",
+    file: io.BufferedReader | None = None,
+) -> AEAD | NonAEAD | AEADOneShot | FileCipherWrapper | HMACWrapper:
     """Create a new backend specific AES cipher.
 
     Args:
@@ -263,7 +263,7 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.Set[_Modes]:
+def supported_modes() -> set[_Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
@@ -278,7 +278,7 @@ def _wrap_hmac(
     mode: _Modes,
     iv_or_nonce: bytes,
     hashalgo: typing.Any,
-    tag_length: typing.Optional[int],
+    tag_length: int | None,
 ) -> HMACWrapper:
     ckey, hkey = derive_hkdf_key(key, len(key), hashalgo, iv_or_nonce)
     return HMACWrapper(

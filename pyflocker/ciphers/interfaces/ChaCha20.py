@@ -19,13 +19,9 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[io.BufferedReader] = None,
-    backend: typing.Optional[Backends] = None,
-) -> typing.Union[
-    base.BaseNonAEADCipher,
-    base.BaseAEADCipher,
-    FileCipherWrapper,
-]:
+    file: io.BufferedReader | None = None,
+    backend: Backends | None = None,
+) -> base.BaseNonAEADCipher | base.BaseAEADCipher | FileCipherWrapper:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:

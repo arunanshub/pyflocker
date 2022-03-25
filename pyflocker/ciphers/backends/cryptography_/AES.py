@@ -131,8 +131,8 @@ class AEADOneShot(base.BaseAEADCipher):
     def update(
         self,
         data: bytes,
-        tag: typing.Optional[bytes] = None,
-    ) -> typing.Optional[bytes]:
+        tag: bytes | None = None,
+    ) -> bytes | None:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -155,13 +155,13 @@ class AEADOneShot(base.BaseAEADCipher):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
-        tag: typing.Optional[bytes] = None,
+        out: bytearray | memoryview,
+        tag: bytes | None = None,
     ) -> None:
         del tag, out, data
         raise NotImplementedError
 
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         del tag
         if self._update_func is None:
             raise exc.AlreadyFinalized
@@ -170,7 +170,7 @@ class AEADOneShot(base.BaseAEADCipher):
         if self._raise_on_tag_err:
             raise exc.DecryptionError
 
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         if self._update_func is not None:
             raise exc.NotFinalized
         return self._tag
@@ -273,7 +273,7 @@ class _EAX:
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         if self.__ctx is None:
             raise bkx.AlreadyFinalized
@@ -300,7 +300,7 @@ class _EAX:
             raise bkx.InvalidTag  # pragma: no cover
 
     @property
-    def tag(self) -> typing.Optional[bytes]:
+    def tag(self) -> bytes | None:
         if self.__ctx is not None:
             raise bkx.NotYetFinalized
         return self.__tag
@@ -308,7 +308,7 @@ class _EAX:
 
 def strxor(x: bytes, y: bytes) -> bytes:
     """XOR two byte strings"""
-    return bytes([ix ^ iy for ix, iy in zip(x, y)])
+    return bytes(ix ^ iy for ix, iy in zip(x, y))
 
 
 def new(
@@ -318,10 +318,10 @@ def new(
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
-    tag_length: typing.Optional[int] = 16,
-    digestmod: typing.Union[str, base.BaseHash] = "sha256",
-    file: typing.Optional[io.BufferedReader] = None,
-) -> typing.Union[AEAD, NonAEAD, FileCipherWrapper, HMACWrapper]:
+    tag_length: int | None = 16,
+    digestmod: str | base.BaseHash = "sha256",
+    file: io.BufferedReader | None = None,
+) -> AEAD | NonAEAD | FileCipherWrapper | HMACWrapper:
     """Create a new backend specific AES cipher.
 
     Args:
@@ -397,7 +397,7 @@ def new(
     return crp
 
 
-def supported_modes() -> typing.Set[_Modes]:
+def supported_modes() -> set[_Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
@@ -423,7 +423,7 @@ def _wrap_hmac(
     mode: _Modes,
     iv_or_nonce: bytes,
     digestmod: typing.Any,
-    tag_length: typing.Optional[int],
+    tag_length: int | None,
 ) -> HMACWrapper:
     ckey, hkey = derive_hkdf_key(key, len(key), digestmod, iv_or_nonce)
     return HMACWrapper(

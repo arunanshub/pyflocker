@@ -56,7 +56,7 @@ class OAEP(BaseAsymmetricPadding):
 
     mgf: BaseMGF = field(default_factory=MGF1)
     hashfunc: BaseHash = field(default_factory=_default_hash_factory)
-    label: typing.Optional[bytes] = None
+    label: bytes | None = None
     name: typing.ClassVar[str] = "OAEP"
 
 
@@ -73,7 +73,7 @@ class PSS(BaseAsymmetricPadding):
     """
 
     mgf: BaseMGF = field(default_factory=MGF1)
-    salt_length: typing.Optional[int] = None
+    salt_length: int | None = None
     name: typing.ClassVar[str] = "PSS"
 
 

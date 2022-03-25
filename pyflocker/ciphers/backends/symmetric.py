@@ -41,7 +41,7 @@ class FileCipherWrapper:
         # the cipher already has an internal context
         self._ctx = cipher
         self._file = file
-        self._tag: typing.Optional[bytes] = None
+        self._tag: bytes | None = None
         self._encrypting = self._ctx.is_encrypting()
         self._offset = offset
 
@@ -53,7 +53,7 @@ class FileCipherWrapper:
     def is_encrypting(self) -> bool:
         return self._encrypting
 
-    def update(self, blocksize: int = 16384) -> typing.Optional[bytes]:
+    def update(self, blocksize: int = 16384) -> bytes | None:
         """
         Reads at most ``blocksize`` bytes from ``file``, passes through the
         cipher and returns the cipher's output.
@@ -76,7 +76,7 @@ class FileCipherWrapper:
     def update_into(
         self,
         file: typing.IO[bytes],
-        tag: typing.Optional[bytes] = None,
+        tag: bytes | None = None,
         blocksize: int = 16384,
     ) -> None:
         """
@@ -122,7 +122,7 @@ class FileCipherWrapper:
 
         self.finalize(tag)
 
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -134,7 +134,7 @@ class FileCipherWrapper:
                 None,  # type: ignore
             )
 
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
             raise exc.NotFinalized("Cipher has already been finalized.")
         return self._tag
@@ -154,9 +154,9 @@ class HMACWrapper(base.BaseAEADCipher):
         cipher: base.BaseNonAEADCipher,
         hmac_key: bytes,
         hmac_random: bytes,
-        hashfunc: typing.Union[str, base.BaseHash] = "sha256",
+        hashfunc: str | base.BaseHash = "sha256",
         offset: int = 0,
-        tag_length: typing.Optional[int] = 16,
+        tag_length: int | None = 16,
     ):
         if not isinstance(cipher, base.BaseNonAEADCipher):
             raise TypeError("Only NonAEAD ciphers can be wrapped.")
@@ -168,7 +168,7 @@ class HMACWrapper(base.BaseAEADCipher):
 
         self._auth.update(hmac_random)
 
-        self._ctx: typing.Optional[typing.Any]
+        self._ctx: typing.Any | None
         self._ctx = self._get_mac_ctx(cipher, self._auth, offset)
 
         self._encrypting = cipher.is_encrypting()
@@ -204,7 +204,7 @@ class HMACWrapper(base.BaseAEADCipher):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
@@ -212,7 +212,7 @@ class HMACWrapper(base.BaseAEADCipher):
         self._ctx.update_into(data, out)
         self._len_ct += len(data)
 
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         if self._ctx is None:
             raise exc.AlreadyFinalized
 
@@ -235,7 +235,7 @@ class HMACWrapper(base.BaseAEADCipher):
         ):
             raise exc.DecryptionError
 
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
             raise exc.NotFinalized
 
@@ -248,7 +248,7 @@ class HMACWrapper(base.BaseAEADCipher):
         cipher: base.BaseNonAEADCipher,
         auth: typing.Any,
         offset: int,
-    ) -> typing.Union[_EncryptionCtx, _DecryptionCtx]:
+    ) -> _EncryptionCtx | _DecryptionCtx:
         if cipher.is_encrypting():
             return _EncryptionCtx(cipher, auth, offset)
         return _DecryptionCtx(cipher, auth)
@@ -273,7 +273,7 @@ class _EncryptionCtx:
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         self._ctx.update_into(data, out)
         self._auth.update(out[: self._offset])
@@ -291,7 +291,7 @@ class _DecryptionCtx:
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         self._auth.update(data)
         self._ctx.update_into(data, out)

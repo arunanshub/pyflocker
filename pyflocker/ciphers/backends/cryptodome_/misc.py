@@ -4,8 +4,6 @@ Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 
 from __future__ import annotations
 
-import typing
-
 from Cryptodome.Protocol import KDF
 
 from ...base import BaseHash
@@ -15,11 +13,11 @@ from . import Hash
 def derive_hkdf_key(
     master_key: bytes,
     dklen: int,
-    hashalgo: typing.Union[str, BaseHash],
+    hashalgo: str | BaseHash,
     salt: bytes,
     cipher_ctx: bytes = b"enc-key",
     auth_ctx: bytes = b"auth-key",
-) -> typing.Tuple[bytes, bytes]:
+) -> tuple[bytes, bytes]:
     """Derive key materials for HMAC from given master key.
 
     Args:

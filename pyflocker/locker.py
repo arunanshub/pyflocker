@@ -170,12 +170,12 @@ def encryptf(
     outfile: typing.IO[bytes],
     password: bytes,
     *,
-    kdf: typing.Optional[KDFunc] = None,
+    kdf: KDFunc | None = None,
     aes_mode: Modes = Modes.MODE_GCM,
     blocksize: int = 16 * 1024,
     metadata: bytes = METADATA,
     dklen: int = 32,
-    backend: typing.Optional[Backends] = None,
+    backend: Backends | None = None,
 ) -> None:
     """Encrypts the binary data using AES cipher and writes it to ``outfile``.
 
@@ -278,11 +278,11 @@ def decryptf(
     outfile: typing.IO[bytes],
     password: bytes,
     *,
-    kdf: typing.Optional[KDFunc] = None,
+    kdf: KDFunc | None = None,
     blocksize: int = 16 * 1024,
     metadata: bytes = METADATA,
     dklen: int = 32,
-    backend: typing.Optional[Backends] = None,
+    backend: Backends | None = None,
 ) -> None:
     """Decrypts the binary data using AES cipher and writes it to ``outfile``.
 
@@ -489,11 +489,11 @@ def lockerf(
 def locker(
     file: str,
     password: bytes,
-    encrypting: typing.Optional[bool] = None,
+    encrypting: bool | None = None,
     remove: bool = True,
     *,
-    ext: typing.Optional[str] = None,
-    newfile: typing.Optional[str] = None,
+    ext: str | None = None,
+    newfile: str | None = None,
     **kwargs: typing.Any,
 ) -> None:
     """Encrypts or decrypts files with AES algorithm.

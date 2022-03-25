@@ -114,11 +114,11 @@ class Hash(base.BaseHash):
     def __init__(
         self,
         name: str,
-        data: typing.Optional[bytes] = None,
-        digest_size: typing.Optional[int] = None,
+        data: bytes | None = None,
+        digest_size: int | None = None,
         *,
-        custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
-        key: typing.Optional[bytes] = None,  # for blakes
+        custom: bytes | None = None,  # cshakes, kangarootwelve
+        key: bytes | None = None,  # for blakes
         _copy: typing.Any = None,
     ) -> None:
         if _copy is not None:
@@ -193,10 +193,10 @@ class Hash(base.BaseHash):
     def new(
         self,
         data: bytes = b"",
-        digest_size: typing.Optional[int] = None,
+        digest_size: int | None = None,
         *,
-        custom: typing.Optional[bytes] = None,
-        key: typing.Optional[bytes] = None,
+        custom: bytes | None = None,
+        key: bytes | None = None,
     ) -> Hash:
         return type(self)(
             self.name,
@@ -211,11 +211,11 @@ class Hash(base.BaseHash):
     @staticmethod
     def _create_ctx(
         name: str,
-        data: typing.Optional[bytes] = None,
-        digest_size: typing.Optional[int] = None,
+        data: bytes | None = None,
+        digest_size: int | None = None,
         *,
-        custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
-        key: typing.Optional[bytes] = None,  # for blakes
+        custom: bytes | None = None,  # cshakes, kangarootwelve
+        key: bytes | None = None,  # for blakes
     ) -> typing.Any:
         """
         Creates a Cryptodome based hash function object.
@@ -252,7 +252,7 @@ class Hash(base.BaseHash):
         return hashobj
 
 
-def algorithms_available() -> typing.Set[str]:
+def algorithms_available() -> set[str]:
     """Return the names of the available hash algorithms.
 
     Returns:
@@ -263,11 +263,11 @@ def algorithms_available() -> typing.Set[str]:
 
 def new(
     name: str,
-    data: typing.Optional[bytes] = b"",
-    digest_size: typing.Optional[int] = None,
+    data: bytes | None = b"",
+    digest_size: int | None = None,
     *,
-    custom: typing.Optional[bytes] = None,  # cshakes, kangarootwelve
-    key: typing.Optional[bytes] = None,  # for blakes
+    custom: bytes | None = None,  # cshakes, kangarootwelve
+    key: bytes | None = None,  # for blakes
 ) -> Hash:
     """
     Instantiate a hash object.

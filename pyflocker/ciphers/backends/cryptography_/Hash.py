@@ -73,12 +73,12 @@ class Hash(base.BaseHash):
     def __init__(
         self,
         name: str,
-        data: typing.Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        digest_size: typing.Optional[int] = None,
-        _copy: typing.Optional[hashes.Hash] = None,
+        digest_size: int | None = None,
+        _copy: hashes.Hash | None = None,
     ) -> None:
-        self._ctx: typing.Optional[hashes.Hash]
+        self._ctx: hashes.Hash | None
         self._digest: bytes
 
         if _copy is not None:
@@ -155,9 +155,9 @@ class Hash(base.BaseHash):
 
     def new(
         self,
-        data: typing.Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        digest_size: typing.Optional[int] = None,
+        digest_size: int | None = None,
     ) -> Hash:
         return type(self)(
             self.name,
@@ -170,9 +170,9 @@ class Hash(base.BaseHash):
     @staticmethod
     def _create_ctx(
         name: str,
-        data: typing.Optional[bytes] = None,
+        data: bytes | None = None,
         *,
-        digest_size: typing.Optional[int] = None,
+        digest_size: int | None = None,
     ) -> hashes.Hash:
         """
         Creates a pyca/cryptography based hash function object.
@@ -193,7 +193,7 @@ class Hash(base.BaseHash):
         return hashobj
 
 
-def algorithms_available() -> typing.Set[str]:
+def algorithms_available() -> set[str]:
     """Return the names of the available hash algorithms."""
     return set(HASHES)
 
@@ -202,7 +202,7 @@ def new(
     name: str,
     data: bytes = b"",
     *,
-    digest_size: typing.Optional[int] = None,
+    digest_size: int | None = None,
     **kwargs: typing.Any,  # only for compatibility with Cryptodome
 ) -> Hash:
     """

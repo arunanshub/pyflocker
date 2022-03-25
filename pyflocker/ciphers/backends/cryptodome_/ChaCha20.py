@@ -46,8 +46,8 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: typing.Optional[io.BufferedReader] = None,
-) -> typing.Union[ChaCha20, ChaCha20Poly1305, FileCipherWrapper]:
+    file: io.BufferedReader | None = None,
+) -> ChaCha20 | ChaCha20Poly1305 | FileCipherWrapper:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 
     Args:

@@ -1,7 +1,6 @@
 """Interface to DH key exchange"""
 from __future__ import annotations
 
-import typing
 from typing import TYPE_CHECKING
 
 from ..backends import Backends as _Backends
@@ -44,7 +43,7 @@ def generate(
 def load_from_parameters(
     p: int,
     g: int = 2,
-    q: typing.Optional[int] = None,
+    q: int | None = None,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
 ) -> base.BaseDHParameters:
@@ -104,7 +103,7 @@ def load_public_key(
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
     *,
     backend: _Backends = _Backends.CRYPTOGRAPHY,
 ) -> base.BaseDHPrivateKey:

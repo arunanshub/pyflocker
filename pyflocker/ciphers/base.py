@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-import typing
 from abc import ABCMeta, abstractmethod
 
 
@@ -33,7 +32,7 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
     def update_into(
         self,
         data: bytes,
-        out: typing.Union[bytearray, memoryview],
+        out: bytearray | memoryview,
     ) -> None:
         """
         Encrypt or decrypt the ``data`` and store it in a preallocated buffer
@@ -90,7 +89,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
         """
 
     @abstractmethod
-    def finalize(self, tag: typing.Optional[bytes] = None) -> None:
+    def finalize(self, tag: bytes | None = None) -> None:
         """Finalizes and ends the cipher state.
 
         Args:
@@ -104,7 +103,7 @@ class BaseAEADCipher(BaseSymmetricCipher):
         """
 
     @abstractmethod
-    def calculate_tag(self) -> typing.Optional[bytes]:
+    def calculate_tag(self) -> bytes | None:
         """Calculates and returns the associated tag.
 
         Returns:
@@ -255,7 +254,7 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def decryptor(
         self,
-        padding: typing.Optional[BaseAsymmetricPadding] = None,
+        padding: BaseAsymmetricPadding | None = None,
     ) -> BaseDecryptorContext:
         """Creates a decryption context.
 
@@ -269,7 +268,7 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def signer(
         self,
-        padding: typing.Optional[BaseAsymmetricPadding] = None,
+        padding: BaseAsymmetricPadding | None = None,
     ) -> BaseSignerContext:
         """Create a signer context.
 
@@ -297,7 +296,7 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
         self,
         encoding: str,
         format: str,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -326,7 +325,7 @@ class BaseRSAPrivateKey(metaclass=ABCMeta):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> BaseRSAPrivateKey:
         """Loads the private key as bytes object and returns the Key interface.
 
@@ -367,7 +366,7 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def encryptor(
         self,
-        padding: typing.Optional[BaseAsymmetricPadding] = None,
+        padding: BaseAsymmetricPadding | None = None,
     ) -> BaseEncryptorContext:
         """Creates a encryption context.
 
@@ -381,7 +380,7 @@ class BaseRSAPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def verifier(
         self,
-        padding: typing.Optional[BaseAsymmetricPadding] = None,
+        padding: BaseAsymmetricPadding | None = None,
     ) -> BaseVerifierContext:
         """Creates a verifier context.
 
@@ -527,8 +526,8 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def exchange(
         self,
-        peer_public_key: typing.Union[bytes, BaseECCPublicKey],
-        algorithm: typing.Optional[BaseEllepticCurveExchangeAlgorithm] = None,
+        peer_public_key: bytes | BaseECCPublicKey,
+        algorithm: BaseEllepticCurveExchangeAlgorithm | None = None,
     ) -> bytes:
         """Perform a key exchange.
 
@@ -613,7 +612,7 @@ class BaseECCPublicKey(metaclass=ABCMeta):
     @abstractmethod
     def verifier(
         self,
-        algorithm: typing.Optional[BaseEllepticCurveSignatureAlgorithm] = None,
+        algorithm: BaseEllepticCurveSignatureAlgorithm | None = None,
     ) -> BaseVerifierContext:
         """Creates a verifier context.
 
@@ -699,7 +698,7 @@ class BaseDHParameters(metaclass=ABCMeta):
 
     @property
     @abstractmethod
-    def q(self) -> typing.Optional[int]:
+    def q(self) -> int | None:
         """The p subgroup order value."""
 
     @abstractmethod
@@ -748,7 +747,7 @@ class BaseDHParameters(metaclass=ABCMeta):
         cls,
         p: int,
         g: int = 2,
-        q: typing.Optional[int] = None,
+        q: int | None = None,
     ) -> BaseDHParameters:
         """Generates a DH parameter group from the parameters.
 
@@ -787,7 +786,7 @@ class BaseDHPrivateKey(metaclass=ABCMeta):
     @abstractmethod
     def exchange(
         self,
-        peer_public_key: typing.Union[bytes, BaseDHPublicKey],
+        peer_public_key: bytes | BaseDHPublicKey,
     ) -> bytes:
         """Perform a key exchange.
 
@@ -810,7 +809,7 @@ class BaseDHPrivateKey(metaclass=ABCMeta):
         self,
         encoding: str,
         format: str,
-        passphrase: typing.Optional[bytes],
+        passphrase: bytes | None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -844,7 +843,7 @@ class BaseDHPrivateKey(metaclass=ABCMeta):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> BaseDHPrivateKey:
         """Deserialize and load the the private key.
 

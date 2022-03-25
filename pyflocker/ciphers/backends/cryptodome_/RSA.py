@@ -18,9 +18,9 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
     def __init__(
         self,
-        n: typing.Optional[int],
+        n: int | None,
         e: int = 65537,
-        _key: typing.Optional[RSA.RsaKey] = None,
+        _key: RSA.RsaKey | None = None,
     ) -> None:
         if _key is not None:
             self._key = _key
@@ -55,7 +55,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
     def decryptor(
         self,
-        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+        padding: base.BaseAsymmetricPadding | None = None,
     ) -> DecryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
@@ -65,7 +65,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
 
     def signer(
         self,
-        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+        padding: base.BaseAsymmetricPadding | None = None,
     ) -> SignerContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
@@ -80,9 +80,9 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         self,
         encoding: str = "PEM",
         format: str = "PKCS8",
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
         *,
-        protection: typing.Optional[str] = None,
+        protection: str | None = None,
     ) -> bytes:
         """Serialize the private key.
 
@@ -141,7 +141,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     @staticmethod
     def _validate_pkcs1_args(
         encoding: str,
-        protection: typing.Optional[str],
+        protection: str | None,
     ) -> None:
         if protection is not None:  # pragma: no cover
             raise ValueError("protection is meaningful only for PKCS8")
@@ -152,7 +152,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     def load(
         cls,
         data: bytes,
-        passphrase: typing.Optional[bytes] = None,
+        passphrase: bytes | None = None,
     ) -> RSAPrivateKey:
         try:
             key = RSA.import_key(data, passphrase)  # type: ignore
@@ -187,7 +187,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
     def encryptor(
         self,
-        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+        padding: base.BaseAsymmetricPadding | None = None,
     ) -> EncryptorContext:
         if padding is None:  # pragma: no cover
             padding = OAEP()
@@ -197,7 +197,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
     def verifier(
         self,
-        padding: typing.Optional[base.BaseAsymmetricPadding] = None,
+        padding: base.BaseAsymmetricPadding | None = None,
     ) -> VerifierContext:
         if padding is None:  # pragma: no cover
             padding = PSS()
@@ -322,7 +322,7 @@ def load_public_key(data: bytes) -> RSAPublicKey:
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
 ) -> RSAPrivateKey:
     """Loads the private key and returns a Key interface.
 

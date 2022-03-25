@@ -12,7 +12,7 @@ if typing.TYPE_CHECKING:
     from ..backends import Backends
 
 
-def _load_ecc_cpr(backend: typing.Optional[Backends]) -> ModuleType:
+def _load_ecc_cpr(backend: Backends | None) -> ModuleType:
     """Load the cipher module from the backend."""
     return _load_algo("ECC", backend)
 
@@ -20,7 +20,7 @@ def _load_ecc_cpr(backend: typing.Optional[Backends]) -> ModuleType:
 def generate(
     curve: str,
     *,
-    backend: typing.Optional[Backends] = None,
+    backend: Backends | None = None,
 ) -> base.BaseECCPrivateKey:
     """
     Generate a private key with given curve ``curve``.
@@ -45,8 +45,8 @@ def generate(
 def load_public_key(
     data: bytes,
     *,
-    curve: typing.Optional[str] = None,
-    backend: typing.Optional[Backends] = None,
+    curve: str | None = None,
+    backend: Backends | None = None,
 ) -> base.BaseECCPublicKey:
     """Loads the public key and returns a Key interface.
 
@@ -68,9 +68,9 @@ def load_public_key(
 
 def load_private_key(
     data: bytes,
-    passphrase: typing.Optional[bytes] = None,
+    passphrase: bytes | None = None,
     *,
-    backend: typing.Optional[Backends] = None,
+    backend: Backends | None = None,
 ) -> base.BaseECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
