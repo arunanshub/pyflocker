@@ -26,13 +26,14 @@ class FileCipherWrapper:
         """Initialize a file cipher wrapper.
 
         Args:
-            cipher (:any:`base.BaseAEADCipher`):
+            cipher:
                 A cipher that supports :py:class:`BaseAEADCipher` interface.
-            file (filelike):
-                A file or file-like object.
-            offset (int):
-                The difference between the length of ``in`` buffer and
-                ``out`` buffer in ``update_into`` method of a BaseAEADCipher.
+            file: A file or file-like object.
+            offset:
+                The difference between the length of ``in`` buffer and ``out``
+                buffer in ``update_into`` method of a BaseAEADCipher. This is
+                required because backend like ``pyca/cryptography`` needs a
+                output buffer that is bigger than the input buffer.
         """
         if not isinstance(cipher, base.BaseAEADCipher):
             raise TypeError("cipher must implement BaseAEADCipher interface.")
@@ -88,11 +89,11 @@ class FileCipherWrapper:
         intermediate copies of data are made during the entire operation.
 
         Args:
-            file (filelike): File to write the output of the cipher into.
-            tag (bytes-like, None):
+            file: File to write the output of the cipher into.
+            tag:
                 The tag to verify decryption. If the file is being decrypted,
                 this must be passed.
-            blocksize (int): Maximum amount of data to read in a single call.
+            blocksize: Maximum amount of data to read in a single call.
 
         Raises:
             AlreadyFinalized: if the cipher has been finalized.
@@ -153,17 +154,17 @@ class HMACWrapper(base.BaseAEADCipher):
         cipher: base.BaseNonAEADCipher,
         hmac_key: bytes,
         hmac_random: bytes,
-        digestmod: typing.Union[str, base.BaseHash] = "sha256",
+        hashfunc: typing.Union[str, base.BaseHash] = "sha256",
         offset: int = 0,
         tag_length: typing.Optional[int] = 16,
     ):
         if not isinstance(cipher, base.BaseNonAEADCipher):
             raise TypeError("Only NonAEAD ciphers can be wrapped.")
 
-        if isinstance(digestmod, base.BaseHash):
+        if isinstance(hashfunc, base.BaseHash):
             # always use a fresh hash object.
-            digestmod = digestmod.new()
-        self._auth = hmac.new(hmac_key, digestmod=digestmod)  # type: ignore
+            hashfunc = hashfunc.new()
+        self._auth = hmac.new(hmac_key, digestmod=hashfunc)  # type: ignore
 
         self._auth.update(hmac_random)
 
