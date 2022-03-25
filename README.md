@@ -4,6 +4,7 @@
 [![Build](https://github.com/arunanshub/pyflocker/actions/workflows/python-package.yml/badge.svg)](https://github.com/arunanshub/pyflocker/actions/workflows/python-package.yml)
 [![codecov](https://codecov.io/gh/arunanshub/pyflocker/branch/master/graph/badge.svg?token=CBSY6U552K)](https://codecov.io/gh/arunanshub/pyflocker)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![Imports: isort](https://img.shields.io/badge/%20imports-isort-%231674b1?style=flat&labelColor=ef8336)](https://pycqa.github.io/isort/)
 [![Python Versions](https://img.shields.io/pypi/pyversions/PyFLocker?label=Python%20Versions)](https://pypi.org/project/PyFLocker)
 [![Documentation Status](https://readthedocs.org/projects/pyflocker/badge/?version=latest)](https://pyflocker.readthedocs.io/en/latest/?badge=latest)
 
