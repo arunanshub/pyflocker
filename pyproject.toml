@@ -58,6 +58,9 @@ version_files = [
     "pyflocker/__init__.py",
 ]
 
+[tool.pycln]
+all = true
+
 [tool.black]
 line-length = 79
 target-verson = "py38"
