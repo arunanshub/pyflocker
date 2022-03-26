@@ -82,7 +82,10 @@ def load_backend(
 
 
 def _import_helper(backend: Backends) -> ModuleType:
-    return import_module(f".{backend.name.lower()}_", __spec__.parent)
+    return import_module(
+        f".{backend.name.lower()}_",
+        __spec__.parent,  # type: ignore
+    )
 
 
 def _find_backend() -> ModuleType | None:
@@ -96,3 +99,5 @@ def _find_backend() -> ModuleType | None:
 
     if errors == len(Backends):
         raise ImportError("No backends found.")
+
+    return None

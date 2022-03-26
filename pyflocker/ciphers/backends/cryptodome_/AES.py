@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 from Cryptodome.Cipher import AES
 
 from ... import exc, modes
-from ...modes import Modes as _Modes
+from ...modes import Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
@@ -22,16 +22,16 @@ if TYPE_CHECKING:  # pragma: no cover
 SUPPORTED = MappingProxyType(
     {
         # classic modes
-        _Modes.MODE_CTR: AES.MODE_CTR,
-        _Modes.MODE_CFB: AES.MODE_CFB,
-        _Modes.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
-        _Modes.MODE_OFB: AES.MODE_OFB,
+        Modes.MODE_CTR: AES.MODE_CTR,
+        Modes.MODE_CFB: AES.MODE_CFB,
+        Modes.MODE_CFB8: AES.MODE_CFB,  # compat with pyca/cryptography
+        Modes.MODE_OFB: AES.MODE_OFB,
         # AEAD modes
-        _Modes.MODE_GCM: AES.MODE_GCM,
-        _Modes.MODE_EAX: AES.MODE_EAX,
-        _Modes.MODE_SIV: AES.MODE_SIV,
-        _Modes.MODE_CCM: AES.MODE_CCM,
-        _Modes.MODE_OCB: AES.MODE_OCB,
+        Modes.MODE_GCM: AES.MODE_GCM,
+        Modes.MODE_EAX: AES.MODE_EAX,
+        Modes.MODE_SIV: AES.MODE_SIV,
+        Modes.MODE_CCM: AES.MODE_CCM,
+        Modes.MODE_OCB: AES.MODE_OCB,
     }
 )
 
@@ -40,16 +40,16 @@ del MappingProxyType
 
 def _get_aes_cipher(
     key: bytes,
-    mode: _Modes,
+    mode: Modes,
     iv_or_nonce: bytes,
 ) -> typing.Any:
     args = (iv_or_nonce,)
     kwargs = {}
 
-    if mode == _Modes.MODE_CFB:
+    if mode == Modes.MODE_CFB:
         # compat with pyca/cryptography's CFB(...) mode
         kwargs = {"segment_size": 128}
-    elif mode == _Modes.MODE_CTR:
+    elif mode == Modes.MODE_CTR:
         kwargs = {
             # initial value of Cryptodome is nonce for pyca/cryptography
             "initial_value": int.from_bytes(iv_or_nonce, "big"),
@@ -66,7 +66,7 @@ class AEAD(AEADCipherTemplate):
         self,
         encrypting: bool,
         key: bytes,
-        mode: _Modes,
+        mode: Modes,
         nonce: bytes,
     ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
@@ -79,7 +79,7 @@ class AEAD(AEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> _Modes:
+    def mode(self) -> Modes:
         """The AES mode."""
         return self._mode
 
@@ -89,7 +89,7 @@ class NonAEAD(NonAEADCipherTemplate):
         self,
         encrypting: bool,
         key: bytes,
-        mode: _Modes,
+        mode: Modes,
         nonce: bytes,
     ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
@@ -103,7 +103,7 @@ class NonAEAD(NonAEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> _Modes:
+    def mode(self) -> Modes:
         """The AES mode."""
         return self._mode
 
@@ -113,7 +113,7 @@ class AEADOneShot(AEAD):
         self,
         encrypting: bool,
         key: bytes,
-        mode: _Modes,
+        mode: Modes,
         nonce: bytes,
     ):
         self._cipher = _get_aes_cipher(key, mode, nonce)
@@ -125,7 +125,7 @@ class AEADOneShot(AEAD):
         self._update_func = self._get_update_func(encrypting, self._cipher)
 
     @property
-    def mode(self) -> _Modes:
+    def mode(self) -> Modes:
         """The AES mode."""
         return self._mode
 
@@ -176,7 +176,7 @@ class AEADOneShot(AEAD):
 def new(
     encrypting: bool,
     key: bytes,
-    mode: _Modes,
+    mode: Modes,
     iv_or_nonce: bytes,
     *,
     use_hmac: bool = False,
@@ -263,7 +263,7 @@ def new(
     return crp
 
 
-def supported_modes() -> set[_Modes]:
+def supported_modes() -> set[Modes]:
     """Lists all modes supported by AES cipher of this backend.
 
     Returns:
@@ -275,7 +275,7 @@ def supported_modes() -> set[_Modes]:
 def _wrap_hmac(
     encrypting: bool,
     key: bytes,
-    mode: _Modes,
+    mode: Modes,
     iv_or_nonce: bytes,
     hashalgo: typing.Any,
     tag_length: int | None,

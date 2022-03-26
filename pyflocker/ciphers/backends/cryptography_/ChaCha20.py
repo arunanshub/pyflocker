@@ -41,10 +41,10 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
 
         self._encrypting = encrypting
         self._auth = Poly1305(derive_poly1305_key(key, nonce))
-        self._ctx = self._get_auth_ctx(encrypting, ctx, self._auth)
+        self._ctx: typing.Any = self._get_auth_ctx(encrypting, ctx, self._auth)
         self._len_aad, self._len_ct = 0, 0
         self._updated = False
-        self._tag = None
+        self._tag: bytes | None = None
 
     @staticmethod
     def _get_auth_ctx(
@@ -118,9 +118,9 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
     def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
             raise exc.NotFinalized
-
         if self.is_encrypting():
             return self._tag
+        return None
 
 
 class ChaCha20(NonAEADCipherTemplate):
