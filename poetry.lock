@@ -273,7 +273,7 @@ flake8 = ">=3.7"
 
 [[package]]
 name = "flake8-type-checking"
-version = "1.3.3"
+version = "1.4.0"
 description = "A flake8 plugin for managing type-checking imports & forward references"
 category = "dev"
 optional = false
@@ -844,7 +844,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "e2f0219d5de40cfdb7334dd10a55a8255e8945d56a052e6894e14d13c790070d"
+content-hash = "553aeefe7b880888cbd6f4b1a7e9adb361ff7b81d3bd78098a76acb93c6d2ed2"
 
 [metadata.files]
 alabaster = [
@@ -1057,8 +1057,8 @@ flake8-simplify = [
     {file = "flake8_simplify-0.19.2.tar.gz", hash = "sha256:a30ef76bf1c0cb89a52a8a5cee37667688e61a66735e997c08d56cd002f9e3e9"},
 ]
 flake8-type-checking = [
-    {file = "flake8-type-checking-1.3.3.tar.gz", hash = "sha256:a9d7523ee6dbefcaf9010b0ae3ddca938232e8c0d7b89f26e082e29aebcb7823"},
-    {file = "flake8_type_checking-1.3.3-py3-none-any.whl", hash = "sha256:241fb3533b64271f811fcb6d79f45609f69c2a2d16527289b98be68ae9c01fa4"},
+    {file = "flake8-type-checking-1.4.0.tar.gz", hash = "sha256:4b6199e9a6144b9c2f3303db5f5e317f5f93d7be75dccec6d530cdd3c9d01ab6"},
+    {file = "flake8_type_checking-1.4.0-py3-none-any.whl", hash = "sha256:ffbc2eafa152fcdd2a87b007b97ecfd835a03b1eda88d14e76f1c7f44e867153"},
 ]
 furo = [
     {file = "furo-2022.3.4-py3-none-any.whl", hash = "sha256:6c718293ebf87755f0b9f148b1e697c9e3aabd7af955644d4bcaee5ce75db781"},
