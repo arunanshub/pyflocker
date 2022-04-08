@@ -284,7 +284,7 @@ flake8 = "*"
 
 [[package]]
 name = "furo"
-version = "2022.3.4"
+version = "2022.4.7"
 description = "A clean customisable Sphinx documentation theme."
 category = "dev"
 optional = false
@@ -1061,8 +1061,8 @@ flake8-type-checking = [
     {file = "flake8_type_checking-1.4.0-py3-none-any.whl", hash = "sha256:ffbc2eafa152fcdd2a87b007b97ecfd835a03b1eda88d14e76f1c7f44e867153"},
 ]
 furo = [
-    {file = "furo-2022.3.4-py3-none-any.whl", hash = "sha256:6c718293ebf87755f0b9f148b1e697c9e3aabd7af955644d4bcaee5ce75db781"},
-    {file = "furo-2022.3.4.tar.gz", hash = "sha256:7660267cc67b2828fd0e17bc07adeb612c47b2eba5a6de07049a1569e6044aa8"},
+    {file = "furo-2022.4.7-py3-none-any.whl", hash = "sha256:7f3e3d2fb977483590f8ecb2c2cd511bd82661b79c18efb24de9558bc9cdf2d7"},
+    {file = "furo-2022.4.7.tar.gz", hash = "sha256:96204ab7cd047e4b6c523996e0279c4c629a8fc31f4f109b2efd470c17f49c80"},
 ]
 identify = [
     {file = "identify-2.4.12-py2.py3-none-any.whl", hash = "sha256:5f06b14366bd1facb88b00540a1de05b69b310cbc2654db3c7e07fa3a4339323"},
