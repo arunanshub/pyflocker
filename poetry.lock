@@ -273,7 +273,7 @@ flake8 = ">=3.7"
 
 [[package]]
 name = "flake8-type-checking"
-version = "1.4.0"
+version = "1.5.0"
 description = "A flake8 plugin for managing type-checking imports & forward references"
 category = "dev"
 optional = false
@@ -511,14 +511,14 @@ python-versions = ">=3.5"
 
 [[package]]
 name = "pyparsing"
-version = "3.0.7"
-description = "Python parsing module"
+version = "3.0.8"
+description = "pyparsing module - Classes and methods to define and execute parsing grammars"
 category = "dev"
 optional = false
-python-versions = ">=3.6"
+python-versions = ">=3.6.8"
 
 [package.extras]
-diagrams = ["jinja2", "railroad-diagrams"]
+diagrams = ["railroad-diagrams", "jinja2"]
 
 [[package]]
 name = "pytest"
@@ -1057,8 +1057,8 @@ flake8-simplify = [
     {file = "flake8_simplify-0.19.2.tar.gz", hash = "sha256:a30ef76bf1c0cb89a52a8a5cee37667688e61a66735e997c08d56cd002f9e3e9"},
 ]
 flake8-type-checking = [
-    {file = "flake8-type-checking-1.4.0.tar.gz", hash = "sha256:4b6199e9a6144b9c2f3303db5f5e317f5f93d7be75dccec6d530cdd3c9d01ab6"},
-    {file = "flake8_type_checking-1.4.0-py3-none-any.whl", hash = "sha256:ffbc2eafa152fcdd2a87b007b97ecfd835a03b1eda88d14e76f1c7f44e867153"},
+    {file = "flake8-type-checking-1.5.0.tar.gz", hash = "sha256:d01234fc2d3ffc9661dd797fb1bed19e2d92a1fb4041a4e8dc0200ea14f357c0"},
+    {file = "flake8_type_checking-1.5.0-py3-none-any.whl", hash = "sha256:b9873f011e18e20dee60e2b633f2c675f2aa1318499e5294b46c860fc75bdcd6"},
 ]
 furo = [
     {file = "furo-2022.4.7-py3-none-any.whl", hash = "sha256:7f3e3d2fb977483590f8ecb2c2cd511bd82661b79c18efb24de9558bc9cdf2d7"},
@@ -1233,8 +1233,8 @@ pygments = [
     {file = "Pygments-2.11.2.tar.gz", hash = "sha256:4e426f72023d88d03b2fa258de560726ce890ff3b630f88c21cbb8b2503b8c6a"},
 ]
 pyparsing = [
-    {file = "pyparsing-3.0.7-py3-none-any.whl", hash = "sha256:a6c06a88f252e6c322f65faf8f418b16213b51bdfaece0524c1c1bc30c63c484"},
-    {file = "pyparsing-3.0.7.tar.gz", hash = "sha256:18ee9022775d270c55187733956460083db60b37d0d0fb357445f3094eed3eea"},
+    {file = "pyparsing-3.0.8-py3-none-any.whl", hash = "sha256:ef7b523f6356f763771559412c0d7134753f037822dad1b16945b7b846f7ad06"},
+    {file = "pyparsing-3.0.8.tar.gz", hash = "sha256:7bf433498c016c4314268d95df76c81b842a4cb2b276fa3312cfb1e1d85f6954"},
 ]
 pytest = [
     {file = "pytest-7.1.1-py3-none-any.whl", hash = "sha256:92f723789a8fdd7180b6b06483874feca4c48a5c76968e03bb3e7f806a1869ea"},
