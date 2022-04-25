@@ -25,7 +25,7 @@ class BaseSymmetricCipher(metaclass=ABCMeta):
             data: The bytes-like object to pass to the cipher.
 
         Returns:
-            Encrypted data as bytes.
+            Encrypted/decrypted data as bytes.
         """
 
     @abstractmethod
@@ -109,6 +109,46 @@ class BaseAEADCipher(BaseSymmetricCipher):
         Returns:
             Returns ``None`` if decrypting, otherwise the associated
             authentication tag.
+        """
+
+
+class BaseAEADOneShotCipher(BaseAEADCipher):
+    @abstractmethod
+    def update(self, data: bytes, tag: bytes | None = None) -> bytes:
+        """Encrypt or decrypt ``data``.
+
+        Tag is required only for decryption.
+
+        Args:
+            data: A bytes-like object to pass to the cipher.
+            tag:
+                The associated tag that authenticates the decryption. Tag is
+                required for decryption only.
+
+
+        Returns:
+            Encrypted/decrypted data as bytes object.
+        """
+
+    @abstractmethod
+    def update_into(
+        self,
+        data: bytes,
+        out: bytearray | memoryview,
+        tag: bytes | None = None,
+    ) -> None:
+        """Encrypt or decrypt ``data`` and write it to ``out``.
+
+        If decrypting, the MAC tag must be provided.
+
+        Args:
+            data: The bytes-like oject to pass to the cipher.
+            out:
+                The buffer interface where the encrypted/decrypted data must be
+                written into.
+            tag:
+                The associated tag that authenticates the decryption. Tag is
+                required for decryption only.
         """
 
 
