@@ -117,14 +117,14 @@ class BaseAEADOneShotCipher(BaseAEADCipher):
     def update(self, data: bytes, tag: bytes | None = None) -> bytes:
         """Encrypt or decrypt ``data``.
 
-        Tag is required only for decryption.
+        Tag is required only for decryption. The cipher is finalized after
+        calling this method.
 
         Args:
             data: A bytes-like object to pass to the cipher.
             tag:
                 The associated tag that authenticates the decryption. Tag is
                 required for decryption only.
-
 
         Returns:
             Encrypted/decrypted data as bytes object.
@@ -139,7 +139,8 @@ class BaseAEADOneShotCipher(BaseAEADCipher):
     ) -> None:
         """Encrypt or decrypt ``data`` and write it to ``out``.
 
-        If decrypting, the MAC tag must be provided.
+        If decrypting, the MAC tag must be provided. The cipher is finalized
+        after calling this method.
 
         Args:
             data: The bytes-like oject to pass to the cipher.
