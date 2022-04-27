@@ -37,6 +37,7 @@ class ChaCha20Poly1305(AEADCipherTemplate):
         self._update_func = (  # type: ignore
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
+        self._tag = None
         self._updated = False
 
 
