@@ -9,10 +9,15 @@ from typing import TYPE_CHECKING
 from Cryptodome.Cipher import AES
 
 from ... import exc, modes
+from ...base import BaseAEADOneShotCipher
 from ...modes import Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from .misc import derive_hkdf_key
-from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
+from .symmetric import (
+    AEADCipherTemplate,
+    AuthenticationMixin,
+    NonAEADCipherTemplate,
+)
 
 if TYPE_CHECKING:  # pragma: no cover
     import io
@@ -43,7 +48,7 @@ def _get_aes_cipher(
     mode: Modes,
     iv_or_nonce: bytes,
 ) -> typing.Any:
-    args = (iv_or_nonce,)
+    args: tuple[bytes, ...] = (iv_or_nonce,)
     kwargs = {}
 
     if mode == Modes.MODE_CFB:
@@ -53,7 +58,7 @@ def _get_aes_cipher(
         kwargs = {
             # initial value of Cryptodome is nonce for pyca/cryptography
             "initial_value": int.from_bytes(iv_or_nonce, "big"),
-            "nonce": b"",
+            "nonce": typing.cast(int, b""),
         }
 
         args = ()
@@ -73,8 +78,9 @@ class AEAD(AEADCipherTemplate):
         self._updated = False
         self._encrypting = encrypting
         self._mode = mode
+        self._tag = None
         # creating a context is relatively expensive here
-        self._update_func = (
+        self._update_func = (  # type: ignore[assignment]
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
 
@@ -98,7 +104,7 @@ class NonAEAD(NonAEADCipherTemplate):
         self._mode = mode
 
         # creating a context is relatively expensive here
-        self._update_func = (
+        self._update_func = (  # type: ignore[assignment]
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
 
@@ -108,7 +114,9 @@ class NonAEAD(NonAEADCipherTemplate):
         return self._mode
 
 
-class AEADOneShot(AEAD):
+class AEADOneShot(AuthenticationMixin, BaseAEADOneShotCipher):
+    _write_into_buffer_unsupported = {Modes.MODE_OCB}
+
     def __init__(
         self,
         encrypting: bool,
@@ -122,7 +130,12 @@ class AEADOneShot(AEAD):
         self._mode = mode
 
         # creating a context is relatively expensive here
-        self._update_func = self._get_update_func(encrypting, self._cipher)
+        self._update_func = self._get_update_func(  # type: ignore[assignment]
+            encrypting, self._cipher
+        )
+
+    def is_encrypting(self) -> bool:
+        return self._encrypting
 
     @property
     def mode(self) -> Modes:
@@ -142,35 +155,46 @@ class AEADOneShot(AEAD):
         return lambda data, tag, **k: func(data, tag, **k)
 
     def update(self, data: bytes, tag: bytes | None = None) -> bytes:
-        return self.update_into(data, None, tag)  # type: ignore
+        result = self._update_helper(data, None, tag)
+        assert result is not None
+        return result
+
+    def _update_helper(
+        self,
+        data: bytes,
+        out: bytearray | memoryview | None,
+        tag: bytes | None = None,
+    ) -> bytes | None:
+        if self._update_func is None:
+            raise exc.AlreadyFinalized
+
+        update_func_kwargs = {}
+        if self.mode in self._write_into_buffer_unsupported:
+            # the mode does not support writing into mutable buffers.
+            if out is not None:
+                raise NotImplementedError(
+                    f"writing into buffer unsupported by {self.mode.name}"
+                )
+        else:
+            update_func_kwargs = {"output": out}
+
+        if not self.is_encrypting() and tag is None:
+            raise ValueError("tag is required for decryption")
+
+        result: bytes | None = None
+        with contextlib.suppress(ValueError):
+            result = self._update_func(data, tag, **update_func_kwargs)
+
+        self.finalize(tag)
+        return result
 
     def update_into(
         self,
         data: bytes,
         out: bytearray | memoryview,
         tag: bytes | None = None,
-    ) -> bytes:
-        if self._update_func is None:
-            raise exc.AlreadyFinalized
-
-        if not self._encrypting and tag is None:
-            raise ValueError("tag is required for decryption.")
-
-        # decryption error is ignored, and raised from finalize method
-        with contextlib.suppress(ValueError):
-            try:
-                data = self._update_func(data, tag, output=out)
-            except TypeError as e:
-                # incorrect nos. of arguments.
-                if out is not None:
-                    raise TypeError(
-                        f"{self._mode} does not support writing into mutable "
-                        "buffers"
-                    ) from e
-                data = self._update_func(data, tag)
-
-        self.finalize(tag)
-        return data
+    ) -> None:
+        self._update_helper(data, out, tag)
 
 
 def new(

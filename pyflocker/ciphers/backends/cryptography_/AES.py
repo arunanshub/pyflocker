@@ -95,7 +95,7 @@ class NonAEAD(NonAEADCipherTemplate):
         return self._mode
 
 
-class AEADOneShot(base.BaseAEADCipher):
+class AEADOneShot(base.BaseAEADOneShotCipher):
     def __init__(
         self,
         encrypting: bool,
@@ -132,7 +132,7 @@ class AEADOneShot(base.BaseAEADCipher):
         self,
         data: bytes,
         tag: bytes | None = None,
-    ) -> bytes | None:
+    ) -> bytes:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
@@ -146,11 +146,12 @@ class AEADOneShot(base.BaseAEADCipher):
             raise ValueError("tag is required for decryption.")
 
         try:
-            return self._update_func(self._nonce, data + tag, self._aad)
+            data = self._update_func(self._nonce, data + tag, self._aad)
         except bkx.InvalidTag:
             self._raise_on_tag_err = True
         finally:
             self.finalize(tag)
+        return data
 
     def update_into(
         self,
@@ -421,7 +422,8 @@ def _aes_cipher(key: bytes, mode: Modes, nonce_or_iv: bytes) -> typing.Any:
         return backend_mode(key)
 
     assert not issubclass(backend_mode, aead.AESCCM)
-    return CrCipher(algo.AES(key), backend_mode(nonce_or_iv))
+    # XXX: Mypy is unable to narrow down the type of `backend_mode`
+    return CrCipher(algo.AES(key), backend_mode(nonce_or_iv))  # type: ignore
 
 
 def _wrap_hmac(
