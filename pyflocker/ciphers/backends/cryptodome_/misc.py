@@ -50,6 +50,7 @@ def derive_hkdf_key(
         num_keys=1,
         context=cipher_ctx,
     )
+    assert isinstance(key, bytes)
 
     hkey = KDF.HKDF(
         master=master_key,
@@ -59,4 +60,5 @@ def derive_hkdf_key(
         num_keys=1,
         context=auth_ctx,
     )
+    assert isinstance(hkey, bytes)
     return key, hkey
