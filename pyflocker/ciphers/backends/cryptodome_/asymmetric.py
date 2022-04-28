@@ -68,7 +68,7 @@ def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding) -> typing.Any:
         mask_func=lambda x, y: pss.MGF1(  # type: ignore
             x,
             y,
-            padding.mgf.hashfunc.new(),  # type: ignore
+            padding.mgf.hashfunc.new(),
         ),
         salt_bytes=padding.salt_length,
     )

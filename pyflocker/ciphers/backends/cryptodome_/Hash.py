@@ -180,7 +180,7 @@ class Hash(base.BaseHash):
             raise exc.AlreadyFinalized
 
         try:
-            hashobj = self._ctx.copy()  # type: ignore
+            hashobj = self._ctx.copy()
         except AttributeError as e:
             raise ValueError(f"copying not supported by {self.name!r}") from e
 

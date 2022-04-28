@@ -423,7 +423,7 @@ def _aes_cipher(key: bytes, mode: Modes, nonce_or_iv: bytes) -> typing.Any:
 
     assert not issubclass(backend_mode, aead.AESCCM)
     # XXX: Mypy is unable to narrow down the type of `backend_mode`
-    return CrCipher(algo.AES(key), backend_mode(nonce_or_iv))  # type: ignore
+    return CrCipher(algo.AES(key), backend_mode(nonce_or_iv))
 
 
 def _wrap_hmac(

@@ -129,7 +129,7 @@ class Hash(base.BaseHash):
                 f" {self.digest_size}"
             )
 
-        return self._oid  # type: ignore
+        return self._oid
 
     def update(self, data: bytes) -> None:
         if self._ctx is None:
@@ -185,7 +185,7 @@ class Hash(base.BaseHash):
                 raise ValueError("digest_size is required")
             digest_size_kwargs = {"digest_size": digest_size}
 
-        hashobj = hashes.Hash(hashfunc(**digest_size_kwargs))  # type: ignore
+        hashobj = hashes.Hash(hashfunc(**digest_size_kwargs))
 
         if data is not None:
             hashobj.update(data)
