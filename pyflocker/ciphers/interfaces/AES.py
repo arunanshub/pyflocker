@@ -40,7 +40,7 @@ def new(
     *,
     use_hmac: bool = False,
     tag_length: int | None = 16,
-    digestmod: str | base.BaseHash = "sha256",
+    digestmod: None | base.BaseHash = None,
     file: io.BufferedReader | None = None,
     backend: Backends | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
@@ -66,9 +66,9 @@ def new(
             Length of non-truncated tag depends on the digest size of the
             underlying hash algorithm used by HMAC.
         digestmod:
-            The algorithm to use for HMAC. Defaults to ``sha256``.
-            Specifying this value without setting ``use_hmac`` to True
-            has no effect.
+            The algorithm to use for HMAC. If ``None``, defaults to ``sha256``.
+            Specifying this value without setting ``use_hmac`` to True has no
+            effect.
         file:
             The source file to read from. If ``file`` is specified and the
             ``mode`` is not an AEAD mode, HMAC is always used.
