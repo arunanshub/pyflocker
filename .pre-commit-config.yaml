@@ -7,14 +7,14 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/asottile/pyupgrade
-    rev: v2.32.0
+    rev: v2.32.1
     hooks:
       - id: pyupgrade
         args: [--py38-plus]
         name: Upgrade syntax
 
   - repo: https://github.com/hadialqattan/pycln
-    rev: v1.3.2
+    rev: v1.3.3
     hooks:
       - id: pycln
         args: [--config=pyproject.toml]
