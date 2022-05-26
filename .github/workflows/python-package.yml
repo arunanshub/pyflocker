@@ -64,7 +64,7 @@ jobs:
       - name: Upload Coverage Report
         uses: codecov/codecov-action@v3
         # Upload only using `ubuntu-latest`. macos uploader is failing.
-        if: matrix.os == "ubuntu-latest"
+        if: matrix.os == 'ubuntu-latest'
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
