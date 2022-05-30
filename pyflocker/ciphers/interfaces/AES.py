@@ -14,8 +14,16 @@ if typing.TYPE_CHECKING:  # pragma: no cover
     from ..backends.symmetric import FileCipherWrapper
 
 
-# shortcut for calling like Crypto.Cipher.AES.new(key, AES.MODE_XXX, ...)
-globals().update({val.name: val for val in list(Modes)})
+# Prevent type checking errors from being raised.
+MODE_GCM = Modes.MODE_GCM
+MODE_CTR = Modes.MODE_CTR
+MODE_CFB = Modes.MODE_CFB
+MODE_CFB8 = Modes.MODE_CFB8
+MODE_OFB = Modes.MODE_OFB
+MODE_CCM = Modes.MODE_CCM
+MODE_EAX = Modes.MODE_EAX
+MODE_SIV = Modes.MODE_SIV
+MODE_OCB = Modes.MODE_OCB
 
 
 def supported_modes(backend: Backends) -> set[Modes]:
