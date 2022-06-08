@@ -372,6 +372,9 @@ def new(
     """
     crp: typing.Any
 
+    if mode not in supported_modes():
+        raise NotImplementedError(f"{mode.name} not supported.")
+
     if file is not None:
         use_hmac = True
 
