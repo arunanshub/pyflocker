@@ -82,19 +82,20 @@ class AuthenticationMixin:
         if self._update_func is None:
             raise exc.AlreadyFinalized
 
-        if not self.is_encrypting():  # type: ignore
-            if tag is None:
-                raise ValueError("tag is required for finalization")
-
-            cipher, self._cipher = self._cipher, None
-            self._update_func = None  # type: ignore
-            try:
-                cipher.verify(tag)
-            except ValueError as e:
-                raise exc.DecryptionError from e
-        else:
+        if self.is_encrypting():  # type: ignore
             self._tag, self._cipher = self._cipher.digest(), None
             self._update_func = None  # type: ignore
+            return
+
+        if tag is None:
+            raise ValueError("tag is required for finalization")
+
+        cipher, self._cipher = self._cipher, None
+        self._update_func = None  # type: ignore
+        try:
+            cipher.verify(tag)
+        except ValueError as e:
+            raise exc.DecryptionError from e
 
     def calculate_tag(self) -> bytes | None:
         if self._update_func is not None:
