@@ -260,7 +260,7 @@ def new(
         use_hmac = True
 
     if mode not in supported_modes():
-        raise NotImplementedError(f"{mode.name} not supported.")
+        raise exc.UnsupportedMode(f"{mode.name} not supported.")
 
     if mode in modes.SPECIAL:
         if file is not None:
