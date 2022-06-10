@@ -51,7 +51,12 @@ def new(
     digestmod: None | base.BaseHash = None,
     file: io.BufferedReader | None = None,
     backend: Backends | None = None,
-) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
+) -> (
+    base.BaseAEADCipher
+    | base.BaseNonAEADCipher
+    | base.BaseAEADOneShotCipher
+    | FileCipherWrapper
+):
     """Instantiate a new AES cipher object.
 
     Args:
@@ -94,9 +99,9 @@ def new(
 
     Raises:
         NotImplementedError:
-            if backend does not support the given mode or the mode does not
-            support encryption/decryption of files.
+            if the mode does not support encryption/decryption of files.
         UnsupportedAlgorithm: if the backend does not support AES.
+        UnsupportedMode: if the mode does not support the given ``mode``.
 
     Note:
         Any other error that is raised is from the backend itself.
