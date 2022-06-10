@@ -1,218 +1,982 @@
-"""
-Simple tests for AES
-
-These tests are meant to check the API and hence, do not use
-the official test vectors. The backends used by pyflocker
-implements the tests using the required test vectors.
-"""
 from __future__ import annotations
 
-import hashlib
-from functools import partial
-from itertools import product
+import io
 
 import pytest
+from hypothesis import Verbosity, given, settings
+from hypothesis import strategies as st
 
-from pyflocker.ciphers import AES, modes
-from pyflocker.ciphers.backends import Backends
+from pyflocker.ciphers import AES, Backends, base, exc, modes
+from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
+from pyflocker.ciphers.modes import Modes
 
-from .base import BaseSymmetric, BaseSymmetricAEAD
+AES_BLOCK_SIZE = 16
 
-_LENGTH_NORMAL = (16, 24, 32)
-_LENGTH_SPECIAL_SIV = (32, 48, 64)
-_MODE_NON_AEAD = set(modes.Modes) ^ modes.AEAD
+NORMAL_KEY_SIZES = st.sampled_from((16, 24, 32)).flatmap(
+    lambda size: st.binary(min_size=size, max_size=size)
+)
 
-TEST_VECTOR_KEY = hashlib.sha3_512(b"TEST_VECTOR_KEY for AES").digest()
-TEST_VECTOR_NONCE = hashlib.sha3_512(b"TEST_VECTOR_NONCE for AES").digest()
+SIV_KEY_SIZES = st.sampled_from((32, 48, 64)).flatmap(
+    lambda size: st.binary(min_size=size, max_size=size)
+)
 
 
-@pytest.fixture
-def cipher(key_length, mode, use_hmac, iv_length, backend1, backend2):
-    if mode not in AES.supported_modes(backend1):
-        pytest.skip(f"{backend1} doesn't support {mode!s}")
-    elif mode not in AES.supported_modes(backend2):
-        pytest.skip(f"{backend2} doesn't support {mode!s}")
+def make_buffer(data: bytes, offset: int = 15) -> memoryview:
+    """
+    Construct a buffer for in-place encryption/decryption. Offset should be a
+    positive integer.
+    """
+    return memoryview(bytearray(data) + bytearray(offset))
 
-    return partial(
-        AES.new,
-        key=TEST_VECTOR_KEY[:key_length],
-        mode=mode,
-        iv_or_nonce=TEST_VECTOR_NONCE[:iv_length],
-        use_hmac=use_hmac,
+
+def get_io_buffer(
+    buffer: memoryview,
+    backend: Backends,
+    offset: int = 15,
+) -> tuple[memoryview, memoryview]:
+    """
+    Create a input/output buffer pair. The size of the buffers varies with the
+    given backend.
+    """
+    if backend == Backends.CRYPTOGRAPHY:
+        return buffer[:-offset], buffer
+    return buffer[:-offset], buffer[:-offset]
+
+
+def get_encryptor(
+    key: bytes,
+    mode: Modes,
+    nonce: bytes,
+    backend: Backends,
+    *,
+    use_hmac: bool = False,
+    file: io.BufferedReader | None = None,
+) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
+    try:
+        enc = AES.new(
+            True,
+            key,
+            mode,
+            nonce,
+            backend=backend,
+            file=file,
+            use_hmac=use_hmac,
+        )
+    except exc.UnsupportedMode:
+        assert mode not in AES.supported_modes(backend)
+        return pytest.skip(
+            f"{mode.name} not supported by {backend.name.lower()}"
+        )
+
+    assert isinstance(
+        enc,
+        (base.BaseAEADCipher, base.BaseNonAEADCipher, FileCipherWrapper),
+    )
+    return enc
+
+
+def get_decryptor(
+    key: bytes,
+    mode: Modes,
+    nonce: bytes,
+    backend: Backends,
+    *,
+    use_hmac: bool = False,
+    file: io.BufferedReader | None = None,
+) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
+    try:
+        dec = AES.new(
+            False,
+            key,
+            mode,
+            nonce,
+            backend=backend,
+            file=file,
+            use_hmac=use_hmac,
+        )
+    except exc.UnsupportedMode:
+        assert mode not in AES.supported_modes(backend)
+        return pytest.skip(
+            f"{mode.name} not supported by {backend.name.lower()}"
+        )
+    assert isinstance(
+        dec,
+        (
+            base.BaseAEADCipher,
+            base.BaseNonAEADCipher,
+            FileCipherWrapper,
+        ),
+    )
+    return dec
+
+
+def get_encryptor_decryptor(
+    key: bytes,
+    mode: Modes,
+    nonce: bytes,
+    backend1: Backends,
+    backend2: Backends,
+    *,
+    use_hmac: bool = False,
+    plain_file: io.BufferedReader | None = None,
+    encrypted_file: io.BufferedReader | None = None,
+):
+    """Return a pair of encryptor and decryptor."""
+    return (
+        get_encryptor(
+            key, mode, nonce, backend1, use_hmac=use_hmac, file=plain_file
+        ),
+        get_decryptor(
+            key, mode, nonce, backend2, use_hmac=use_hmac, file=encrypted_file
+        ),
     )
 
 
-@pytest.mark.parametrize(
-    ["backend1", "backend2"],
-    list(product(Backends, repeat=2)),
-)
-@pytest.mark.parametrize(
-    "key_length",
-    _LENGTH_NORMAL,
-)
-@pytest.mark.parametrize(
-    "mode",
-    _MODE_NON_AEAD,
-)
-@pytest.mark.parametrize(
-    "use_hmac",
-    [False],
-)
-@pytest.mark.parametrize(
-    "iv_length",
-    [16],
-)
-class TestNonAEAD(BaseSymmetric):
-    def test_update_into(self, cipher, backend1, backend2):
-        return super().test_update_into(cipher, backend1, backend2, offset=15)
-
-
-@pytest.mark.parametrize(
-    ["backend1", "backend2"],
-    list(product(Backends, repeat=2)),
-)
-@pytest.mark.parametrize(
-    "key_length",
-    _LENGTH_NORMAL,
-)
-@pytest.mark.parametrize(
-    "mode",
-    set(modes.Modes) ^ modes.SPECIAL,
-)
-@pytest.mark.parametrize(
-    "use_hmac",
-    [True],
-)
-@pytest.mark.parametrize(
-    "iv_length",
-    [16],
-)
-class TestAEAD(BaseSymmetricAEAD):
-    def test_update_into(self, cipher, backend1, backend2):
-        return super().test_update_into(cipher, backend1, backend2, offset=15)
-
-    def test_update_into_with_auth(
+class TestAESNormal:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(),
+    )
+    def test_update(
         self,
-        cipher,
-        backend1,
-        backend2,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        backend1: Backends,
+        backend2: Backends,
     ):
-        return super().test_update_into_with_auth(
-            cipher,
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
             backend1,
             backend2,
-            offset=15,
         )
+        assert not isinstance(encryptor, FileCipherWrapper)
+        assert not isinstance(decryptor, FileCipherWrapper)
 
+        assert decryptor.update(encryptor.update(data)) == data
 
-@pytest.mark.parametrize(
-    "use_hmac",
-    [True],
-)
-@pytest.mark.parametrize(
-    ["backend1", "backend2"],
-    list(product(Backends, repeat=2)),
-)
-class _TestAEADOneShot(BaseSymmetricAEAD):
-    @staticmethod
-    def _assert_update(enc, dec, data):
-        ctxt = enc.update(data)
-        ptxt = dec.update(ctxt, enc.calculate_tag())
-        assert ptxt == data
-
-    @staticmethod
-    def _assert_update_into(enc, dec, readbuf, in_, out):
-        try:
-            enc.update_into(readbuf, in_)
-        except NotImplementedError:
-            pytest.skip(f"update_into not supported by {enc.mode!s}")
-        except TypeError:
-            assert enc.mode == modes.Modes.MODE_OCB
-            pytest.skip(
-                f"{enc.mode!s} does not suport writing into mutable buffers."
-            )
-
-        try:
-            dec.update_into(in_[: len(readbuf)], out, enc.calculate_tag())
-        except NotImplementedError:
-            pytest.skip(f"update_into not supported by {dec.mode!s}")
-        except TypeError:
-            assert dec.mode == modes.Modes.MODE_OCB
-            pytest.skip(
-                f"{dec.mode!s} does not suport writing into mutable buffers."
-            )
-
-        assert out[: len(readbuf)].tobytes() == readbuf.tobytes()
-
-    @staticmethod
-    def _finalizer(enc, dec):
-        # one shot ciphers are finalized on their first call to update(_into)
-        pass
-
-    def test_update_into(self, cipher, backend1, backend2):
-        return super().test_update_into(cipher, backend1, backend2, offset=15)
-
-    def test_update_into_with_auth(
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(),
+    )
+    def test_update_into(
         self,
-        cipher,
-        backend1,
-        backend2,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        backend1: Backends,
+        backend2: Backends,
     ):
-        return super().test_update_into_with_auth(
-            cipher,
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
             backend1,
             backend2,
-            offset=15,
+        )
+        assert not isinstance(encryptor, FileCipherWrapper)
+        assert not isinstance(decryptor, FileCipherWrapper)
+
+        buffer = make_buffer(data, AES_BLOCK_SIZE - 1)
+
+        in_, out = get_io_buffer(buffer, backend1)
+        encryptor.update_into(in_, out)
+
+        in_, out = get_io_buffer(buffer, backend2)
+        decryptor.update_into(in_, out)
+
+        assert data == buffer[: len(data)].tobytes()
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(modes.AEAD ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_update_with_auth(
+        self,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        assert isinstance(decryptor, base.BaseAEADCipher)
+
+        encryptor.authenticate(authdata)
+        encrypted = encryptor.update(data)
+
+        decryptor.authenticate(authdata)
+        decrypted = decryptor.update(encrypted)
+
+        encryptor.finalize()
+        decryptor.finalize(encryptor.calculate_tag())
+
+        assert data == decrypted
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(modes.AEAD ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_update_into_with_auth(
+        self,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        assert isinstance(decryptor, base.BaseAEADCipher)
+        buffer = make_buffer(data, AES_BLOCK_SIZE - 1)
+
+        in_, out = get_io_buffer(buffer, backend1)
+        encryptor.authenticate(authdata)
+        encryptor.update_into(in_, out)
+
+        in_, out = get_io_buffer(buffer, backend2)
+        decryptor.authenticate(authdata)
+        decryptor.update_into(in_, out)
+
+        encryptor.finalize()
+        decryptor.finalize(encryptor.calculate_tag())
+
+        assert data == buffer[: len(data)].tobytes()
+
+
+class TestAESSIV:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=SIV_KEY_SIZES,
+        nonce=st.binary(min_size=8, max_size=16),
+        data=st.binary(),
+    )
+    def test_update(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_SIV,
+            nonce,
+            backend1,
+            backend2,
         )
 
-    def test_update_into_file_buffer(self, cipher, backend1, backend2):
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        assert data == decryptor.update(
+            encryptor.update(data),
+            encryptor.calculate_tag(),
+        )
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=SIV_KEY_SIZES,
+        nonce=st.binary(min_size=8, max_size=16),
+        data=st.binary(),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update_into(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_SIV,
+            nonce,
+            backend1,
+            backend2,
+        )
+
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        buffer = make_buffer(data, AES_BLOCK_SIZE - 1)
+        in_, out = get_io_buffer(buffer, backend1)
+        encryptor.update_into(in_, out)
+
+        in_, out = get_io_buffer(buffer, backend2)
+        decryptor.update_into(in_, out, encryptor.calculate_tag())
+
+        assert data == buffer[: len(data)].tobytes()
+
+
+class TestAESOCB:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=1, max_size=15),
+        data=st.binary(),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_OCB,
+            nonce,
+            backend1,
+            backend2,
+        )
+
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        assert data == decryptor.update(
+            encryptor.update(data),
+            encryptor.calculate_tag(),
+        )
+
+    @pytest.mark.parametrize("backend", Backends)
+    def test_update_into_is_unsupported(self, backend: Backends):
+        encryptor = get_encryptor(
+            bytes(16),
+            AES.MODE_OCB,
+            bytes(15),
+            backend,
+        )
+        assert not isinstance(encryptor, FileCipherWrapper)
+
+        buffer = make_buffer(bytes(16), AES_BLOCK_SIZE - 1)
+        in_, out = get_io_buffer(buffer, backend)
+
         with pytest.raises(NotImplementedError):
-            super().test_update_into_file_buffer(cipher, backend1, backend2)
+            encryptor.update_into(in_, out)
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [modes.Modes.MODE_SIV],
-)
-@pytest.mark.parametrize(
-    "key_length",
-    _LENGTH_SPECIAL_SIV,
-)
-@pytest.mark.parametrize(
-    "iv_length",
-    [8, 16],
-)
-class TestAEADOneShotSIV(_TestAEADOneShot):
-    pass
+class TestAESCCM:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=7, max_size=13),
+        data=st.binary(),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_CCM,
+            nonce,
+            backend1,
+            backend2,
+        )
+
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        assert data == decryptor.update(
+            encryptor.update(data),
+            encryptor.calculate_tag(),
+        )
+
+    @settings(deadline=None, verbosity=Verbosity.verbose)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=7, max_size=13),
+        data=st.binary(),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update_into(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_CCM,
+            nonce,
+            backend1,
+            backend2,
+        )
+
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        buffer = make_buffer(data, AES_BLOCK_SIZE - 1)
+        in_, out = get_io_buffer(buffer, backend1)
+
+        try:
+            encryptor.update_into(in_, out)
+        except NotImplementedError:
+            assert backend1 == Backends.CRYPTOGRAPHY
+            return pytest.skip(
+                f"Backend {backend1.name.lower()} does not support writing "
+                "into mutable buffers."
+            )
+
+        in_, out = get_io_buffer(buffer, backend2)
+
+        try:
+            decryptor.update_into(in_, out, encryptor.calculate_tag())
+        except NotImplementedError:
+            assert backend2 == Backends.CRYPTOGRAPHY
+            return pytest.skip(
+                f"Backend {backend2.name.lower()} does not support writing "
+                "into mutable buffers."
+            )
+
+        assert data == buffer[: len(data)].tobytes()
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [modes.Modes.MODE_CCM],
-)
-@pytest.mark.parametrize(
-    "key_length",
-    _LENGTH_NORMAL,
-)
-@pytest.mark.parametrize(
-    "iv_length",
-    list(range(7, 14)),
-)
-class TestAEADOneShotCCM(_TestAEADOneShot):
-    pass
+class TestFileIO:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(min_size=1),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update_into(
+        self,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        filebuf = io.BytesIO(data)
+        as_encrypted = io.BytesIO()
+        as_decrypted = io.BytesIO()
+
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
+            backend1,
+            backend2,
+            plain_file=filebuf,
+            encrypted_file=as_encrypted,
+        )
+        assert isinstance(encryptor, FileCipherWrapper)
+        assert isinstance(decryptor, FileCipherWrapper)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        encryptor.update_into(as_encrypted)
+        as_encrypted.seek(0)
+        decryptor.update_into(as_decrypted, encryptor.calculate_tag())
+
+        assert filebuf.getvalue() == as_decrypted.getvalue()
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(min_size=1),
+        authdata=st.none() | st.binary(min_size=1),
+    )
+    def test_update(
+        self,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        filebuf = io.BytesIO(data)
+        as_encrypted = io.BytesIO()
+
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
+            backend1,
+            backend2,
+            plain_file=filebuf,  # type: ignore
+            encrypted_file=as_encrypted,  # type: ignore
+        )
+        assert isinstance(encryptor, FileCipherWrapper)
+        assert isinstance(decryptor, FileCipherWrapper)
+
+        if authdata is not None:
+            encryptor.authenticate(authdata)
+            decryptor.authenticate(authdata)
+
+        as_encrypted.write(encryptor.update(len(data)))  # type: ignore
+        as_encrypted.seek(0)
+
+        as_decrypted = decryptor.update(len(data))
+        assert as_decrypted == data
 
 
-@pytest.mark.parametrize(
-    "mode",
-    [modes.Modes.MODE_OCB],
-)
-@pytest.mark.parametrize(
-    "key_length",
-    _LENGTH_NORMAL,
-)
-@pytest.mark.parametrize(
-    "iv_length",
-    list(range(7, 16)),
-)
-class TestAEADOneShotOCB(_TestAEADOneShot):
-    pass
+class TestErrors:
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
+        nonce=st.binary(min_size=16, max_size=16),
+    )
+    def test_invalid_key_length_for_normal_ciphers(
+        self,
+        key,
+        mode,
+        nonce,
+        backend,
+    ):
+        with pytest.raises(ValueError):
+            get_encryptor(key, mode, nonce, backend)
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [32, 48, 64]),
+        nonce=st.binary(min_size=8, max_size=16),
+    )
+    def test_invalid_key_length_for_siv(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_SIV, nonce, backend)
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
+        nonce=st.binary(min_size=7, max_size=13),
+    )
+    def test_invalid_key_length_for_ccm(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_CCM, nonce, backend)
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary().filter(lambda x: len(x) not in range(7, 14)),
+    )
+    def test_invalid_nonce_length_for_ccm(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_CCM, nonce, backend)
+
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", modes.SPECIAL)
+    def test_one_shot_modes_cannot_write_to_file(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        file = io.BytesIO(bytes(b" "))
+        with pytest.raises(NotImplementedError, match="does not support"):
+            get_encryptor(
+                bytes(32),
+                mode,
+                bytes(12),
+                backend,
+                file=file,
+            )
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=16, max_size=16),
+        data=st.binary(min_size=1),
+        authdata=st.binary(min_size=1),
+    )
+    def test_fileio_incorrect_decryption(
+        self,
+        key: bytes,
+        mode: Modes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        filebuf = io.BytesIO(data)
+        as_encrypted = io.BytesIO()
+        as_decrypted = io.BytesIO()
+
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            mode,
+            nonce,
+            backend1,
+            backend2,
+            plain_file=filebuf,
+            encrypted_file=as_encrypted,
+        )
+        assert isinstance(encryptor, FileCipherWrapper)
+        assert isinstance(decryptor, FileCipherWrapper)
+
+        encryptor.authenticate(authdata)
+
+        encryptor.update_into(as_encrypted)
+        as_encrypted.seek(0)
+
+        with pytest.raises(exc.DecryptionError):
+            decryptor.update_into(as_decrypted, encryptor.calculate_tag())
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=SIV_KEY_SIZES,
+        nonce=st.binary(min_size=8, max_size=16),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_siv_invalid_decryption(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_SIV,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+        encryptor.authenticate(authdata)
+
+        with pytest.raises(exc.DecryptionError):
+            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=7, max_size=13),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_ccm_invalid_decryption(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_CCM,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+        encryptor.authenticate(authdata)
+
+        with pytest.raises(exc.DecryptionError):
+            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
+
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_finalize_if_tag_is_missing(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        key, nonce = bytes(32), bytes(16)
+        decryptor = get_decryptor(key, mode, nonce, backend, use_hmac=True)
+        assert isinstance(decryptor, base.BaseAEADCipher)
+
+        with pytest.raises(ValueError, match="tag is required"):
+            decryptor.finalize()
+
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_finalize_if_tag_is_missing_for_one_shot(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        key, nonce = bytes(32), bytes(12)
+        decryptor = get_decryptor(key, mode, nonce, backend)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        with pytest.raises(ValueError, match="tag is required"):
+            decryptor.finalize()
+
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_update_if_tag_is_missing_for_one_shot(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        key, nonce = bytes(32), bytes(12)
+        decryptor = get_decryptor(key, mode, nonce, backend)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+
+        with pytest.raises(ValueError, match="tag is required"):
+            decryptor.update(b"somedata")
+
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_authenticate_after_update(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            mode,
+            bytes(16),
+            backend,
+            use_hmac=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.authenticate(bytes(11))
+        encryptor.update(bytes(32))
+
+        with pytest.raises(TypeError):
+            encryptor.authenticate(bytes(16))
+
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    def test_error_on_finalize_after_finalize(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(16), backend)
+        encryptor.finalize()
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.finalize()
+
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.AEAD))
+    def test_error_on_finalize_after_finalize_for_hmac(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            mode,
+            bytes(16),
+            backend,
+            use_hmac=True,
+        )
+        encryptor.finalize()
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.finalize()
+
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    def test_error_on_finalize_after_finalize_for_one_shot(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(12), backend)
+        encryptor.finalize()
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.finalize()
+
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_authenticate_after_finalize(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            mode,
+            bytes(16),
+            backend,
+            use_hmac=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.finalize()
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.authenticate(bytes(16))
+
+    @pytest.mark.parametrize("mode", list(modes.AEAD ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_update_and_update_into_after_finalize(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(16), backend)
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.finalize()
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update(bytes(32))
+
+        buffer = make_buffer(bytes(32))
+        in_, out = get_io_buffer(buffer, backend)
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update_into(in_, out)
+
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.AEAD))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_update_and_update_into_after_finalize_for_hmac(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            mode,
+            bytes(16),
+            backend,
+            use_hmac=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.finalize()
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update(bytes(32))
+
+        buffer = make_buffer(bytes(32))
+        in_, out = get_io_buffer(buffer, backend)
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update_into(in_, out)
+
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_one_shot_modes_error_on_authenticate_after_update(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(12), backend)
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        encryptor.authenticate(bytes(16))
+        encryptor.update(bytes(16))
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.authenticate(bytes(16))
+
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_one_shot_modes_error_on_update_after_update(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(12), backend)
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        encryptor.update(bytes(16))
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update(bytes(16))
