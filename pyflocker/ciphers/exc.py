@@ -28,6 +28,10 @@ class UnsupportedAlgorithm(Exception):
     """Raised if the backend does not support the algorithm."""
 
 
+class UnsupportedMode(Exception):
+    """Raised if the backend does not support the mode."""
+
+
 class AlreadyFinalized(FinalizationError):
     """The context was already destroyed."""
 
