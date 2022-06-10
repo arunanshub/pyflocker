@@ -164,9 +164,11 @@ class AEADOneShot(base.BaseAEADOneShotCipher):
         raise NotImplementedError
 
     def finalize(self, tag: bytes | None = None) -> None:
-        del tag
         if self._update_func is None:
             raise exc.AlreadyFinalized
+
+        if not self.is_encrypting() and tag is None:
+            raise ValueError("tag is required for decryption.")
 
         self._update_func = None
         if self._raise_on_tag_err:
@@ -236,7 +238,7 @@ class _EAX:
         self.__tag = None
 
     @property
-    def _ctx(self) -> typing.Any:
+    def _ctx(self) -> typing.Any:  # pragma: no cover
         """The Cipher context used by the backend.
         Maintains compatibility across pyca/cryptography style
         cipher instances.
@@ -373,7 +375,7 @@ def new(
     crp: typing.Any
 
     if mode not in supported_modes():
-        raise NotImplementedError(f"{mode.name} not supported.")
+        raise exc.UnsupportedMode(f"{mode.name} not supported.")
 
     if file is not None:
         use_hmac = True
