@@ -248,7 +248,7 @@ class _EAX:
         return None
 
     def authenticate_additional_data(self, data: bytes) -> None:
-        if self.__ctx is None:
+        if self.__ctx is None:  # pragma: no cover
             raise bkx.AlreadyFinalized
         if self._updated:
             raise ValueError  # pragma: no cover
@@ -270,7 +270,7 @@ class _EAX:
         return self
 
     def update(self, data: bytes) -> bytes:
-        if self.__ctx is None:
+        if self.__ctx is None:  # pragma: no cover
             raise bkx.AlreadyFinalized
         self._updated = True
         return self.__ctx.update(data)
@@ -280,14 +280,14 @@ class _EAX:
         data: bytes,
         out: bytearray | memoryview,
     ) -> None:
-        if self.__ctx is None:
+        if self.__ctx is None:  # pragma: no cover
             raise bkx.AlreadyFinalized
         self._updated = True
         self.__ctx.update_into(data, out)
 
     def finalize(self) -> None:
         """Finalizes the cipher."""
-        if self.__ctx is None:
+        if self.__ctx is None:  # pragma: no cover
             raise bkx.AlreadyFinalized
 
         tag = bytes(typing.cast(int, algo.AES.block_size) // 8)
@@ -307,7 +307,7 @@ class _EAX:
 
     @property
     def tag(self) -> bytes | None:
-        if self.__ctx is not None:
+        if self.__ctx is not None:  # pragma: no cover
             raise bkx.NotYetFinalized
         return self.__tag
 

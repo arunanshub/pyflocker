@@ -86,7 +86,7 @@ class AEAD(AEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> Modes:
+    def mode(self) -> Modes:  # pragma: no cover
         """The AES mode."""
         return self._mode
 
@@ -110,7 +110,7 @@ class NonAEAD(NonAEADCipherTemplate):
         )
 
     @property
-    def mode(self) -> Modes:
+    def mode(self) -> Modes:  # pragma: no cover
         """The AES mode."""
         return self._mode
 
@@ -139,7 +139,7 @@ class AEADOneShot(AuthenticationMixin, BaseAEADOneShotCipher):
         return self._encrypting
 
     @property
-    def mode(self) -> Modes:
+    def mode(self) -> Modes:  # pragma: no cover
         """The AES mode."""
         return self._mode
 
