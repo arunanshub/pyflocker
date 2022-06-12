@@ -827,6 +827,36 @@ class TestErrors:
 
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_calculate_tag_before_finalize(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            mode,
+            bytes(16),
+            backend,
+            use_hmac=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        with pytest.raises(exc.NotFinalized):
+            encryptor.calculate_tag()
+
+    @pytest.mark.parametrize("mode", list(modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_calculate_tag_before_finalize_for_one_shot(
+        self,
+        mode: Modes,
+        backend: Backends,
+    ):
+        encryptor = get_encryptor(bytes(32), mode, bytes(12), backend)
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        with pytest.raises(exc.NotFinalized):
+            encryptor.calculate_tag()
+
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @pytest.mark.parametrize("backend", Backends)
     def test_error_on_authenticate_after_update(
         self,
         mode: Modes,
