@@ -10,6 +10,8 @@ from pyflocker.ciphers import AES, Backends, base, exc, modes
 from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
 from pyflocker.ciphers.modes import Modes
 
+from .base import get_io_buffer, make_buffer
+
 AES_BLOCK_SIZE = 16
 
 NORMAL_KEY_SIZES = st.sampled_from((16, 24, 32)).flatmap(
@@ -19,28 +21,6 @@ NORMAL_KEY_SIZES = st.sampled_from((16, 24, 32)).flatmap(
 SIV_KEY_SIZES = st.sampled_from((32, 48, 64)).flatmap(
     lambda size: st.binary(min_size=size, max_size=size)
 )
-
-
-def make_buffer(data: bytes, offset: int = 15) -> memoryview:
-    """
-    Construct a buffer for in-place encryption/decryption. Offset should be a
-    positive integer.
-    """
-    return memoryview(bytearray(data) + bytearray(offset))
-
-
-def get_io_buffer(
-    buffer: memoryview,
-    backend: Backends,
-    offset: int = 15,
-) -> tuple[memoryview, memoryview]:
-    """
-    Create a input/output buffer pair. The size of the buffers varies with the
-    given backend.
-    """
-    if backend == Backends.CRYPTOGRAPHY:
-        return buffer[:-offset], buffer
-    return buffer[:-offset], buffer[:-offset]
 
 
 def get_encryptor(
@@ -202,7 +182,7 @@ class TestAESNormal:
         assert data == buffer[: len(data)].tobytes()
 
     @settings(deadline=None)
-    @pytest.mark.parametrize("mode", list(modes.AEAD ^ modes.SPECIAL))
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -227,6 +207,7 @@ class TestAESNormal:
             nonce,
             backend1,
             backend2,
+            use_hmac=True,
         )
         assert isinstance(encryptor, base.BaseAEADCipher)
         assert isinstance(decryptor, base.BaseAEADCipher)
@@ -243,7 +224,7 @@ class TestAESNormal:
         assert data == decrypted
 
     @settings(deadline=None)
-    @pytest.mark.parametrize("mode", list(modes.AEAD ^ modes.SPECIAL))
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -268,6 +249,7 @@ class TestAESNormal:
             nonce,
             backend1,
             backend2,
+            use_hmac=True,
         )
         assert isinstance(encryptor, base.BaseAEADCipher)
         assert isinstance(decryptor, base.BaseAEADCipher)
