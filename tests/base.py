@@ -14,12 +14,13 @@ def make_buffer(data: bytes, offset: int = 15) -> memoryview:
 def get_io_buffer(
     buffer: memoryview,
     backend: Backends,
-    offset: int = 15,
+    offset: int | None = 15,
 ) -> tuple[memoryview, memoryview]:
     """
     Create a input/output buffer pair. The size of the buffers varies with the
     given backend.
     """
+    offset = -offset if offset else None
     if backend == Backends.CRYPTOGRAPHY:
-        return buffer[:-offset], buffer
-    return buffer[:-offset], buffer[:-offset]
+        return buffer[:offset], buffer
+    return buffer[:offset], buffer[:offset]
