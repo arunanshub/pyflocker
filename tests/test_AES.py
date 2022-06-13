@@ -268,6 +268,23 @@ class TestAESNormal:
 
         assert data == buffer[: len(data)].tobytes()
 
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
+        nonce=st.binary(min_size=16, max_size=16),
+    )
+    def test_invalid_key_length(
+        self,
+        key,
+        mode,
+        nonce,
+        backend,
+    ):
+        with pytest.raises(ValueError):
+            get_encryptor(key, mode, nonce, backend)
+
 
 class TestAESSIV:
     @settings(deadline=None)
@@ -343,6 +360,48 @@ class TestAESSIV:
         decryptor.update_into(in_, out, encryptor.calculate_tag())
 
         assert data == buffer[: len(data)].tobytes()
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [32, 48, 64]),
+        nonce=st.binary(min_size=8, max_size=16),
+    )
+    def test_invalid_key_length(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_SIV, nonce, backend)
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=SIV_KEY_SIZES,
+        nonce=st.binary(min_size=8, max_size=16),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_invalid_decryption(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_SIV,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+        encryptor.authenticate(authdata)
+
+        with pytest.raises(exc.DecryptionError):
+            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
 
 
 class TestAESOCB:
@@ -498,6 +557,58 @@ class TestAESCCM:
 
         assert data == buffer[: len(data)].tobytes()
 
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend1", Backends)
+    @pytest.mark.parametrize("backend2", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary(min_size=7, max_size=13),
+        data=st.binary(),
+        authdata=st.binary(min_size=1),
+    )
+    def test_invalid_decryption(
+        self,
+        key: bytes,
+        nonce: bytes,
+        data: bytes,
+        authdata: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        encryptor, decryptor = get_encryptor_decryptor(
+            key,
+            AES.MODE_CCM,
+            nonce,
+            backend1,
+            backend2,
+        )
+        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
+        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
+        encryptor.authenticate(authdata)
+
+        with pytest.raises(exc.DecryptionError):
+            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
+        nonce=st.binary(min_size=7, max_size=13),
+    )
+    def test_invalid_key_length(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_CCM, nonce, backend)
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(
+        key=NORMAL_KEY_SIZES,
+        nonce=st.binary().filter(lambda x: len(x) not in range(7, 14)),
+    )
+    def test_invalid_nonce_length(self, key, nonce, backend):
+        with pytest.raises(ValueError):
+            get_encryptor(key, AES.MODE_CCM, nonce, backend)
+
 
 class TestFileIO:
     @settings(deadline=None)
@@ -591,72 +702,6 @@ class TestFileIO:
         as_decrypted = decryptor.update(len(data))
         assert as_decrypted == data
 
-
-class TestErrors:
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend", Backends)
-    @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
-    @given(
-        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
-        nonce=st.binary(min_size=16, max_size=16),
-    )
-    def test_invalid_key_length_for_normal_ciphers(
-        self,
-        key,
-        mode,
-        nonce,
-        backend,
-    ):
-        with pytest.raises(ValueError):
-            get_encryptor(key, mode, nonce, backend)
-
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend", Backends)
-    @given(
-        key=st.binary().filter(lambda b: len(b) not in [32, 48, 64]),
-        nonce=st.binary(min_size=8, max_size=16),
-    )
-    def test_invalid_key_length_for_siv(self, key, nonce, backend):
-        with pytest.raises(ValueError):
-            get_encryptor(key, AES.MODE_SIV, nonce, backend)
-
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend", Backends)
-    @given(
-        key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
-        nonce=st.binary(min_size=7, max_size=13),
-    )
-    def test_invalid_key_length_for_ccm(self, key, nonce, backend):
-        with pytest.raises(ValueError):
-            get_encryptor(key, AES.MODE_CCM, nonce, backend)
-
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend", Backends)
-    @given(
-        key=NORMAL_KEY_SIZES,
-        nonce=st.binary().filter(lambda x: len(x) not in range(7, 14)),
-    )
-    def test_invalid_nonce_length_for_ccm(self, key, nonce, backend):
-        with pytest.raises(ValueError):
-            get_encryptor(key, AES.MODE_CCM, nonce, backend)
-
-    @pytest.mark.parametrize("backend", Backends)
-    @pytest.mark.parametrize("mode", modes.SPECIAL)
-    def test_one_shot_modes_cannot_write_to_file(
-        self,
-        mode: Modes,
-        backend: Backends,
-    ):
-        file = io.BytesIO(bytes(b" "))
-        with pytest.raises(NotImplementedError, match="does not support"):
-            get_encryptor(
-                bytes(32),
-                mode,
-                bytes(12),
-                backend,
-                file=file,
-            )
-
     @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -701,69 +746,24 @@ class TestErrors:
         with pytest.raises(exc.DecryptionError):
             decryptor.update_into(as_decrypted, encryptor.calculate_tag())
 
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend1", Backends)
-    @pytest.mark.parametrize("backend2", Backends)
-    @given(
-        key=SIV_KEY_SIZES,
-        nonce=st.binary(min_size=8, max_size=16),
-        data=st.binary(),
-        authdata=st.binary(min_size=1),
-    )
-    def test_siv_invalid_decryption(
+
+class TestErrors:
+    @pytest.mark.parametrize("backend", Backends)
+    @pytest.mark.parametrize("mode", modes.SPECIAL)
+    def test_one_shot_modes_cannot_write_to_file(
         self,
-        key: bytes,
-        nonce: bytes,
-        data: bytes,
-        authdata: bytes,
-        backend1: Backends,
-        backend2: Backends,
+        mode: Modes,
+        backend: Backends,
     ):
-        encryptor, decryptor = get_encryptor_decryptor(
-            key,
-            AES.MODE_SIV,
-            nonce,
-            backend1,
-            backend2,
-        )
-        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
-        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
-        encryptor.authenticate(authdata)
-
-        with pytest.raises(exc.DecryptionError):
-            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
-
-    @settings(deadline=None)
-    @pytest.mark.parametrize("backend1", Backends)
-    @pytest.mark.parametrize("backend2", Backends)
-    @given(
-        key=NORMAL_KEY_SIZES,
-        nonce=st.binary(min_size=7, max_size=13),
-        data=st.binary(),
-        authdata=st.binary(min_size=1),
-    )
-    def test_ccm_invalid_decryption(
-        self,
-        key: bytes,
-        nonce: bytes,
-        data: bytes,
-        authdata: bytes,
-        backend1: Backends,
-        backend2: Backends,
-    ):
-        encryptor, decryptor = get_encryptor_decryptor(
-            key,
-            AES.MODE_CCM,
-            nonce,
-            backend1,
-            backend2,
-        )
-        assert isinstance(encryptor, base.BaseAEADOneShotCipher)
-        assert isinstance(decryptor, base.BaseAEADOneShotCipher)
-        encryptor.authenticate(authdata)
-
-        with pytest.raises(exc.DecryptionError):
-            decryptor.update(encryptor.update(data), encryptor.calculate_tag())
+        file = io.BytesIO(bytes(b" "))
+        with pytest.raises(NotImplementedError, match="does not support"):
+            get_encryptor(
+                bytes(32),
+                mode,
+                bytes(12),
+                backend,
+                file=file,
+            )
 
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend", Backends)
