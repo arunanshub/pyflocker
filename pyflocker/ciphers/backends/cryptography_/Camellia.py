@@ -6,6 +6,7 @@ from cryptography.hazmat.primitives.ciphers import Cipher
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
 from cryptography.hazmat.primitives.ciphers import modes
 
+from ... import exc
 from ...modes import Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
 from . import Hash
@@ -34,6 +35,9 @@ class Camellia(NonAEADCipherTemplate):
         mode: Modes,
         iv_or_nonce: bytes,
     ):
+        if mode not in supported_modes():
+            raise exc.UnsupportedMode(f"{mode.name} not supported.")
+
         cipher = Cipher(
             algo.Camellia(key),
             SUPPORTED[mode](iv_or_nonce),  # type: ignore
