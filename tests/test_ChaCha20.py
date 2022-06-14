@@ -274,15 +274,17 @@ class TestChaCha20:
         # NOTE: Cryptodome supports both ChaCha20 and XChaCha20, hence the 24
         # bytes nonce. For cryptography, it should be invalid too.
         nonce=st.binary().filter(lambda b: len(b) not in (8, 12, 24)),
+        use_poly1305=st.booleans(),
     )
     def test_invalid_nonce_length(
         self,
-        key,
-        nonce,
-        backend,
+        key: bytes,
+        nonce: bytes,
+        backend: Backends,
+        use_poly1305: bool,
     ):
         with pytest.raises(ValueError):
-            get_encryptor(key, nonce, backend)
+            get_encryptor(key, nonce, backend, use_poly1305=use_poly1305)
 
 
 class TestFileIO:
