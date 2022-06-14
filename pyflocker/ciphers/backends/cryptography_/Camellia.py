@@ -100,6 +100,9 @@ def new(
     Returns:
         Camellia cipher.
 
+    Raises:
+        UnsupportedMode: if the given ``mode`` is not supported by the cipher.
+
     Note:
         Any other error that is raised is from the backend itself.
     """

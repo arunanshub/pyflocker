@@ -81,7 +81,7 @@ def new(
         Camellia cipher from the appropriate backend module.
 
     Raises:
-        NotImplementedError: if backend does not support that mode.
+        UnsupportedMode: if backend does not support that mode.
         UnsupportedAlgorithm: if the backend does not support Camellia.
 
     Note:
