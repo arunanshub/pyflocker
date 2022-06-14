@@ -185,7 +185,7 @@ def new(
     crp = (
         ChaCha20Poly1305(encrypting, key, nonce)
         if use_poly1305
-        else ChaCha20Poly1305(encrypting, key, nonce)
+        else ChaCha20(encrypting, key, nonce)
     )
 
     if file:
