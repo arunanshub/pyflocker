@@ -27,7 +27,7 @@ def get_encryptor(
     backend: Backends,
     *,
     use_poly1305: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         enc = ChaCha20.new(
@@ -54,7 +54,7 @@ def get_decryptor(
     backend: Backends,
     *,
     use_poly1305: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         dec = ChaCha20.new(
@@ -86,8 +86,8 @@ def get_encryptor_decryptor(
     backend2: Backends,
     *,
     use_poly1305: bool = False,
-    plain_file: io.BufferedReader | None = None,
-    encrypted_file: io.BufferedReader | None = None,
+    plain_file: io.BufferedIOBase | None = None,
+    encrypted_file: io.BufferedIOBase | None = None,
 ):
     """Return a pair of encryptor and decryptor."""
     return (
@@ -411,3 +411,103 @@ class TestFileIO:
 
         with pytest.raises(exc.DecryptionError):
             decryptor.update_into(as_decrypted, encryptor.calculate_tag())
+
+
+class TestErrors:
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_finalize_if_tag_is_missing(self, backend: Backends):
+        key, nonce = bytes(32), bytes(12)
+        decryptor = get_decryptor(key, nonce, backend, use_poly1305=True)
+        assert isinstance(decryptor, base.BaseAEADCipher)
+
+        with pytest.raises(ValueError, match="tag is required"):
+            decryptor.finalize()
+
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_calculate_tag_before_finalize(self, backend: Backends):
+        encryptor = get_encryptor(
+            bytes(32),
+            bytes(12),
+            backend,
+            use_poly1305=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        with pytest.raises(exc.NotFinalized):
+            encryptor.calculate_tag()
+
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_authenticate_after_update(self, backend: Backends):
+        encryptor = get_encryptor(
+            bytes(32),
+            bytes(12),
+            backend,
+            use_poly1305=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.authenticate(bytes(11))
+        encryptor.update(bytes(32))
+
+        with pytest.raises(TypeError):
+            encryptor.authenticate(bytes(16))
+
+    @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
+    @given(use_hmac=st.booleans())
+    def test_error_on_finalize_after_finalize(
+        self,
+        backend: Backends,
+        use_hmac: bool,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            bytes(12),
+            backend,
+            use_poly1305=use_hmac,
+        )
+        encryptor.finalize()
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.finalize()
+
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_authenticate_after_finalize(self, backend: Backends):
+        encryptor = get_encryptor(
+            bytes(32),
+            bytes(12),
+            backend,
+            use_poly1305=True,
+        )
+        assert isinstance(encryptor, base.BaseAEADCipher)
+        encryptor.finalize()
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.authenticate(bytes(16))
+
+    @pytest.mark.parametrize("backend", Backends)
+    @given(use_hmac=st.booleans())
+    def test_error_on_update_and_update_into_after_finalize(
+        self,
+        backend: Backends,
+        use_hmac: bool,
+    ):
+        encryptor = get_encryptor(
+            bytes(32),
+            bytes(12),
+            backend,
+            use_poly1305=use_hmac,
+        )
+        assert isinstance(
+            encryptor,
+            (
+                base.BaseAEADCipher,
+                base.BaseNonAEADCipher,
+            ),
+        )
+        encryptor.finalize()
+
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update(bytes(32))
+
+        buffer = make_buffer(bytes(32))
+        in_, out = get_io_buffer(buffer, backend)
+        with pytest.raises(exc.AlreadyFinalized):
+            encryptor.update_into(in_, out)
