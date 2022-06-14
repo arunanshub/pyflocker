@@ -59,7 +59,7 @@ def new(
     use_hmac: bool = False,
     tag_length: int | None = 16,
     digestmod: None | base.BaseHash = None,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> Camellia | FileCipherWrapper | HMACWrapper:
     """Instantiate a new Camellia cipher wrapper object.
 

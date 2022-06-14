@@ -37,7 +37,7 @@ def new(
     use_hmac: bool = False,
     tag_length: int | None = 16,
     digestmod: None | base.BaseHash = None,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
     backend: Backends = Backends.CRYPTOGRAPHY,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     """Instantiate a new Camellia cipher object.

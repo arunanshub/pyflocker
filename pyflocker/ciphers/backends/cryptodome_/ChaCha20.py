@@ -47,7 +47,7 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> ChaCha20 | ChaCha20Poly1305 | FileCipherWrapper:
     """Instantiate a new ChaCha20-Poly1305 cipher wrapper object.
 

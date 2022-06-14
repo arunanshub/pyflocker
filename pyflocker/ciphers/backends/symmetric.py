@@ -20,7 +20,7 @@ class FileCipherWrapper:
     def __init__(
         self,
         cipher: base.BaseAEADCipher,
-        file: io.BufferedReader,
+        file: io.BufferedIOBase,
         offset: int = 0,
     ):
         """Initialize a file cipher wrapper.

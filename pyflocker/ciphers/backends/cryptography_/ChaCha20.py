@@ -156,7 +156,7 @@ def new(
     nonce: bytes,
     *,
     use_poly1305: bool = True,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> ChaCha20 | ChaCha20Poly1305 | FileCipherWrapper:
     """Instantiate a new ChaCha20(-Poly1305) cipher object.
 
@@ -182,10 +182,11 @@ def new(
     if file is not None:
         use_poly1305 = True
 
-    if use_poly1305:
-        crp = ChaCha20Poly1305(encrypting, key, nonce)
-    else:
-        crp = ChaCha20(encrypting, key, nonce)
+    crp = (
+        ChaCha20Poly1305(encrypting, key, nonce)
+        if use_poly1305
+        else ChaCha20Poly1305(encrypting, key, nonce)
+    )
 
     if file:
         crp = FileCipherWrapper(crp, file, offset=0)

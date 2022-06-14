@@ -207,7 +207,7 @@ def new(
     use_hmac: bool = False,
     tag_length: int | None = 16,
     digestmod: None | base.BaseHash = None,
-    file: io.BufferedReader | None = None,
+    file: io.BytesIO | io.BufferedReader | None = None,
 ) -> AEAD | NonAEAD | AEADOneShot | FileCipherWrapper | HMACWrapper:
     """Create a new backend specific AES cipher.
 
