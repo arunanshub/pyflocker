@@ -30,7 +30,7 @@ def get_encryptor(
     backend: Backends,
     *,
     use_hmac: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         enc = Camellia.new(
@@ -64,7 +64,7 @@ def get_decryptor(
     backend: Backends,
     *,
     use_hmac: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         dec = Camellia.new(
@@ -103,16 +103,26 @@ def get_encryptor_decryptor(
     backend2: Backends,
     *,
     use_hmac: bool = False,
-    plain_file: io.BufferedReader | None = None,
-    encrypted_file: io.BufferedReader | None = None,
+    plain_file: io.BufferedIOBase | None = None,
+    encrypted_file: io.BufferedIOBase | None = None,
 ):
     """Return a pair of encryptor and decryptor."""
     return (
         get_encryptor(
-            key, mode, nonce, backend1, use_hmac=use_hmac, file=plain_file
+            key,
+            mode,
+            nonce,
+            backend1,
+            use_hmac=use_hmac,
+            file=plain_file,
         ),
         get_decryptor(
-            key, mode, nonce, backend2, use_hmac=use_hmac, file=encrypted_file
+            key,
+            mode,
+            nonce,
+            backend2,
+            use_hmac=use_hmac,
+            file=encrypted_file,
         ),
     )
 
@@ -466,9 +476,9 @@ class TestErrors:
             encryptor.authenticate(bytes(16))
 
     @settings(deadline=None)
+    @pytest.mark.parametrize("backend", Backends)
     @given(
         mode=st.sampled_from(CAMELLIA_MODES),
-        backend=st.sampled_from(Backends),
         use_hmac=st.booleans(),
     )
     def test_error_on_finalize_after_finalize(

@@ -30,7 +30,7 @@ def get_encryptor(
     backend: Backends,
     *,
     use_hmac: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         enc = AES.new(
@@ -62,7 +62,7 @@ def get_decryptor(
     backend: Backends,
     *,
     use_hmac: bool = False,
-    file: io.BufferedReader | None = None,
+    file: io.BufferedIOBase | None = None,
 ) -> base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper:
     try:
         dec = AES.new(
@@ -98,8 +98,8 @@ def get_encryptor_decryptor(
     backend2: Backends,
     *,
     use_hmac: bool = False,
-    plain_file: io.BufferedReader | None = None,
-    encrypted_file: io.BufferedReader | None = None,
+    plain_file: io.BufferedIOBase | None = None,
+    encrypted_file: io.BufferedIOBase | None = None,
 ):
     """Return a pair of encryptor and decryptor."""
     return (
