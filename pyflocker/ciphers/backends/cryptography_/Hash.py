@@ -39,6 +39,26 @@ VAR_DIGEST_SIZE = frozenset(
     }
 )
 
+# the ASN.1 Object IDs
+OIDS = MappingProxyType(
+    {
+        "sha224": "2.16.840.1.101.3.4.2.4",
+        "sha256": "2.16.840.1.101.3.4.2.1",
+        "sha384": "2.16.840.1.101.3.4.2.2",
+        "sha512": "2.16.840.1.101.3.4.2.3",
+        "sha512_224": "2.16.840.1.101.3.4.2.5",
+        "sha512_256": "2.16.840.1.101.3.4.2.6",
+        "sha3_224": "2.16.840.1.101.3.4.2.7",
+        "sha3_256": "2.16.840.1.101.3.4.2.8",
+        "sha3_384": "2.16.840.1.101.3.4.2.9",
+        "sha3_512": "2.16.840.1.101.3.4.2.10",
+        "shake128": "2.16.840.1.101.3.4.2.11",
+        "shake256": "2.16.840.1.101.3.4.2.12",
+        "blake2b": "1.3.6.1.4.1.1722.12.2.1.64",
+        "blake2s": "1.3.6.1.4.1.1722.12.2.2.32",
+    }
+)
+
 
 class Hash(base.BaseHash):
     __slots__ = (
@@ -80,6 +100,7 @@ class Hash(base.BaseHash):
             )
             or NotImplemented
         )
+        self._oid = OIDS.get(name, NotImplemented)
 
     @property
     def digest_size(self) -> int:
@@ -92,6 +113,23 @@ class Hash(base.BaseHash):
     @property
     def name(self) -> str:
         return self._name
+
+    @property
+    def oid(self) -> str:
+        """The ASN.1 Object ID."""
+        if self._oid is NotImplemented:
+            raise AttributeError(f"OID not available for {self.name!r}")
+
+        if self.name in ("blake2b", "blake2s") and self.digest_size not in (
+            32,
+            64,
+        ):
+            raise AttributeError(
+                f"OID not available for {self.name!r} with digest size"
+                f" {self.digest_size}"
+            )
+
+        return self._oid
 
     def update(self, data: bytes) -> None:
         if self._ctx is None:
