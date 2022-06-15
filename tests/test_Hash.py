@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import hashlib
-from itertools import combinations, product
+from itertools import product
 from typing import TYPE_CHECKING
 
 import pytest
@@ -108,21 +108,6 @@ def _check_equal_and_check_finalize_once(
         with pytest.raises(exc.AlreadyFinalized):
             each.copy()
         assert isinstance(each.new(), type(each))
-
-
-@pytest.mark.parametrize("name", sorted(ALL_HASHES ^ BLAKES))
-@pytest.mark.parametrize("digest_size", [15])
-@pytest.mark.parametrize("custom", [None])
-@pytest.mark.parametrize("key", [None])
-@pytest.mark.parametrize(
-    ["backend1", "backend2"],
-    list(combinations(Backends, 2)),
-)
-def test_oid_matches_except_blakes(
-    hashfuncs: tuple[BaseHash, BaseHash],
-):
-    h1, h2 = hashfuncs
-    assert h1.oid == h2.oid  # type: ignore
 
 
 @pytest.mark.parametrize("name", sorted(FIXED_DIGEST_SIZE))
