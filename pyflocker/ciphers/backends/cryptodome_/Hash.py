@@ -135,7 +135,6 @@ class Hash(base.BaseHash):
         self._name = name
         self._digest_size = getattr(self._ctx, "digest_size", digest_size)
         self._block_size = getattr(self._ctx, "block_size", NotImplemented)
-        self._oid = getattr(self._ctx, "oid", NotImplemented)
         self._digest = b""
 
     @property
@@ -149,13 +148,6 @@ class Hash(base.BaseHash):
     @property
     def name(self) -> str:
         return self._name
-
-    @property
-    def oid(self) -> str:
-        """The ASN.1 Object ID."""
-        if self._oid is NotImplemented:
-            raise AttributeError(f"OID not available for {self.name!r}")
-        return self._oid  # type: ignore
 
     def update(self, data: bytes) -> None:
         if self._ctx is None:
