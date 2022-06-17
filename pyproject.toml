@@ -28,7 +28,7 @@ pycryptodomex = "^3.9.8"
 cryptography = {version = ">=35.0.0,!=37.0.0", extras = ["ssh"]}
 
 [tool.poetry.dev-dependencies]
-Sphinx = "^5.0.1"
+Sphinx = "^5.0.2"
 pytest = "^7.1.2"
 furo = ">=2022.2.14"
 pytest-cov = "^3.0.0"
