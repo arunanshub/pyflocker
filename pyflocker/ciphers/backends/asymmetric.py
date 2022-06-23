@@ -89,3 +89,13 @@ class ECDH(BaseEllepticCurveExchangeAlgorithm):
     """
     Elleptic Curve Diffie Hellmann Algorithm.
     """
+
+
+@dataclass(frozen=True)
+class EdDSA(BaseEllepticCurveSignatureAlgorithm):
+    """
+    Edwards-curve Digital Signature Algorithm.
+    """
+
+    mode: str = "rfc8032"
+    context: bytes | None = None
