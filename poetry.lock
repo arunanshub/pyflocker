@@ -329,7 +329,7 @@ sphinx-basic-ng = "*"
 
 [[package]]
 name = "hypothesis"
-version = "6.47.4"
+version = "6.47.5"
 description = "A library for property-based testing"
 category = "dev"
 optional = false
@@ -976,7 +976,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "286720bcb697db0f68081a68a4f163602fecbee0d7fdfc06d70d834ff5f5b5ab"
+content-hash = "ecee3bf053cb6bdb42a1696c94b80c19c31fdadd5f585b32f9607f1b142e8c40"
 
 [metadata.files]
 alabaster = [
@@ -1212,8 +1212,8 @@ furo = [
     {file = "furo-2022.6.21.tar.gz", hash = "sha256:9aa983b7488a4601d13113884bfb7254502c8729942e073a0acb87a5512af223"},
 ]
 hypothesis = [
-    {file = "hypothesis-6.47.4-py3-none-any.whl", hash = "sha256:4328db270ae6c9121763980afa5c841b0fbdd69e6f07e30f5d1b204a4a8b3c37"},
-    {file = "hypothesis-6.47.4.tar.gz", hash = "sha256:0f98e20e8427d99af93a7d2d8184c07f6d5df2666d27626979c52b67b93090e0"},
+    {file = "hypothesis-6.47.5-py3-none-any.whl", hash = "sha256:87049b781ee11ec1c7948565b889ab02e428a1e32d427ab4de8fdb3649242d06"},
+    {file = "hypothesis-6.47.5.tar.gz", hash = "sha256:e0c1e253fc97e7ecdb9e2bbff2cf815d8739e0d1d3d093d67c3af5bb6a7211b0"},
 ]
 identify = [
     {file = "identify-2.5.1-py2.py3-none-any.whl", hash = "sha256:0dca2ea3e4381c435ef9c33ba100a78a9b40c0bab11189c7cf121f75815efeaa"},
