@@ -95,6 +95,13 @@ class ECDH(BaseEllepticCurveExchangeAlgorithm):
 class EdDSA(BaseEllepticCurveSignatureAlgorithm):
     """
     Edwards-curve Digital Signature Algorithm.
+
+    Parameters:
+        mode: A string that is currently equal to ``"rfc8032"``.
+        context:
+            Up to 255 bytes of context, which is a constant byte string to
+            segregate different protocols or different applications of the same
+            key.
     """
 
     mode: str = "rfc8032"
