@@ -360,8 +360,8 @@ def decryptf(
 
 
 def encrypt(
-    infile: str,
-    outfile: str,
+    infile: str | os.PathLike,
+    outfile: str | os.PathLike,
     password: bytes,
     remove: bool = True,
     **kwargs: typing.Any,
@@ -404,8 +404,8 @@ def encrypt(
 
 
 def decrypt(
-    infile: str,
-    outfile: str,
+    infile: str | os.PathLike,
+    outfile: str | os.PathLike,
     password: bytes,
     remove: bool = True,
     **kwargs: typing.Any,
@@ -592,8 +592,8 @@ def _assert_unique_files(
 
 def _encrypt_or_decrypt(
     callable: typing.Callable[..., None],
-    infile: str,
-    outfile: str,
+    infile: str | os.PathLike,
+    outfile: str | os.PathLike,
     password: bytes,
     remove: bool = True,
     **kwargs: typing.Any,
