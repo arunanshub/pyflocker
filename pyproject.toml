@@ -46,7 +46,7 @@ flake8-type-checking = "^2.0.1"
 flake8-annotations = "^2.9.0"
 pdbpp = "^0.10.3"
 pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
-hypothesis = "^6.48.1"
+hypothesis = "^6.48.2"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
