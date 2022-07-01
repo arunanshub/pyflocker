@@ -96,10 +96,7 @@ class DHParameters(base.BaseDHParameters):
                 raise ValueError("Invalid parameter format.")
             return cls(None, _params=params)
         except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. The parameter format is invalid. "
-                f"Backend error message:\n{e}",
-            ) from e
+            raise ValueError(f"Failed to load parameters: {e!s}") from e
 
     @classmethod
     def load_from_parameters(
@@ -210,17 +207,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
                     "Cannot deserialize key. This key is not a DH private key"
                 )
             return cls(key)
-        except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid or "
-                f"passphrase is incorrect. Backend error message:\n{e}"
-            ) from e
-        except TypeError as e:
-            raise ValueError(
-                "The key is encrypted but the passphrase is not given or the"
-                " key is not encrypted but the passphrase is given."
-                f" Cannot deserialize the key. Backend error message:\n{e}"
-            ) from e
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Failed to load key: {e!s}") from e
 
 
 class DHPublicKey(base.BaseDHPublicKey):
@@ -296,10 +284,7 @@ class DHPublicKey(base.BaseDHPublicKey):
                 )
             return cls(key=key)
         except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. Incorrect key format. Backend error"
-                f" message:\n{e}",
-            ) from e
+            raise ValueError(f"Failed to load key: {e!s}") from e
 
 
 def generate(key_size: int, g: int = 2) -> DHParameters:
