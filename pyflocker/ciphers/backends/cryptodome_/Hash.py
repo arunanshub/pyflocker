@@ -151,7 +151,7 @@ class Hash(base.BaseHash):
         return self._name
 
     @property
-    def oid(self) -> str:
+    def oid(self) -> str:  # pragma: no cover
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
             raise AttributeError(f"OID not available for {self.name!r}")
