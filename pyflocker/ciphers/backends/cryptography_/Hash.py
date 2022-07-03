@@ -115,7 +115,7 @@ class Hash(base.BaseHash):
         return self._name
 
     @property
-    def oid(self) -> str:
+    def oid(self) -> str:  # pragma: no cover
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
             raise AttributeError(f"OID not available for {self.name!r}")
@@ -221,8 +221,13 @@ def new(
         KeyError: If ``name`` is not a hash function name.
         ValueError: If ``digest_size`` is required but not provided.
     """
-    del kwargs
-    return Hash(name, data, digest_size=digest_size)
+    extra_params = {"custom", "key"}
+    for key in extra_params:
+        if kwargs.get(key) is None:
+            kwargs.pop(key, None)
+
+    # at this point, kwargs should be empty, otherwise we ge `TypeError`
+    return Hash(name, data, digest_size=digest_size, **kwargs)
 
 
 def _get_hash_algorithm(hashfunc: base.BaseHash) -> hashes.HashAlgorithm:
