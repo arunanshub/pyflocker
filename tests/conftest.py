@@ -4,7 +4,7 @@ import os
 
 from hypothesis import settings
 
-settings.register_profile("dev", deadline=500)
+settings.register_profile("dev", deadline=1000)
 settings.register_profile(
     "ci",
     max_examples=500,
