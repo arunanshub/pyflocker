@@ -522,7 +522,12 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
         """
 
     @abstractmethod
-    def serialize(self, encoding: str, format: str) -> bytes:
+    def serialize(
+        self,
+        encoding: str,
+        format: str,
+        passphrase: bytes | None = None,
+    ) -> bytes:
         """Serialize the private key.
 
         Args:
@@ -592,11 +597,13 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
     def signer(
         self,
         algorithm: BaseEllepticCurveSignatureAlgorithm,
-    ) -> BaseSignerContext:
+    ) -> BaseSignerContext | BaseEdDSASignerContext:
         """Creates a signer context.
 
         Args:
-            algorithm: The signing algorithm to use. Default is ECDSA.
+            algorithm:
+                The signing algorithm to use. Default is ECDSA for NIST curves
+                and EdDSA for Edwards curves.
 
         Returns:
             signer object for signing.
@@ -654,11 +661,13 @@ class BaseECCPublicKey(metaclass=ABCMeta):
     def verifier(
         self,
         algorithm: BaseEllepticCurveSignatureAlgorithm | None = None,
-    ) -> BaseVerifierContext:
+    ) -> BaseVerifierContext | BaseEdDSAVerifierContext:
         """Creates a verifier context.
 
         Args:
-            algorithm: The signing algorithm to use. Default is ECDSA.
+            algorithm:
+                The signing algorithm to use. Default is ECDSA for NIST curves
+                and EdDSA for Edwards curves.
 
         Returns:
             verifier object for verification.
@@ -690,6 +699,33 @@ class BaseVerifierContext(metaclass=ABCMeta):
                 It must be a :any:`BaseHash` object, used to digest the message
                 to sign.
 
+            signature: The signature of the message.
+
+        Raises:
+            SignatureError: if the signature was incorrect.
+        """
+
+
+class BaseEdDSASignerContext(metaclass=ABCMeta):
+    @abstractmethod
+    def sign(self, msghash: bytes) -> bytes:
+        """Return the signature of the message.
+
+        Args:
+            msghash: A bytes object.
+
+        Returns:
+            signature of the message as bytes object.
+        """
+
+
+class BaseEdDSAVerifierContext(metaclass=ABCMeta):
+    @abstractmethod
+    def verify(self, msghash: bytes, signature: bytes) -> None:
+        """Verifies the signature of the message.
+
+        Args:
+            msghash: A bytes object.
             signature: The signature of the message.
 
         Raises:
