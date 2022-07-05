@@ -254,7 +254,13 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         cls,
         data: bytes,
         passphrase: bytes | None = None,
+        *,
+        curve: str | None = None,
     ) -> ECCPrivateKey:
+        if curve is not None:
+            raise NotImplementedError(
+                "Cryptodome does not support Raw encoded private keys yet."
+            )
         try:
             key = ECC.import_key(data, passphrase)  # type: ignore
             if not key.has_private():

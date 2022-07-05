@@ -69,6 +69,7 @@ def load_private_key(
     data: bytes,
     passphrase: bytes | None = None,
     *,
+    curve: str | None = None,
     backend: Backends | None = None,
 ) -> base.BaseECCPrivateKey:
     """Loads the private key and returns a Key interface.
@@ -81,6 +82,7 @@ def load_private_key(
         passphrase:
             The passphrase (in bytes) that was used to encrypt the private key.
             `None` if the key was not encrypted.
+        curve: The name of the curve. Required only for ``Raw`` keys.
 
     Keyword Arguments:
         backend: The backend to use. It must be a value from `Backends`.
@@ -88,4 +90,8 @@ def load_private_key(
     Returns:
         An ECC Private key.
     """
-    return _load_ecc_cpr(backend).load_private_key(data, passphrase)
+    return _load_ecc_cpr(backend).load_private_key(
+        data,
+        passphrase,
+        curve=curve,
+    )

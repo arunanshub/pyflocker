@@ -552,7 +552,12 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def load(cls, data: bytes) -> BaseECCPrivateKey:
+    def load(
+        cls,
+        data: bytes,
+        *,
+        curve: str | None = None,
+    ) -> BaseECCPrivateKey:
         """Loads the private key as bytes object and returns the Key interface.
 
         Args:
@@ -561,6 +566,11 @@ class BaseECCPrivateKey(metaclass=ABCMeta):
                 The passphrase that deserializes the private key. It must be a
                 bytes-like object if the key was encrypted while serialization,
                 otherwise ``None``.
+
+        Keyword Arguments:
+            curve:
+                The name of the curve as string. It is required only for
+                ``Raw`` keys.
 
         Returns:
             RSA private key.
@@ -643,12 +653,22 @@ class BaseECCPublicKey(metaclass=ABCMeta):
 
     @classmethod
     @abstractmethod
-    def load(cls, data: bytes) -> BaseECCPublicKey:
+    def load(
+        cls,
+        data: bytes,
+        *,
+        curve: str | None = None,
+    ) -> BaseECCPublicKey:
         """Loads the public key as ``bytes`` object and returns
         the Key interface.
 
         Args:
             data: The key as bytes object.
+
+        Keyword Arguments:
+            curve:
+                The name of the curve as a string. Required only for ``SEC1``
+                and ``Raw`` keys.
 
         Returns:
             The ECC public key.

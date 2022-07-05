@@ -693,6 +693,8 @@ def generate(curve: str) -> ECCPrivateKey:
 def load_private_key(
     data: bytes,
     passphrase: bytes | None = None,
+    *,
+    curve: str | None = None,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
@@ -701,11 +703,14 @@ def load_private_key(
         passphrase:
             The passphrase (in bytes) that was used to encrypt the private key.
             ``None`` if the key was not encrypted.
+        curve:
+            The name of the curve as string. It is required only for ``Raw``
+            keys.
 
     Returns:
         ECCPrivateKey: An ECC private key.
     """
-    return ECCPrivateKey.load(data, passphrase)
+    return ECCPrivateKey.load(data, passphrase, curve=curve)
 
 
 def load_public_key(data: bytes, *, curve: str | None = None) -> ECCPublicKey:
