@@ -532,6 +532,8 @@ def load_public_key(
 def load_private_key(
     data: bytes,
     passphrase: bytes | None = None,
+    *,
+    curve: str | None = None,
 ) -> ECCPrivateKey:
     """Loads the private key and returns a Key interface.
 
@@ -544,4 +546,4 @@ def load_private_key(
     Returns:
         ECCPrivateKey: An ECC private key.
     """
-    return ECCPrivateKey.load(data, passphrase)
+    return ECCPrivateKey.load(data, passphrase, curve=curve)
