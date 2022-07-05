@@ -1,18 +1,14 @@
 from __future__ import annotations
 
-import typing
 from itertools import product
 
 import pytest
 from hypothesis import strategies as st
 from hypothesis.core import given
 
-from pyflocker.ciphers import ECC, ECDSA, Backends, exc
+from pyflocker.ciphers import ECC, ECDSA, Backends, base, exc
 from pyflocker.ciphers.backends.asymmetric import ECDH, EdDSA
 from pyflocker.ciphers.interfaces import Hash
-
-if typing.TYPE_CHECKING:
-    from pyflocker.ciphers import base
 
 # an encrypted DH private key. passphrase is "helloworld"
 TESTING_DH_PRIVATE_KEY = b"""\
