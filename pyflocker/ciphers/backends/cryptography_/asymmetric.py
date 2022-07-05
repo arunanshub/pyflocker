@@ -106,6 +106,7 @@ EC_SIGNATURE_ALGORITHMS: dict[
     typing.Callable,
 ] = {
     asymmetric.ECDSA: get_ECDSA,
+    # asymmetric.EdDSA: get_EdDSA,
 }
 
 

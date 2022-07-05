@@ -3,7 +3,7 @@ from __future__ import annotations
 import typing
 
 from Cryptodome.Cipher import PKCS1_OAEP
-from Cryptodome.Signature import DSS, pss
+from Cryptodome.Signature import DSS, eddsa, pss
 
 from .. import asymmetric
 
@@ -90,16 +90,29 @@ def get_ECDSA(
     Returns: Signer/Verifier instance.
     """
     if not isinstance(algorithm, asymmetric.ECDSA):  # pragma: no cover
-        raise TypeError("algorithm must be an instance of ECDH")
+        raise TypeError("algorithm must be an instance of ECDSA")
     return DSS.new(key, mode="fips-186-3", encoding="der")  # type: ignore
+
+
+def get_EdDSA(
+    key: EccKey,
+    algorithm: asymmetric.BaseEllepticCurveSignatureAlgorithm,
+) -> eddsa.EdDSASigScheme:
+    if not isinstance(algorithm, asymmetric.EdDSA):
+        raise TypeError("algorithm must be an instance of EdDSA")
+    return eddsa.new(
+        key,
+        mode=algorithm.mode,  # type: ignore
+        context=algorithm.context,
+    )
 
 
 class _SaltLengthMaximizer:
     """
-    Custom sign/verify wrapper over PSS to preserve consistency:
-    pyca/cryptography follows the OpenSSL quirk where the default
-    salt length is maximized and doesn't match with the size of the
-    digest applied to the message.
+    Custom sign/verify wrapper over PSS to preserve consistency.
+    pyca/cryptography follows the OpenSSL quirk where the default salt length
+    is maximized and doesn't match with the size of the digest applied to the
+    message.
     """
 
     def __init__(self, key: RsaKey, padding: typing.Any) -> None:
@@ -139,6 +152,7 @@ EC_SIGNATURE_ALGORITHMS: dict[
     typing.Callable,
 ] = {
     asymmetric.ECDSA: get_ECDSA,
+    asymmetric.EdDSA: get_EdDSA,
 }
 
 # PKCS8 password derivation mechanisms
