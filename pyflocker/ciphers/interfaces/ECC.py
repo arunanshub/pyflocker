@@ -52,7 +52,9 @@ def load_public_key(
 
     Args:
         data: The public key (a bytes-like object) to deserialize.
-        curve: The name of the curve. Required only for ``SEC1`` keys.
+        curve:
+            The name of the curve. Required only for ``SEC1`` and ``Raw``
+            keys.
 
     Keyword Arguments:
         backend: The backend to use. It must be a value from :any:`Backends`.
@@ -60,10 +62,7 @@ def load_public_key(
     Returns:
         An ECC public key.
     """
-    return _load_ecc_cpr(backend).load_public_key(
-        data,
-        curve=curve,
-    )
+    return _load_ecc_cpr(backend).load_public_key(data, curve=curve)
 
 
 def load_private_key(
