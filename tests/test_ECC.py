@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-import hashlib
 import typing
 from itertools import product
 
 import pytest
+from hypothesis import strategies as st
+from hypothesis.core import given
 
 from pyflocker.ciphers import ECC, ECDSA, Backends, exc
-from pyflocker.ciphers.backends.asymmetric import ECDH
+from pyflocker.ciphers.backends.asymmetric import ECDH, EdDSA
 from pyflocker.ciphers.interfaces import Hash
 
-ENCRYPTION_PASSPHRASE = hashlib.sha256(b"ENCRYPTION_PASSPHRASE").digest()
-
-SIGNING_DATA = b"SIGNING_DATA for SignerContext and VerifierContext"
+if typing.TYPE_CHECKING:
+    from pyflocker.ciphers import base
 
 # an encrypted DH private key. passphrase is "helloworld"
 TESTING_DH_PRIVATE_KEY = b"""\
@@ -75,30 +75,51 @@ TXfCf13+xi6EN2juRS0=
 -----END PUBLIC KEY-----
 """
 
-if typing.TYPE_CHECKING:
-    from pyflocker.ciphers import base
+
+NIST_CURVES = ["p192", "p224", "p256", "p384", "p521"]
+
+EDWARDS_CURVES = ["ed25519", "ed448"]
+
+nist_curves_fixture = pytest.mark.parametrize(
+    "curve",
+    NIST_CURVES,
+    scope="module",
+)
+edwards_curves_fixture = pytest.mark.parametrize(
+    "curve",
+    EDWARDS_CURVES,
+    scope="module",
+)
+all_curves_fixture = pytest.mark.parametrize(
+    "curve",
+    NIST_CURVES + EDWARDS_CURVES,
+    scope="module",
+)
+backend_cross_fixture = pytest.mark.parametrize(
+    "backend1, backend2",
+    list(product(Backends, repeat=2)),
+    scope="module",
+)
+p256_curve_fixture = pytest.mark.parametrize("curve", ["p256"], scope="module")
 
 
 @pytest.fixture(scope="module")
-def private_key(curve: str, backend: Backends):
-    return ECC.generate(curve, backend=backend)
+def private_key(curve: str, backend1: Backends):
+    """
+    Generate a private key. It will be generated only once for the entire
+    test suite.
+    """
+    try:
+        return ECC.generate(curve, backend=backend1)
+    except ValueError as e:
+        assert "Invalid curve" in str(e)
+        return pytest.skip(f"{curve} not supported by {backend1.name}")
 
 
 @pytest.fixture(scope="module")
 def public_key(private_key: base.BaseECCPrivateKey):
+    """Derive a public key from a private key fixture."""
     return private_key.public_key()
-
-
-curve_fixture = pytest.mark.parametrize(
-    "curve",
-    ["p192", "p224", "p256", "p384", "p521"],
-    scope="module",
-)
-backend_cross_fixture = pytest.mark.parametrize(
-    "backend, backend2",
-    list(product(Backends, repeat=2)),
-    scope="module",
-)
 
 
 def private_key_equal(
@@ -115,11 +136,11 @@ def public_key_equal(
     return key1.key_size == key2.key_size
 
 
-@curve_fixture
-@backend_cross_fixture
-class TestPrivateKeyEncoding:
+class TestPrivateKeySerde:
+    @nist_curves_fixture
+    @backend_cross_fixture
     @pytest.mark.parametrize("format", ["PKCS1", "PKCS8"])
-    @pytest.mark.parametrize("passphrase", [None, ENCRYPTION_PASSPHRASE])
+    @given(passphrase=st.binary(min_size=1) | st.none())
     def test_PEM(
         self,
         private_key,
@@ -140,8 +161,10 @@ class TestPrivateKeyEncoding:
         )
         assert private_key_equal(private_key, private_key2)
 
-    @pytest.mark.parametrize("format", ["PKCS1", "PKCS8"])
-    @pytest.mark.parametrize("passphrase", [None, ENCRYPTION_PASSPHRASE])
+    @all_curves_fixture
+    @backend_cross_fixture
+    @pytest.mark.parametrize("format", ["PKCS8"])
+    @given(passphrase=st.binary(min_size=1) | st.none())
     def test_DER(
         self,
         private_key,
@@ -149,15 +172,11 @@ class TestPrivateKeyEncoding:
         backend2: Backends,
         passphrase,
     ):
-        try:
-            serialized = private_key.serialize(
-                encoding="DER",
-                format=format,
-                passphrase=passphrase,
-            )
-        except ValueError:
-            assert format == "PKCS1"
-            return
+        serialized = private_key.serialize(
+            encoding="DER",
+            format=format,
+            passphrase=passphrase,
+        )
 
         private_key2 = ECC.load_private_key(
             serialized,
@@ -166,66 +185,188 @@ class TestPrivateKeyEncoding:
         )
         assert private_key_equal(private_key, private_key2)
 
+    @nist_curves_fixture
+    @backend_cross_fixture
+    def test_error_DER_PKCS1_with_passphrase(
+        self,
+        private_key: base.BaseECCPrivateKey,
+        backend2: Backends,
+    ):
+        del backend2
+        with pytest.raises(ValueError):
+            private_key.serialize("DER", "PKCS1", b"passwd")
 
-@curve_fixture
-@backend_cross_fixture
-class TestPublicKeyEncoding:
+    @pytest.mark.parametrize("backend1", Backends)
+    def test_error_load_invalid_password(self, backend1):
+        with pytest.raises(ValueError):
+            ECC.load_private_key(
+                TESTING_ENCRYPTED_PRIVATE_KEY,
+                backend=backend1,
+            )
+        with pytest.raises(ValueError):
+            ECC.load_private_key(
+                TESTING_ENCRYPTED_PRIVATE_KEY,
+                passphrase=b"nothepassphrase",
+                backend=backend1,
+            )
+            ECC.load_private_key(
+                TESTING_UNENCRYPTED_PRIVATE_KEY,
+                passphrase=b"nothepassphrase",
+                backend=backend1,
+            )
+        with pytest.raises(ValueError):
+            ECC.load_private_key(
+                TESTING_DH_PRIVATE_KEY,
+                passphrase=b"helloworld",
+                backend=backend1,
+            )
+        with pytest.raises(ValueError):
+            ECC.load_private_key(TESTING_PUBLIC_KEY, backend=backend1)
+
+    @pytest.mark.parametrize("backend1", Backends)
+    def test_error_load_invalid_data(self, backend1):
+        with pytest.raises(ValueError):
+            ECC.load_private_key(b"invalid-data", backend=backend1)
+        with pytest.raises(ValueError):
+            ECC.load_private_key(
+                b"invalid-data",
+                backend=backend1,
+                passphrase=b"invalid",
+            )
+
+    @p256_curve_fixture
+    @pytest.mark.parametrize(
+        "backend1",
+        [Backends.CRYPTOGRAPHY],
+        scope="module",
+    )
+    def test_error_PEM_OpenSSH_password_less_than_72_bytes(
+        self,
+        private_key,
+    ):
+        with pytest.raises(ValueError):
+            private_key.serialize("PEM", "OpenSSH", passphrase=bytes(73))
+
+    @p256_curve_fixture
+    @pytest.mark.parametrize("backend1", Backends, scope="module")
+    def test_error_invalid_encoding_format(self, private_key):
+        with pytest.raises(ValueError):
+            private_key.serialize(encoding="nonexistent")
+        with pytest.raises(ValueError):
+            private_key.serialize(format="nonexistent")
+
+    @pytest.mark.parametrize("curve", ["p192", "p224"], scope="module")
+    @pytest.mark.parametrize(
+        "backend1",
+        [Backends.CRYPTOGRAPHY],
+        scope="module",
+    )
+    def test_PEM_OpenSSH_unsupported_curves(self, private_key):
+        with pytest.raises(ValueError):
+            private_key.serialize("PEM", "OpenSSH")
+
+
+class TestPublicKeySerde:
+    @all_curves_fixture
+    @backend_cross_fixture
     @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo"])
-    def test_PEM(self, public_key, format, backend, backend2):
+    def test_PEM(self, public_key, format, backend1, backend2):
         try:
             serialized = public_key.serialize(encoding="PEM", format=format)
         except ValueError:
-            assert backend == Backends.CRYPTODOME
+            assert backend1 == Backends.CRYPTODOME
             return pytest.skip(
-                f"{backend} does not support format {format} for public key",
+                f"{backend1} does not support format {format} for public key",
             )
 
         public_key2 = ECC.load_public_key(serialized, backend=backend2)
         assert public_key_equal(public_key, public_key2)
 
     @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo"])
-    def test_DER(self, public_key, format, backend, backend2):
-        try:
-            serialized = public_key.serialize(encoding="DER", format=format)
-        except ValueError:
-            assert backend == Backends.CRYPTODOME
-            return pytest.skip(
-                f"{backend} does not support format {format} for public key",
-            )
-
+    @all_curves_fixture
+    @backend_cross_fixture
+    def test_DER(self, public_key, format, backend2):
+        serialized = public_key.serialize(encoding="DER", format=format)
         public_key2 = ECC.load_public_key(serialized, backend=backend2)
         assert public_key_equal(public_key, public_key2)
 
-    def test_SEC1_SEC1(self, public_key, backend, backend2):
-        try:
-            serialized = public_key.serialize("SEC1", "SEC1")
-        except ValueError:
-            assert backend == Backends.CRYPTOGRAPHY
-            return pytest.skip("SEC1 format unsupported by Cryptography")
-
-        try:
-            public_key2 = ECC.load_public_key(
-                serialized,
-                backend=backend2,
-                curve=public_key.curve,
-            )
-        except ValueError:
-            assert backend2 == Backends.CRYPTOGRAPHY
-            return pytest.skip("SEC1 format unsupported by Cryptography")
-
+    @pytest.mark.parametrize(
+        "format",
+        ["CompressedPoint", "UncompressedPoint"],
+    )
+    @nist_curves_fixture
+    @backend_cross_fixture
+    def test_SEC1(self, public_key, format, backend2):
+        serialized = public_key.serialize("SEC1", format)
+        public_key2 = ECC.load_public_key(
+            serialized,
+            backend=backend2,
+            curve=public_key.curve,
+        )
         assert public_key_equal(public_key, public_key2)
 
+    @edwards_curves_fixture
+    @backend_cross_fixture
+    def test_Raw(self, public_key, backend2):
+        serialized = public_key.serialize("Raw", "Raw")
+        public_key2 = ECC.load_public_key(
+            serialized,
+            backend=backend2,
+            curve=public_key.curve,
+        )
+        assert public_key_equal(public_key, public_key2)
 
-@curve_fixture
-@backend_cross_fixture
+    @p256_curve_fixture
+    @pytest.mark.parametrize("backend1", Backends, scope="module")
+    def test_error_openssh_not_with_openssh(self, private_key):
+        public_key = private_key.public_key()
+        with pytest.raises(ValueError):
+            public_key.serialize("OpenSSH", "SubjectPublicKeyInfo")
+        with pytest.raises(ValueError):
+            public_key.serialize("PEM", "OpenSSH")
+
+    @pytest.mark.parametrize("backend1", Backends)
+    def test_error_load_invalid_data(self, backend1):
+        with pytest.raises(ValueError):
+            ECC.load_public_key(b"invalid-data", backend=backend1)
+        with pytest.raises(ValueError):
+            ECC.load_public_key(
+                TESTING_ENCRYPTED_PRIVATE_KEY,
+                backend=backend1,
+            )
+        with pytest.raises(ValueError):
+            ECC.load_public_key(
+                TESTING_UNENCRYPTED_PRIVATE_KEY,
+                backend=backend1,
+            )
+        with pytest.raises(ValueError):
+            ECC.load_public_key(
+                TESTING_DH_PUBLIC_KEY,
+                backend=backend1,
+            )
+
+    @p256_curve_fixture
+    @pytest.mark.parametrize("backend1", Backends, scope="module")
+    def test_error_invalid_encoding_format(self, private_key):
+        public_key = private_key.public_key()
+        with pytest.raises(ValueError):
+            public_key.serialize(encoding="nonexistent")
+        with pytest.raises(ValueError):
+            public_key.serialize(format="nonexistent")
+
+
 class TestSigningVerifying:
+    @nist_curves_fixture
+    @backend_cross_fixture
     @pytest.mark.parametrize("hashname", ["sha256", "sha512", "sha3_512"])
+    @given(data=st.binary())
     # maximum and minimum salt lengths
     def test_ECDSA(
         self,
         private_key,
         backend2,
         hashname,
+        data,
     ):
         public_key = ECC.load_public_key(
             private_key.public_key().serialize(),
@@ -234,29 +375,72 @@ class TestSigningVerifying:
 
         ecdsa = ECDSA()
         signer = private_key.signer(ecdsa)
+        assert isinstance(signer, base.BaseSignerContext)
         verifier = public_key.verifier(ecdsa)
+        assert isinstance(verifier, base.BaseVerifierContext)
 
-        to_sign = Hash.new(hashname, SIGNING_DATA)
+        to_sign = Hash.new(hashname, data)
         signature = signer.sign(to_sign)
         verifier.verify(to_sign, signature)
 
         with pytest.raises(exc.SignatureError):
             verifier.verify(Hash.new("sha256", b"bogus"), signature)
 
+    @given(data=st.binary())
+    @backend_cross_fixture
+    @edwards_curves_fixture
+    def test_EdDSA(self, private_key, backend2, data):
+        public_key = ECC.load_public_key(
+            private_key.public_key().serialize(),
+            backend=backend2,
+        )
 
-@curve_fixture
+        eddsa = EdDSA()
+        signer = private_key.signer(eddsa)
+        verifier = public_key.verifier(eddsa)
+
+        signature = signer.sign(data)
+        verifier.verify(data, signature)
+
+    @p256_curve_fixture
+    @pytest.mark.parametrize("backend1", Backends, scope="module")
+    def test_private_key_signer_invalid_algorithm(self, private_key):
+        class FakeAlgo:
+            pass
+
+        with pytest.raises(TypeError):
+            private_key.signer(FakeAlgo())
+
+    @p256_curve_fixture
+    @pytest.mark.parametrize("backend1", Backends, scope="module")
+    def test_public_key_verifier_invalid_algorithm(self, public_key):
+        class FakeAlgo:
+            pass
+
+        with pytest.raises(TypeError):
+            public_key.verifier(FakeAlgo())
+
+
+@nist_curves_fixture
 @backend_cross_fixture
 class TestECCExchange:
     def test_exchange_bytes_ECDH(
         self,
         private_key: base.BaseECCPrivateKey,
-        backend,
+        backend1,
         backend2,
     ):
         algorithm = ECDH()
 
         try:
             private_key2 = ECC.generate(private_key.curve, backend=backend2)
+        except ValueError as e:
+            assert "Invalid curve" in str(e)
+            return pytest.skip(
+                f"{private_key.curve} not supported by {backend2.name}"
+            )
+
+        try:
             assert private_key.exchange(
                 private_key2.public_key().serialize(
                     "PEM",
@@ -271,19 +455,26 @@ class TestECCExchange:
                 algorithm=algorithm,
             )
         except NotImplementedError:
-            assert Backends.CRYPTODOME in (backend, backend2)
+            assert Backends.CRYPTODOME in (backend1, backend2)
             return pytest.skip("Key exchange not supported by Cryptodome")
 
     def test_exchange_key_ECDH(
         self,
         private_key: base.BaseECCPrivateKey,
-        backend,
+        backend1,
         backend2,
     ):
         algorithm = ECDH()
 
         try:
             private_key2 = ECC.generate(private_key.curve, backend=backend2)
+        except ValueError as e:
+            assert "Invalid curve" in str(e)
+            return pytest.skip(
+                f"{private_key.curve} not supported by {backend2.name}"
+            )
+
+        try:
             assert private_key.exchange(
                 private_key2.public_key(),
                 algorithm=algorithm,
@@ -292,148 +483,12 @@ class TestECCExchange:
                 algorithm=algorithm,
             )
         except NotImplementedError:
-            assert Backends.CRYPTODOME in (backend, backend2)
+            assert Backends.CRYPTODOME in (backend1, backend2)
             return pytest.skip("Key exchange not supported by Cryptodome")
 
 
-curve_p256_fixture = pytest.mark.parametrize("curve", ["p256"], scope="module")
-
-backend_list_fixture = pytest.mark.parametrize(
-    "backend", list(Backends), scope="module"
-)
-
-
 class TestECCErrors:
-    @curve_p256_fixture
-    @pytest.mark.parametrize(
-        "backend",
-        [Backends.CRYPTOGRAPHY],
-        scope="module",
-    )
-    def test_PEM_OpenSSH_password_less_than_72_bytes_cryptography(
-        self,
-        private_key,
-    ):
+    @pytest.mark.parametrize("backend1", Backends)
+    def test_invalid_curve_name(self, backend1):
         with pytest.raises(ValueError):
-            private_key.serialize("PEM", "OpenSSH", passphrase=bytes(73))
-
-    @pytest.mark.parametrize(
-        "curve",
-        ["p192", "p224"],
-        scope="module",
-    )
-    @pytest.mark.parametrize(
-        "backend",
-        [Backends.CRYPTOGRAPHY],
-        scope="module",
-    )
-    def test_PEM_OpenSSH_unsupported_curves(self, private_key):
-        with pytest.raises(ValueError):
-            private_key.serialize("PEM", "OpenSSH")
-
-    @backend_list_fixture
-    def test_invalid_curve_name(self, backend):
-        with pytest.raises(ValueError):
-            ECC.generate("invalid-curve", backend=backend)
-
-    @curve_p256_fixture
-    @backend_list_fixture
-    def test_private_key_invalid_encoding_format(self, private_key):
-        with pytest.raises(ValueError):
-            private_key.serialize(encoding="nonexistent")
-        with pytest.raises(ValueError):
-            private_key.serialize(format="nonexistent")
-
-    @curve_p256_fixture
-    @backend_list_fixture
-    def test_public_key_serialize_invalid_encoding_format(self, private_key):
-        public_key = private_key.public_key()
-        with pytest.raises(ValueError):
-            public_key.serialize(encoding="nonexistent")
-        with pytest.raises(ValueError):
-            public_key.serialize(format="nonexistent")
-
-    @backend_list_fixture
-    def test_private_key_load_invalid_data(self, backend):
-        with pytest.raises(ValueError):
-            ECC.load_private_key(b"invalid-data", backend=backend)
-        with pytest.raises(ValueError):
-            ECC.load_private_key(
-                b"invalid-data",
-                backend=backend,
-                passphrase=b"invalid",
-            )
-
-    @backend_list_fixture
-    def test_private_key_load_invalid_password(self, backend):
-        with pytest.raises(ValueError):
-            ECC.load_private_key(
-                TESTING_ENCRYPTED_PRIVATE_KEY,
-                backend=backend,
-            )
-        with pytest.raises(ValueError):
-            ECC.load_private_key(
-                TESTING_ENCRYPTED_PRIVATE_KEY,
-                passphrase=b"nothepassphrase",
-                backend=backend,
-            )
-            ECC.load_private_key(
-                TESTING_UNENCRYPTED_PRIVATE_KEY,
-                passphrase=b"nothepassphrase",
-                backend=backend,
-            )
-        with pytest.raises(ValueError):
-            ECC.load_private_key(
-                TESTING_DH_PRIVATE_KEY,
-                passphrase=b"helloworld",
-                backend=backend,
-            )
-        with pytest.raises(ValueError):
-            ECC.load_private_key(TESTING_PUBLIC_KEY, backend=backend)
-
-    @backend_list_fixture
-    def test_public_key_load_invalid_data(self, backend):
-        with pytest.raises(ValueError):
-            ECC.load_public_key(b"invalid-data", backend=backend)
-        with pytest.raises(ValueError):
-            ECC.load_public_key(
-                TESTING_ENCRYPTED_PRIVATE_KEY,
-                backend=backend,
-            )
-        with pytest.raises(ValueError):
-            ECC.load_public_key(
-                TESTING_UNENCRYPTED_PRIVATE_KEY,
-                backend=backend,
-            )
-        with pytest.raises(ValueError):
-            ECC.load_public_key(
-                TESTING_DH_PUBLIC_KEY,
-                backend=backend,
-            )
-
-    @curve_p256_fixture
-    @backend_list_fixture
-    def test_public_key_openssh_not_with_openssh(self, private_key):
-        public_key = private_key.public_key()
-        with pytest.raises(ValueError):
-            public_key.serialize("OpenSSH", "SubjectPublicKeyInfo")
-        with pytest.raises(ValueError):
-            public_key.serialize("PEM", "OpenSSH")
-
-    @curve_p256_fixture
-    @backend_list_fixture
-    def test_private_key_signer_invalid_algorithm(self, private_key):
-        class FakeAlgo:
-            pass
-
-        with pytest.raises(TypeError):
-            private_key.signer(FakeAlgo())
-
-    @curve_p256_fixture
-    @backend_list_fixture
-    def test_public_key_signer_invalid_algorithm(self, public_key):
-        class FakeAlgo:
-            pass
-
-        with pytest.raises(TypeError):
-            public_key.verifier(FakeAlgo())
+            ECC.generate("invalid-curve", backend=backend1)
