@@ -81,6 +81,12 @@ def hashfuncs(
                 f"Variable digest size unsupported for {name!r} by"
                 f" {backend.name!r}"
             )
+        except TypeError as e:
+            assert "got an unexpected keyword argument" in str(e)
+            assert backend == Backends.CRYPTOGRAPHY
+            return pytest.skip(
+                f"{backend.name.lower()} does not support keyed hash."
+            )
 
     return tuple(hashes)
 
