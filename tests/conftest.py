@@ -7,7 +7,7 @@ from hypothesis import settings
 settings.register_profile("dev", deadline=None)
 settings.register_profile(
     "ci",
-    max_examples=500,
+    max_examples=200,
     parent=settings.get_profile("dev"),
 )
 
