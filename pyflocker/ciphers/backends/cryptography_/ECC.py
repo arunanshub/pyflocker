@@ -324,6 +324,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
     _LOADERS = {
         b"-----": serial.load_pem_public_key,
         b"0": serial.load_der_public_key,
+        b"ecdsa": serial.load_ssh_public_key,
+        b"ssh-ed25519": serial.load_ssh_public_key,
     }
 
     # possible key types returned by load_*_private_key(...). The keys are
