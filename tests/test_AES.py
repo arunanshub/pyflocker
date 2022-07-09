@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 
 import pytest
-from hypothesis import Verbosity, given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 
 from pyflocker.ciphers import AES, Backends, base, exc, modes
@@ -113,7 +113,6 @@ def get_encryptor_decryptor(
 
 
 class TestAESNormal:
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -143,7 +142,6 @@ class TestAESNormal:
 
         assert decryptor.update(encryptor.update(data)) == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -181,7 +179,6 @@ class TestAESNormal:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -223,7 +220,6 @@ class TestAESNormal:
 
         assert data == decrypted
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -268,7 +264,6 @@ class TestAESNormal:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @given(
@@ -287,7 +282,6 @@ class TestAESNormal:
 
 
 class TestAESSIV:
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -319,7 +313,6 @@ class TestAESSIV:
             encryptor.calculate_tag(),
         )
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -361,7 +354,6 @@ class TestAESSIV:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         key=st.binary().filter(lambda b: len(b) not in [32, 48, 64]),
@@ -371,7 +363,6 @@ class TestAESSIV:
         with pytest.raises(ValueError):
             get_encryptor(key, AES.MODE_SIV, nonce, backend)
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -405,7 +396,6 @@ class TestAESSIV:
 
 
 class TestAESOCB:
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -461,7 +451,6 @@ class TestAESOCB:
 
 
 class TestAESCCM:
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -499,7 +488,6 @@ class TestAESCCM:
             encryptor.calculate_tag(),
         )
 
-    @settings(deadline=None, verbosity=Verbosity.verbose)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -557,7 +545,6 @@ class TestAESCCM:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -589,7 +576,6 @@ class TestAESCCM:
         with pytest.raises(exc.DecryptionError):
             decryptor.update(encryptor.update(data), encryptor.calculate_tag())
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         key=st.binary().filter(lambda b: len(b) not in [16, 24, 32]),
@@ -599,7 +585,6 @@ class TestAESCCM:
         with pytest.raises(ValueError):
             get_encryptor(key, AES.MODE_CCM, nonce, backend)
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         key=NORMAL_KEY_SIZES,
@@ -611,7 +596,6 @@ class TestAESCCM:
 
 
 class TestFileIO:
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -657,7 +641,6 @@ class TestFileIO:
 
         assert filebuf.getvalue() == as_decrypted.getvalue()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -702,7 +685,6 @@ class TestFileIO:
         as_decrypted = decryptor.update(len(data))
         assert as_decrypted == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @pytest.mark.parametrize("mode", list(set(Modes) ^ modes.SPECIAL))

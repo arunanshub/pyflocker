@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 
 from pyflocker.ciphers import base, exc
@@ -128,7 +128,6 @@ def get_encryptor_decryptor(
 
 
 class TestCamellia:
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -158,7 +157,6 @@ class TestCamellia:
 
         assert decryptor.update(encryptor.update(data)) == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -196,7 +194,6 @@ class TestCamellia:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -238,7 +235,6 @@ class TestCamellia:
 
         assert data == decrypted
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -285,7 +281,6 @@ class TestCamellia:
 
 
 class TestFileIO:
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -331,7 +326,6 @@ class TestFileIO:
 
         assert filebuf.getvalue() == as_decrypted.getvalue()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
@@ -376,7 +370,6 @@ class TestFileIO:
         as_decrypted = decryptor.update(len(data))
         assert as_decrypted == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
@@ -475,7 +468,6 @@ class TestErrors:
         with pytest.raises(TypeError):
             encryptor.authenticate(bytes(16))
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         mode=st.sampled_from(CAMELLIA_MODES),
@@ -498,7 +490,6 @@ class TestErrors:
         with pytest.raises(exc.AlreadyFinalized):
             encryptor.finalize()
 
-    @settings(deadline=None)
     @given(
         mode=st.sampled_from(CAMELLIA_MODES),
         backend=st.sampled_from(Backends),
@@ -521,7 +512,6 @@ class TestErrors:
         with pytest.raises(exc.AlreadyFinalized):
             encryptor.authenticate(bytes(16))
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         mode=st.sampled_from(CAMELLIA_MODES),

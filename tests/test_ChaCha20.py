@@ -3,7 +3,7 @@ from __future__ import annotations
 import io
 
 import pytest
-from hypothesis import given, settings
+from hypothesis import given
 from hypothesis import strategies as st
 
 from pyflocker.ciphers import Backends, base, exc
@@ -109,7 +109,6 @@ def get_encryptor_decryptor(
 
 
 class TestChaCha20:
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -136,7 +135,6 @@ class TestChaCha20:
 
         assert decryptor.update(encryptor.update(data)) == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -171,7 +169,6 @@ class TestChaCha20:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -210,7 +207,6 @@ class TestChaCha20:
 
         assert data == decrypted
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -252,7 +248,6 @@ class TestChaCha20:
 
         assert data == buffer[: len(data)].tobytes()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         key=st.binary().filter(lambda b: len(b) != 32),
@@ -267,7 +262,6 @@ class TestChaCha20:
         with pytest.raises(ValueError):
             get_encryptor(key, nonce, backend)
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(
         key=CHACHA20_KEY_SIZES,
@@ -288,7 +282,6 @@ class TestChaCha20:
 
 
 class TestFileIO:
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -331,7 +324,6 @@ class TestFileIO:
 
         assert filebuf.getvalue() == as_decrypted.getvalue()
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -373,7 +365,6 @@ class TestFileIO:
         as_decrypted = decryptor.update(len(data))
         assert as_decrypted == data
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
     @given(
@@ -452,7 +443,6 @@ class TestErrors:
         with pytest.raises(TypeError):
             encryptor.authenticate(bytes(16))
 
-    @settings(deadline=None)
     @pytest.mark.parametrize("backend", Backends)
     @given(use_hmac=st.booleans())
     def test_error_on_finalize_after_finalize(
