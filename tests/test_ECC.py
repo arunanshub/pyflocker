@@ -312,6 +312,17 @@ class TestPublicKeySerde:
         )
         assert public_key_equal(public_key, public_key2)
 
+    @pytest.mark.parametrize(
+        "curve",
+        ["p256", "p384", "p521", "ed25519"],
+        scope="module",
+    )
+    @backend_cross_fixture
+    def test_OpenSSH(self, public_key, backend2):
+        serialized = public_key.serialize("OpenSSH", "OpenSSH")
+        public_key2 = ECC.load_public_key(serialized, backend=backend2)
+        assert public_key_equal(public_key, public_key2)
+
     @p256_curve_fixture
     @pytest.mark.parametrize("backend1", Backends, scope="module")
     def test_error_openssh_not_with_openssh(self, private_key):
