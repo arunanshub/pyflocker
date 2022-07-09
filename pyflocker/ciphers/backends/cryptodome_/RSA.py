@@ -10,11 +10,21 @@ from .asymmetric import PROTECTION_SCHEMES, get_padding_algorithm
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
-    _encodings = ("PEM", "DER")
-    _formats = {
-        "PKCS1": 1,
-        "PKCS8": 8,
+    # Encodings supported by this key.
+    _ENCODINGS = {
+        "PEM": "PEM",
+        "DER": "DER",
     }
+
+    # Formats supported by this key.
+    _FORMATS = {
+        "PKCS1": "PKCS1",
+        "TraditionalOpenSSL": "PKCS1",
+        "PKCS8": "PKCS8",
+    }
+
+    # The default protection algorithm used for encrypting the private key.
+    _DEFAULT_PROTECTION = "scryptAndAES256-CBC"
 
     def __init__(
         self,
@@ -98,8 +108,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             protection:
                 The protection scheme to use. Supplying a value for protection
                 has meaning only if the ``format`` is PKCS8. If ``None`` is
-                provided ``PBKDF2WithHMAC-SHA1AndAES256-CBC`` is used as the
-                protection scheme.
+                provided ``scryptAndAES256-CBC`` is used as the protection
+                scheme.
 
         Returns:
             Serialized key as a bytes object.
@@ -110,33 +120,91 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
                 if DER is used with PKCS1 or,
                 protection value is supplied with PKCS1 format.
         """
-        if encoding not in self._encodings:
-            raise ValueError(f"Invalid encoding: {encoding!r}")
-        if format not in self._formats:
-            raise ValueError(f"Invalid format: {format!r}")
+        try:
+            encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding or format: {e}") from e
 
         if (
             protection is not None and protection not in PROTECTION_SCHEMES
         ):  # pragma: no cover
-            raise ValueError("invalid protection scheme")
+            raise ValueError(f"invalid protection scheme: {protection!r}")
 
-        if format == "PKCS1":
-            self._validate_pkcs1_args(encoding, protection)
+        if passphrase:
+            passphrase = memoryview(passphrase).tobytes()
 
-        if passphrase is not None and protection is None:
-            # use a curated encryption choice and not DES-EDE3-CBC
-            protection = "PBKDF2WithHMAC-SHA1AndAES256-CBC"
+        kwargs: dict[str, typing.Any] = {}
+        if encoding == "PEM":
+            self._set_pem_args(format, passphrase, protection, kwargs)
+        elif encoding == "DER":
+            self._set_der_args(format, passphrase, protection, kwargs)
 
-        return self._key.export_key(
-            format=encoding,
-            pkcs=self._formats[format],
-            passphrase=(
-                memoryview(passphrase).tobytes()  # type: ignore
-                if passphrase is not None
-                else None
-            ),
-            protection=protection,
+        try:
+            key = self._key.export_key(**kwargs)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
+        return key if isinstance(key, bytes) else key.encode()
+
+    @classmethod
+    def _set_pem_args(
+        cls,
+        format: str,
+        passphrase: bytes | None,
+        protection: str | None,
+        kwargs: dict,
+    ) -> None:
+        kwargs["format"] = "PEM"
+        if format == "PKCS8":
+            kwargs["pkcs"] = 8
+            cls._set_pkcs8_passphrase_args(passphrase, protection, kwargs)
+        elif format == "PKCS1":
+            kwargs["pkcs"] = 1
+            cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
+        else:
+            raise ValueError(f"Invalid format for PEM: {format!r}")
+
+    @classmethod
+    def _set_der_args(
+        cls,
+        format: str,
+        passphrase: bytes | None,
+        protection: str | None,
+        kwargs: dict,
+    ) -> None:
+        kwargs["format"] = "DER"
+        if format == "PKCS8":
+            kwargs["pkcs"] = 8
+            cls._set_pkcs8_passphrase_args(passphrase, protection, kwargs)
+        elif format == "PKCS1":
+            kwargs["pkcs"] = 1
+            cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
+        else:
+            raise ValueError(f"Invalid format for DER: {format!r}")
+
+    @classmethod
+    def _set_pkcs8_passphrase_args(
+        cls,
+        passphrase: bytes | None,
+        protection: str | None,
+        kwargs: dict,
+    ) -> None:
+        if not passphrase and protection:
+            raise ValueError("Using protection without passphrase is invalid")
+        kwargs["passphrase"] = passphrase
+        kwargs["protection"] = (
+            protection if protection else cls._DEFAULT_PROTECTION
         )
+
+    @staticmethod
+    def _set_pkcs1_passphrase_args(
+        passphrase: bytes | None,
+        protection: str | None,
+        kwargs: dict,
+    ) -> None:
+        if protection is not None:  # pragma: no cover
+            raise ValueError("protection is meaningful only for PKCS8")
+        if passphrase is not None:
+            kwargs["passphrase"] = passphrase
 
     @staticmethod
     def _validate_pkcs1_args(
@@ -158,17 +226,24 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             key = RSA.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
                 raise ValueError("The key is not a private key")
-            return cls(None, _key=key)
         except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid or "
-                "passphrase is missing or incorrect."
-            ) from e
+            raise ValueError(f"Failed to load key: {e!s}") from e
+        return cls(None, _key=key)
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
-    _encodings = ("PEM", "DER", "OpenSSH")
-    _formats = ("SubjectPublicKeyInfo", "OpenSSH")
+    # Encodings supported by this key.
+    _ENCODINGS = {
+        "PEM": "PEM",
+        "DER": "DER",
+        "OpenSSH": "OpenSSH",
+    }
+
+    # Formats supported by this key.
+    _FORMATS = {
+        "SubjectPublicKeyInfo": "SubjectPublicKeyInfo",
+        "OpenSSH": "OpenSSH",
+    }
 
     def __init__(self, key: RSA.RsaKey) -> None:
         self._key = key
@@ -232,27 +307,55 @@ class RSAPublicKey(base.BaseRSAPublicKey):
                 if the encoding or format is not supported or invalid,
                 or OpenSSH encoding is not used with OpenSSH format.
         """
-        if format not in self._formats:
-            raise ValueError(f"Invalid format: {format!r}")
-        if encoding not in self._encodings:
-            raise ValueError(f"Invalid encoding: {encoding!r}")
-        if "OpenSSH" in (encoding, format) and encoding != format:
-            raise ValueError(
-                "OpenSSH format can be used only with OpenSSH encoding",
-            )
-        return self._key.export_key(format=encoding)
+        try:
+            encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
+        except KeyError as e:
+            raise ValueError(f"Invalid encoding or format: {e}") from e
+
+        kwargs: dict[str, typing.Any] = {}
+        if encoding == "OpenSSH":
+            self._set_openssh_args(format, kwargs)
+        elif encoding == "PEM":
+            self._set_pem_args(format, kwargs)
+        elif encoding == "DER":
+            self._set_der_args(format, kwargs)
+
+        try:
+            data = self._key.export_key(**kwargs)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
+        return data if isinstance(data, bytes) else data.encode("utf-8")
+
+    @staticmethod
+    def _set_openssh_args(format: str, kwargs: dict) -> None:
+        if format == "OpenSSH":
+            kwargs["format"] = "OpenSSH"
+            return
+        raise ValueError(f"Invalid format for OpenSSH: {format!r}")
+
+    @staticmethod
+    def _set_pem_args(format: str, kwargs: dict) -> None:
+        if format == "SubjectPublicKeyInfo":
+            kwargs["format"] = "PEM"
+            return
+        raise ValueError(f"Invalid format for PEM: {format!r}")
+
+    @staticmethod
+    def _set_der_args(format: str, kwargs: dict) -> None:
+        if format == "SubjectPublicKeyInfo":
+            kwargs["format"] = "DER"
+            return
+        raise ValueError(f"Invalid format for DER: {format!r}")
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
         try:
             key = RSA.import_key(data)
+            if key.has_private():
+                raise ValueError("The key is not a private key")
         except ValueError as e:
-            raise ValueError(
-                f"Cannot deserialize key. Backend error message:\n{e}"
-            ) from e
-        if key.has_private():
-            raise ValueError("The key is not a public key")
-        return cls(key=key)
+            raise ValueError(f"Failed to load key: {e!s}") from e
+        return cls(key)
 
 
 class EncryptorContext(base.BaseEncryptorContext):
