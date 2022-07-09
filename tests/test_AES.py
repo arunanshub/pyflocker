@@ -755,7 +755,7 @@ class TestErrors:
         mode: Modes,
         backend: Backends,
     ):
-        file = io.BytesIO(bytes(b" "))
+        file = io.BytesIO(b" ")
         with pytest.raises(NotImplementedError, match="does not support"):
             get_encryptor(
                 bytes(32),
