@@ -22,15 +22,25 @@ if typing.TYPE_CHECKING:
 
 
 class RSAPrivateKey(base.BaseRSAPrivateKey):
-    _encodings = {
+    # Encodings supported by this key.
+    _ENCODINGS = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
     }
-    _formats = {
-        "OpenSSH": PrivateFormat.OpenSSH,
-        "PKCS1": PrivateFormat.TraditionalOpenSSL,
-        "PKCS8": PrivateFormat.PKCS8,
+
+    # Formats supported by this key.
+    _FORMATS = {
         "TraditionalOpenSSL": PrivateFormat.TraditionalOpenSSL,
+        "PKCS1": PrivateFormat.TraditionalOpenSSL,
+        "OpenSSH": PrivateFormat.OpenSSH,
+        "PKCS8": PrivateFormat.PKCS8,
+    }
+
+    # Key loaders indexed by the key format.
+    _LOADERS = {
+        b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
+        b"-----": serial.load_pem_private_key,
+        b"0": serial.load_der_private_key,
     }
 
     def __init__(
@@ -133,8 +143,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
            ValueError: if the format or encoding is invalid or not supported.
         """
         try:
-            encd = self._encodings[encoding]
-            fmt = self._formats[format]
+            encd = self._ENCODINGS[encoding]
+            fmt = self._FORMATS[format]
         except KeyError as e:
             raise ValueError(
                 f"The encoding or format is invalid: {e.args[0]!r}"
@@ -147,7 +157,11 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             protection = serial.BestAvailableEncryption(
                 memoryview(passphrase).tobytes()
             )
-        return self._key.private_bytes(encd, fmt, protection)
+
+        try:
+            return self._key.private_bytes(encd, fmt, protection)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
 
     @classmethod
     def load(
@@ -155,49 +169,51 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         data: bytes,
         passphrase: bytes | None = None,
     ) -> RSAPrivateKey:
-        formats = {
-            b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
-            b"-----": serial.load_pem_private_key,
-            b"0": serial.load_der_private_key,
-        }
+        loader = cls._get_loader(data)
 
-        try:
-            loader = formats[next(filter(data.startswith, formats))]
-        except StopIteration:
-            raise ValueError("Invalid format.") from None
-
-        # type check
         if passphrase is not None:
             passphrase = memoryview(passphrase).tobytes()
 
         try:
             key = loader(memoryview(data), passphrase)
-            if not isinstance(key, rsa.RSAPrivateKey):  # pragma: no cover
-                raise ValueError("The key is not an RSA private key.")
-            return cls(None, _key=key)
-        except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. Either Key format is invalid or "
-                "passphrase is incorrect."
-            ) from e
-        except TypeError as e:
-            raise ValueError(
-                "The key is encrypted but the passphrase is not given or the"
-                " key is not encrypted but the passphrase is given."
-                " Cannot deserialize the key."
-            ) from e
+            if not isinstance(key, rsa.RSAPrivateKey):
+                raise ValueError("Key is not an RSA Private key")
+        except (ValueError, TypeError) as e:
+            raise ValueError(f"Failed to load key: {e!s}") from e
+
+        return cls(None, _key=key)
+
+    @classmethod
+    def _get_loader(cls, data: bytes) -> typing.Callable:
+        """
+        Returns a loader function depending on the initial bytes of the key.
+        """
+        try:
+            return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
+        except StopIteration:
+            raise ValueError("Invalid format") from None
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
-    _encodings = {
+    # Encodings supported by this key.
+    _ENCODINGS = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
         "OpenSSH": Encoding.OpenSSH,
     }
-    _formats = {
+
+    # Formats supported by this key.
+    _FORMATS = {
         "OpenSSH": PublicFormat.OpenSSH,
         "PKCS1": PublicFormat.PKCS1,
         "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
+    }
+
+    # Key loaders indexed by the key format.
+    _LOADERS = {
+        b"ssh-rsa ": serial.load_ssh_public_key,
+        b"-----": serial.load_pem_public_key,
+        b"0": serial.load_der_public_key,
     }
 
     def __init__(self, key: rsa.RSAPublicKey) -> None:
@@ -266,8 +282,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             ValueError: if the encoding or format is incorrect or unsupported.
         """
         try:
-            encd = self._encodings[encoding]
-            fmt = self._formats[format]
+            encd = self._ENCODINGS[encoding]
+            fmt = self._FORMATS[format]
         except KeyError as e:
             raise ValueError(
                 f"Invalid encoding or format: {e.args[0]!r}"
@@ -276,26 +292,26 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
-        formats = {
-            b"ssh-rsa ": serial.load_ssh_public_key,
-            b"-----": serial.load_pem_public_key,
-            b"0": serial.load_der_public_key,
-        }
-
-        try:
-            loader = formats[next(filter(data.startswith, formats))]
-        except StopIteration:
-            raise ValueError("Invalid format.") from None
-
+        loader = cls._get_loader(data)
         try:
             key = loader(memoryview(data))
             if not isinstance(key, rsa.RSAPublicKey):
-                raise ValueError("The key is not an RSA public key")
-            return cls(key)
+                raise ValueError("Key is not an RSA public key.")
         except ValueError as e:
-            raise ValueError(
-                "Cannot deserialize key. The key format might be invalid."
-            ) from e
+            raise ValueError(f"Failed to load key: {e!s}") from e
+
+        assert isinstance(key, rsa.RSAPublicKey)
+        return cls(key)
+
+    @classmethod
+    def _get_loader(cls, data: bytes) -> typing.Callable:
+        """
+        Returns a loader function depending on the initial bytes of the key.
+        """
+        try:
+            return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
+        except StopIteration:
+            raise ValueError("Invalid format.") from None
 
 
 class EncryptorContext(base.BaseEncryptorContext):
