@@ -4,6 +4,8 @@ import hashlib
 from itertools import product
 
 import pytest
+from hypothesis import given
+from hypothesis import strategies as st
 
 from pyflocker.ciphers import DH, exc
 from pyflocker.ciphers.backends import Backends
@@ -110,9 +112,9 @@ class TestDHParameters:
 
 @key_size_fixture
 @backend_cross_fixture
-class TestDHPrivateKeyEncoding:
+class TestDHPrivateKeySerde:
     @pytest.mark.parametrize("format", ["PKCS8"])
-    @pytest.mark.parametrize("passphrase", [None, SERIALIZATION_KEY])
+    @given(passphrase=st.binary(min_size=1))
     def test_PEM(self, dh_param, format, passphrase, backend2):
         private_key = dh_param.private_key()
         serialized = private_key.serialize("PEM", format, passphrase)
@@ -128,14 +130,14 @@ class TestDHPrivateKeyEncoding:
             return pytest.skip("DH not supported by Cryptodome")
 
         assert (
-            private_key.x == private_key2.x  # type: ignore
-            and private_key.key_size == private_key2.key_size  # type: ignore
+            private_key.x == private_key2.x
+            and private_key.key_size == private_key2.key_size
         )
 
 
 @key_size_fixture
 @backend_cross_fixture
-class TestDHPublicKeyEncoding:
+class TestDHPublicKeySerde:
     @pytest.mark.parametrize("format", ["SubjectPublicKeyInfo"])
     def test_PEM(self, dh_param, format, backend2):
         public_key = dh_param.private_key().public_key()
