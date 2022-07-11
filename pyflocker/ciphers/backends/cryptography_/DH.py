@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import typing
+
 from cryptography.hazmat.primitives import serialization as serial
 from cryptography.hazmat.primitives.asymmetric import dh
 from cryptography.hazmat.primitives.serialization import (
@@ -13,12 +15,18 @@ from ... import base
 
 
 class DHParameters(base.BaseDHParameters):
-    _encodings = {
+    _ENCODINGS = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
     }
-    _formats = {
+
+    _FORMATS = {
         "PKCS3": ParameterFormat.PKCS3,
+    }
+
+    _LOADERS = {
+        b"-----BEGIN DH PARAMETERS": serial.load_pem_parameters,
+        b"0": serial.load_der_parameters,
     }
 
     def __init__(
@@ -69,34 +77,40 @@ class DHParameters(base.BaseDHParameters):
             ValueError: if the encoding of format is invalid.
         """
         try:
-            return self._params.parameter_bytes(
-                self._encodings[encoding],
-                self._formats[format],
-            )
+            encd = self._ENCODINGS[encoding]
+            fmt = self._FORMATS[format]
         except KeyError as e:
             raise ValueError(
-                f"Invalid encoding or format: {e.args[0]!r}"
+                f"The encoding or format is invalid: {e.args[0]!r}"
             ) from e
+
+        try:
+            return self._params.parameter_bytes(encd, fmt)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
 
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
-        formats = {
-            b"-----BEGIN DH PARAMETERS": serial.load_pem_parameters,
-            b"0": serial.load_der_parameters,
-        }
-
+        loader = cls._get_loader(data)
         try:
-            loader = formats[next(filter(data.startswith, formats))]
+            params = loader(memoryview(data))
+            if not isinstance(params, dh.DHParameters):
+                raise ValueError("Data is not a DH parameter.")
+        except ValueError as e:
+            raise ValueError(f"Failed to load key: {e!s}") from e
+
+        return cls(None, _params=params)
+
+    @classmethod
+    def _get_loader(cls, data: bytes) -> typing.Callable:
+        """
+        Returns a loader function depending on the initial bytes of the
+        parameter.
+        """
+        try:
+            return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
             raise ValueError("Invalid format.") from None
-
-        try:
-            params = loader(data)
-            if not isinstance(params, dh.DHParameters):  # pragma: no cover
-                raise ValueError("Invalid parameter format.")
-            return cls(None, _params=params)
-        except ValueError as e:
-            raise ValueError(f"Failed to load parameters: {e!s}") from e
 
     @classmethod
     def load_from_parameters(
@@ -110,12 +124,17 @@ class DHParameters(base.BaseDHParameters):
 
 
 class DHPrivateKey(base.BaseDHPrivateKey):
-    _encodings = {
+    _ENCODINGS = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
     }
-    _formats = {
+    _FORMATS = {
         "PKCS8": PrivateFormat.PKCS8,
+    }
+
+    _LOADERS = {
+        b"-----": serial.load_pem_private_key,
+        b"0": serial.load_der_private_key,
     }
 
     def __init__(self, key: dh.DHPrivateKey) -> None:
@@ -157,6 +176,14 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         format: str = "PKCS8",
         passphrase: bytes | None = None,
     ) -> bytes:
+        try:
+            encd = self._ENCODINGS[encoding]
+            fmt = self._FORMATS[format]
+        except KeyError as e:
+            raise ValueError(
+                f"The encoding or format is invalid: {e.args[0]!r}"
+            ) from e
+
         protection: serial.KeySerializationEncryption
         if passphrase is None:
             protection = serial.NoEncryption()
@@ -166,15 +193,9 @@ class DHPrivateKey(base.BaseDHPrivateKey):
             )
 
         try:
-            return self._key.private_bytes(
-                self._encodings[encoding],
-                self._formats[format],
-                protection,
-            )
-        except KeyError as e:
-            raise ValueError(
-                f"Invalid encoding or format: {e.args[0]!r}"
-            ) from e
+            return self._key.private_bytes(encd, fmt, protection)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
 
     @property
     def x(self) -> int:
@@ -186,38 +207,44 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         data: bytes,
         passphrase: bytes | None = None,
     ) -> DHPrivateKey:
-        formats = {
-            b"-----": serial.load_pem_private_key,
-            b"0": serial.load_der_private_key,
-        }
+        loader = cls._get_loader(data)
 
-        try:
-            loader = formats[next(filter(data.startswith, formats))]
-        except StopIteration:
-            raise ValueError("Invalid format.") from None
-
-        # type check
         if passphrase is not None:
             passphrase = memoryview(passphrase).tobytes()
 
         try:
-            key = loader(memoryview(data).tobytes(), passphrase)
+            key = loader(memoryview(data), passphrase)
             if not isinstance(key, dh.DHPrivateKey):
-                raise ValueError(
-                    "Cannot deserialize key. This key is not a DH private key"
-                )
-            return cls(key)
+                raise ValueError("Key is not a DH private key.")
         except (ValueError, TypeError) as e:
             raise ValueError(f"Failed to load key: {e!s}") from e
 
+        return cls(key)
+
+    @classmethod
+    def _get_loader(cls, data: bytes) -> typing.Callable:
+        """
+        Returns a loader function depending on the initial bytes of the key.
+        """
+        try:
+            return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
+        except StopIteration:
+            raise ValueError("Invalid format") from None
+
 
 class DHPublicKey(base.BaseDHPublicKey):
-    _encodings = {
+    _ENCODINGS = {
         "PEM": Encoding.PEM,
         "DER": Encoding.DER,
     }
-    _formats = {
+
+    _FORMATS = {
         "SubjectPublicKeyInfo": PublicFormat.SubjectPublicKeyInfo,
+    }
+
+    _LOADERS = {
+        b"-----": serial.load_pem_public_key,
+        b"0": serial.load_der_public_key,
     }
 
     def __init__(self, key: dh.DHPublicKey) -> None:
@@ -251,14 +278,17 @@ class DHPublicKey(base.BaseDHPublicKey):
             ValueError: if the encoding or format is invalid.
         """
         try:
-            return self._key.public_bytes(
-                self._encodings[encoding],
-                self._formats[format],
-            )
+            encd = self._ENCODINGS[encoding]
+            fmt = self._FORMATS[format]
         except KeyError as e:
             raise ValueError(
                 f"Invalid encoding or format: {e.args[0]!r}"
             ) from e
+
+        try:
+            return self._key.public_bytes(encd, fmt)
+        except ValueError as e:
+            raise ValueError(f"Failed to serialize key: {e!s}") from e
 
     @property
     def y(self) -> int:
@@ -266,25 +296,25 @@ class DHPublicKey(base.BaseDHPublicKey):
 
     @classmethod
     def load(cls, data: bytes) -> DHPublicKey:
-        formats = {
-            b"-----": serial.load_pem_public_key,
-            b"0": serial.load_der_public_key,
-        }
-
-        try:
-            loader = formats[next(filter(data.startswith, formats))]
-        except StopIteration:
-            raise ValueError("Invalid format.") from None
-
+        loader = cls._get_loader(data)
         try:
             key = loader(memoryview(data))
             if not isinstance(key, dh.DHPublicKey):
-                raise ValueError(
-                    "Cannot deserialize key. This key is not a DH public key"
-                )
-            return cls(key=key)
+                raise ValueError("Key is not a DH public key.")
         except ValueError as e:
             raise ValueError(f"Failed to load key: {e!s}") from e
+
+        return cls(key)
+
+    @classmethod
+    def _get_loader(cls, data: bytes) -> typing.Callable:
+        """
+        Returns a loader function depending on the initial bytes of the key.
+        """
+        try:
+            return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
+        except StopIteration:
+            raise ValueError("Invalid format.") from None
 
 
 def generate(key_size: int, g: int = 2) -> DHParameters:
