@@ -1,4 +1,3 @@
-# ed448, ed25519, x448, x25519,
 from __future__ import annotations
 
 import typing
@@ -393,7 +392,6 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
     @classmethod
     def load(cls, data: bytes, *, curve: str | None = None) -> ECCPublicKey:
-
         if curve is not None:
             return cls._load_raw_or_sec1(data, curve)
 
