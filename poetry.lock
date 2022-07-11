@@ -303,7 +303,7 @@ flake8 = ">=3.7"
 
 [[package]]
 name = "flake8-type-checking"
-version = "2.0.2"
+version = "2.0.3"
 description = "A flake8 plugin for managing type-checking imports & forward references"
 category = "dev"
 optional = false
@@ -976,7 +976,7 @@ testing = ["pytest (>=6)", "pytest-checkdocs (>=2.4)", "pytest-flake8", "pytest-
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.8"
-content-hash = "a703de8c29b744ab28be605d8a5db00771325efcbc92324730efc24e1b5a1100"
+content-hash = "d6f82d88609a0e20a9f20cfbdb8be3fa8fc6d8f24148fa68c82347245e9a8432"
 
 [metadata.files]
 alabaster = []
