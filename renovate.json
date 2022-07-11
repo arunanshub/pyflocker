@@ -4,6 +4,7 @@
     "config:base",
     ":semanticCommitType(build)",
     ":enablePreCommit",
+    ":label(dependencies)",
     ":automergeMinor"
   ]
 }
