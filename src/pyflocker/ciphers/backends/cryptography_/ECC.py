@@ -217,6 +217,34 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         format: str = "PKCS8",
         passphrase: bytes | None = None,
     ) -> bytes:
+        """Serialize the private key.
+
+        Args:
+            encoding: The encoding to use. Supported encodings are:
+
+                - PEM
+                - DER
+                - Raw
+
+            format: The format to use. Supported formats are:
+
+                - PKCS1
+                - TraditionalOpenSSL (alias for PKCS1)
+                - PKCS8
+                - Raw
+                - OpenSSH
+
+            passphrase:
+                A byte string that will be used to encrypt the PKCS8 encoded
+                private key. If ``None``, the key will not be encrypted.
+
+        Returns:
+            Private key as a byte string.
+
+        Raises:
+            ValueError: If the encoding or format is incorrect, or
+            serialization failed.
+        """
         try:
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
@@ -377,6 +405,33 @@ class ECCPublicKey(base.BaseECCPublicKey):
         encoding: str = "PEM",
         format: str = "SubjectPublicKeyInfo",
     ) -> bytes:
+        """Serialize the public key.
+
+        Args:
+            encoding: The encoding to use. Supported encodings are:
+
+                - PEM
+                - DER
+                - OpenSSH
+                - Raw
+                - X962
+                - SEC1
+
+            format: The format to use. Supported formats are:
+
+                - SubjectPublicKeyInfo
+                - OpenSSH
+                - Raw
+                - CompressedPoint
+                - UncompressedPoint
+
+        Returns:
+            Public key as a byte string.
+
+        Raises:
+            ValueError: If the encoding or format is incorrect, or
+            serialization failed.
+        """
         try:
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
@@ -488,15 +543,7 @@ class EdDSASignerContext(base.BaseEdDSASignerContext):
 
     # TODO: Currently we have no way use a backend agnostic hash object for
     # `msghash`.
-    def sign(
-        self,
-        msghash: bytes,
-    ) -> bytes:
-        if isinstance(msghash, base.BaseHash):
-            raise TypeError(
-                "Due to the limitations of cryptography backend, only binary "
-                "object is supported."
-            )
+    def sign(self, msghash: bytes) -> bytes:
         return self._key.sign(msghash, None)
 
 
@@ -511,11 +558,6 @@ class EdDSAVerifierContext(base.BaseEdDSAVerifierContext):
         msghash: bytes,
         signature: bytes,
     ) -> None:
-        if isinstance(msghash, base.BaseHash):
-            raise TypeError(
-                "Due to the limitations of cryptography backend, only binary "
-                "object is supported."
-            )
         try:
             return self._key.verify(signature, msghash, None)
         except bkx.InvalidSignature as e:
