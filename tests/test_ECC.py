@@ -428,9 +428,9 @@ class TestSigningVerifying:
             public_key.verifier(FakeAlgo())
 
 
-@nist_curves_fixture
-@backend_cross_fixture
 class TestECCExchange:
+    @nist_curves_fixture
+    @backend_cross_fixture
     def test_exchange_bytes_ECDH(
         self,
         private_key: base.BaseECCPrivateKey,
@@ -465,6 +465,8 @@ class TestECCExchange:
             assert Backends.CRYPTODOME in (backend1, backend2)
             return pytest.skip("Key exchange not supported by Cryptodome")
 
+    @nist_curves_fixture
+    @backend_cross_fixture
     def test_exchange_key_ECDH(
         self,
         private_key: base.BaseECCPrivateKey,
@@ -492,6 +494,20 @@ class TestECCExchange:
         except NotImplementedError:
             assert Backends.CRYPTODOME in (backend1, backend2)
             return pytest.skip("Key exchange not supported by Cryptodome")
+
+    @edwards_curves_fixture
+    @backend_cross_fixture
+    def test_error_EdDSA_cannot_exchange(
+        self,
+        private_key,
+        backend2,
+    ):
+        private_key2 = ECC.generate(private_key.curve, backend=backend2)
+
+        with pytest.raises(NotImplementedError):
+            assert private_key.exchange(
+                private_key2.public_key()
+            ) == private_key2.exchange(private_key.public_key())
 
 
 class TestECCErrors:
