@@ -140,7 +140,7 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             self._set_der_args(format, passphrase, protection, kwargs)
 
         try:
-            key = self._key.export_key(**kwargs)
+            key: str | bytes = self._key.export_key(**kwargs)
         except ValueError as e:
             raise ValueError(f"Failed to serialize key: {e!s}") from e
         return key if isinstance(key, bytes) else key.encode()
@@ -321,7 +321,7 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             self._set_der_args(format, kwargs)
 
         try:
-            data = self._key.export_key(**kwargs)
+            data: str | bytes = self._key.export_key(**kwargs)
         except ValueError as e:
             raise ValueError(f"Failed to serialize key: {e!s}") from e
         return data if isinstance(data, bytes) else data.encode("utf-8")
