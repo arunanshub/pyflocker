@@ -1,8 +1,9 @@
 name: Upload Python Package
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   deploy:
@@ -11,6 +12,19 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+
+    - name: Bump and Update Changelog
+      uses: commitizen-tools/commitizen-action@0.14.1
+      with:
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+        changelog_increment_filename: body.md
+
+    - name: Create Release
+      uses: softprops/action-gh-release@v1
+      with:
+        body_path: body.md
+        tag_name: ${{ env.REVISION }}
+        token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
       uses: actions/setup-python@v4
@@ -22,7 +36,7 @@ jobs:
 
     - name: Publish Package
       env:
-        PYPI_USERNAME: ${{ secrets.PYPI_USERNAME }}
+        PYPI_USERNAME: __token__
         PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
       run: |
         poetry publish --build -u "$PYPI_USERNAME" -p "$PYPI_PASSWORD"
