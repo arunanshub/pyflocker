@@ -28,25 +28,20 @@ pycryptodomex = "^3.9.8"
 cryptography = {version = ">=35.0.0,!=37.0.0", extras = ["ssh"]}
 
 [tool.poetry.dev-dependencies]
+# Documentation dependencies (currently not used by Readthedocs)
 Sphinx = "^5.0.2"
-pytest = "^7.1.2"
-furo = ">=2022.2.14"
-pytest-cov = "^3.0.0"
-flake8 = "^4.0.1"
-pytest-xdist = "^2.5.0"
-pre-commit = "^2.20.0"
-mypy = "^0.971"
 sphinx-copybutton = "^0.5.0"
+furo = ">=2022.2.14"
+# Testing and debugging dependencies
+pytest = "^7.1.2"
+pytest-cov = "^3.0.0"
+pytest-xdist = "^2.5.0"
 pytest-randomly = "^3.12.0"
-flake8-bugbear = "^22.7.1"
-flake8-comprehensions = "^3.10.0"
-flake8-simplify = "^0.19.2"
-flake8-pie = "^0.15.0"
-flake8-type-checking = "^2.0.3"
-flake8-annotations = "^2.9.0"
 pdbpp = "^0.10.3"
 pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
 hypothesis = "^6.50.1"
+# Pre-commit hooks
+pre-commit = "^2.20.0"
 
 [tool.commitizen]
 name = "cz_conventional_commits"
@@ -58,7 +53,7 @@ annotated_tag = true
 changelog_start_rev = "v0.3.0"
 version_files = [
     "pyproject.toml",
-    "pyflocker/__init__.py",
+    "src/pyflocker/__init__.py",
 ]
 
 [tool.pycln]
