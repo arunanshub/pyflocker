@@ -2,12 +2,12 @@ name: Upload Python Package
 
 on:
   push:
-    tags:
-      - "v*.*.*"
+    branches:
+      - "master"
 
 jobs:
   deploy:
-
+    if: "contains(github.event.head_commit.message, '[make release]')"
     runs-on: ubuntu-latest
 
     steps:
