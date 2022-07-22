@@ -2,28 +2,30 @@ name: Upload Python Package
 
 on:
   push:
-    branches:
-      - "master"
+    tags:
+      - "v*.*.*"
 
 jobs:
   deploy:
-    if: "endsWith(github.event.head_commit.message, '[make release]')"
     runs-on: ubuntu-latest
 
     steps:
     - uses: actions/checkout@v3
 
+    # We will create the tag and changelog locally. This tool will just create
+    # the incremental changelog for Github Release.
     - name: Bump and Update Changelog
       uses: commitizen-tools/commitizen-action@0.14.1
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         changelog_increment_filename: body.md
+        push: false
 
     - name: Create Release
       uses: softprops/action-gh-release@v1
       with:
         body_path: body.md
-        tag_name: ${{ env.REVISION }}
+        tag_name: v${{ env.REVISION }}
         token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Set up Python
