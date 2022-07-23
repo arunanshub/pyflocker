@@ -29,12 +29,8 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
             nonce = bytes(4) + nonce
 
         cipher = Cipher(
-            algo.ChaCha20(
-                key,
-                (1).to_bytes(4, "little") + nonce,
-            ),
+            algo.ChaCha20(key, (1).to_bytes(4, "little") + nonce),
             None,
-            defb(),
         )
 
         ctx = cipher.encryptor() if encrypting else cipher.decryptor()
