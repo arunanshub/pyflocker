@@ -175,7 +175,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             kwargs["use_pkcs8"] = False
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for PKCS8: {format!r}")
+            raise ValueError(f"Invalid format for PEM: {format!r}")
 
     @classmethod
     def _set_der_args(
@@ -193,7 +193,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             kwargs["use_pkcs8"] = False
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for PKCS8: {format!r}")
+            raise ValueError(f"Invalid format for DER: {format!r}")
 
     @classmethod
     def _set_pkcs8_passphrase_args(
