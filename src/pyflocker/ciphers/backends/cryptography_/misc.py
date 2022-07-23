@@ -56,9 +56,9 @@ def derive_poly1305_key(ckey: bytes, nonce: bytes) -> bytes:
         ValueError: If the length of nonce is not equal to 8 or 12 bytes.
     """
     if len(nonce) not in (8, 12):
-        raise ValueError("Poly1305 key must be 16 bytes long.")
+        raise ValueError("Poly1305 nonce must be 8 or 12 bytes long.")
 
-    if len(nonce) == 8:
+    if len(nonce) == 8:  # pragma: no cover
         nonce = bytes(4) + nonce
 
     crp = Cipher(algo.ChaCha20(ckey, bytes(4) + nonce), None).encryptor()
