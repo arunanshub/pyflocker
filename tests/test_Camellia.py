@@ -415,6 +415,13 @@ class TestFileIO:
 
 
 class TestErrors:
+    @given(mode=st.sampled_from(list(set(CAMELLIA_MODES) ^ set(Modes))))
+    @pytest.mark.parametrize("backend", Backends)
+    def test_error_on_unsupported_mode(self, mode: Modes, backend: Backends):
+        key, nonce = bytes(32), bytes(16)
+        with pytest.raises(exc.UnsupportedMode):
+            get_encryptor(key, mode, nonce, backend)
+
     @pytest.mark.parametrize("mode", CAMELLIA_MODES)
     @pytest.mark.parametrize("backend", Backends)
     def test_error_on_finalize_if_tag_is_missing(
