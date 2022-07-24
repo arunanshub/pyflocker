@@ -518,5 +518,5 @@ class TestECCErrors:
 
     @pytest.mark.parametrize("backend1", Backends)
     def test_invalid_curve_type(self, backend1):
-        with pytest.raises(TypeError, match="curve must be a string"):
+        with pytest.raises(TypeError, match="curve name must be a string"):
             ECC.generate(233, backend=backend1)  # type: ignore
