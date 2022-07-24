@@ -76,7 +76,7 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             self._key = _key
         else:
             if not isinstance(curve, str):
-                raise TypeError("curve must be a string")
+                raise TypeError("curve name must be a string")
             try:
                 self._key = ECC.generate(curve=_Curves.CURVES[curve])
             except KeyError as e:
