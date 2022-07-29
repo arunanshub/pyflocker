@@ -59,7 +59,7 @@ def _get_aes_cipher(
         kwargs = {
             # initial value of Cryptodome is nonce for pyca/cryptography
             "initial_value": int.from_bytes(iv_or_nonce, "big"),
-            "nonce": typing.cast(int, b""),
+            "nonce": typing.cast("int", b""),
         }
 
         args = ()

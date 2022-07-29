@@ -215,7 +215,7 @@ class _EAX:
 
         for i in range(3):
             self._omac[i].update(
-                bytes(1) * (typing.cast(int, algo.AES.block_size) // 8 - 1)
+                bytes(1) * (typing.cast("int", algo.AES.block_size) // 8 - 1)
                 + struct.pack("B", i)  # noqa: W503
             )
 
@@ -290,7 +290,7 @@ class _EAX:
         if self.__ctx is None:  # pragma: no cover
             raise bkx.AlreadyFinalized
 
-        tag = bytes(typing.cast(int, algo.AES.block_size) // 8)
+        tag = bytes(typing.cast("int", algo.AES.block_size) // 8)
         for i in range(3):
             try:
                 tag = strxor(tag, self._omac_cache[i])
