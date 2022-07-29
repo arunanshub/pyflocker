@@ -192,9 +192,9 @@ class Hash(base.BaseHash):
 
     def new(
         self,
-        data: bytes = b"",
-        digest_size: int | None = None,
+        data: bytes | None = None,
         *,
+        digest_size: int | None = None,
         custom: bytes | None = None,
         key: bytes | None = None,
     ) -> Hash:

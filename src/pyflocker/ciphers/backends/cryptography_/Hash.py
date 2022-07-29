@@ -235,7 +235,7 @@ def _get_hash_algorithm(hashfunc: base.BaseHash) -> hashes.HashAlgorithm:
     Get the cryptography backend specific ``hash algorithm`` object from the
     given hash ``hashfunc``.
     """
-    return new(
+    return new(  # pragma: no cover
         hashfunc.name,
         digest_size=hashfunc.digest_size,
     )._ctx.algorithm  # type: ignore

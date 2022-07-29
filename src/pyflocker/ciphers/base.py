@@ -251,7 +251,7 @@ class BaseHash(metaclass=ABCMeta):
         """Name of the hash function."""
 
     @abstractmethod
-    def new(self, data: bytes = b"") -> BaseHash:
+    def new(self, data: bytes | None = None) -> BaseHash:
         """Create a fresh hash object."""
 
     def __repr__(self) -> str:  # pragma: no cover
