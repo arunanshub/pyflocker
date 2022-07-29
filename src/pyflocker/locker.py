@@ -269,7 +269,7 @@ def encryptf(
     cipher.update_into(outfile, blocksize=blocksize)
 
     # put the tag back in the header
-    outfile.seek(struct.calcsize(">I H 16s"))
+    outfile.seek(struct.calcsize(f">I H {MAX_NONCE_LEN}s"))
     outfile.write(cipher.calculate_tag())  # type: ignore
 
 
