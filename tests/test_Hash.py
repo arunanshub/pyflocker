@@ -196,29 +196,48 @@ class TestHashEqual:
             == hash2.new(data).hexdigest()
         )
 
-    @given(data=st.binary() | st.none(), key=st.binary())
+    @given(data=st.binary() | st.none(), key=st.binary(max_size=32))
     @pytest.mark.parametrize("backend1,backend2", list(repcomb(Backends, 2)))
-    @pytest.mark.parametrize(
-        "hashname,digest_size",
-        [
-            ("blake2b", 64),
-            ("blake2s", 32),
-        ],
-    )
-    def test_blake_with_key_hash_equal(
+    def test_blake2s_with_key_hash_equal(
         self,
-        hashname: str,
         data: bytes,
         key: bytes,
-        digest_size: int,
         backend1: Backends,
         backend2: Backends,
     ):
         hash1, hash2 = make_hash_pairs(
-            hashname,
+            "blake2s",
             backend1,
             backend2,
-            digest_size=digest_size,
+            digest_size=32,
+            key=key,
+            custom=None,
+        )
+        if data:
+            hash1.update(data)
+            hash2.update(data)
+
+        assert (
+            hash1.hexdigest()
+            == hash2.hexdigest()
+            == hash1.new(data, key=key).hexdigest()
+            == hash2.new(data, key=key).hexdigest()
+        )
+
+    @given(data=st.binary() | st.none(), key=st.binary(max_size=64))
+    @pytest.mark.parametrize("backend1,backend2", list(repcomb(Backends, 2)))
+    def test_blake2b_with_key_hash_equal(
+        self,
+        data: bytes,
+        key: bytes,
+        backend1: Backends,
+        backend2: Backends,
+    ):
+        hash1, hash2 = make_hash_pairs(
+            "blake2b",
+            backend1,
+            backend2,
+            digest_size=64,
             key=key,
             custom=None,
         )
