@@ -487,7 +487,7 @@ def lockerf(
 
 
 def locker(
-    file: str,
+    file: str | os.PathLike[str],
     password: bytes,
     encrypting: bool | None = None,
     remove: bool = True,
@@ -565,7 +565,7 @@ def locker(
 
 
 def extract_header_from_file(
-    path: str,
+    path: str | os.PathLike,
     metadata: bytes = METADATA,
 ) -> _Header:
     """Extract the header from the file ``file``.
