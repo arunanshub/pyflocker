@@ -59,7 +59,7 @@ jobs:
 
       - name: Test and Generate Coverage Report
         run: |
-          poetry run pytest -n auto -d --cov=src/ --cov-report=xml --cov-branch
+          poetry run pytest -n auto -d --cov=src/ --cov-report=xml --cov-branch --durations=20
         env:
           HYPOTHESIS_PROFILE: ci
 
