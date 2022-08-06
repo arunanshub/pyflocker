@@ -543,8 +543,8 @@ class EdDSASignerContext(base.BaseEdDSASignerContext):
 
     # TODO: Currently we have no way use a backend agnostic hash object for
     # `msghash`.
-    def sign(self, msghash: bytes) -> bytes:
-        return self._key.sign(msghash, None)
+    def sign(self, message: bytes) -> bytes:
+        return self._key.sign(message, None)
 
 
 class EdDSAVerifierContext(base.BaseEdDSAVerifierContext):
@@ -555,11 +555,11 @@ class EdDSAVerifierContext(base.BaseEdDSAVerifierContext):
     # `msghash`.
     def verify(
         self,
-        msghash: bytes,
+        message: bytes,
         signature: bytes,
     ) -> None:
         try:
-            return self._key.verify(signature, msghash, None)
+            return self._key.verify(signature, message, None)
         except bkx.InvalidSignature as e:
             raise exc.SignatureError from e
 
