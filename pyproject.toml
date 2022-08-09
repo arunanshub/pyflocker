@@ -62,7 +62,7 @@ all = true
 
 [tool.black]
 line-length = 79
-target-verson = "py3213"
+target-verson = "py38"
 
 [tool.isort]
 multi_line_output = 3
