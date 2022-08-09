@@ -288,6 +288,7 @@ class TestFileIO:
         key=CAMELLIA_KEY_SIZES,
         nonce=st.binary(min_size=16, max_size=16),
         data=st.binary(min_size=1),
+        blocksize=st.integers(min_value=1, max_value=16384),
         authdata=st.none() | st.binary(min_size=1),
     )
     def test_update_into(
@@ -296,6 +297,7 @@ class TestFileIO:
         mode: Modes,
         nonce: bytes,
         data: bytes,
+        blocksize: int,
         authdata: bytes,
         backend1: Backends,
         backend2: Backends,
@@ -320,9 +322,11 @@ class TestFileIO:
             encryptor.authenticate(authdata)
             decryptor.authenticate(authdata)
 
-        encryptor.update_into(as_encrypted)
+        encryptor.update_into(as_encrypted, blocksize=blocksize)
         as_encrypted.seek(0)
-        decryptor.update_into(as_decrypted, encryptor.calculate_tag())
+        decryptor.update_into(
+            as_decrypted, encryptor.calculate_tag(), blocksize=blocksize
+        )
 
         assert filebuf.getvalue() == as_decrypted.getvalue()
 
