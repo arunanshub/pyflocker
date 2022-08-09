@@ -52,6 +52,7 @@ def get_encryptor(
         enc,
         (base.BaseAEADCipher, base.BaseNonAEADCipher, FileCipherWrapper),
     )
+    assert enc.is_encrypting()
     return enc
 
 
@@ -87,6 +88,7 @@ def get_decryptor(
             FileCipherWrapper,
         ),
     )
+    assert not dec.is_encrypting()
     return dec
 
 
@@ -656,6 +658,7 @@ class TestFileIO:
         key=NORMAL_KEY_SIZES,
         nonce=st.binary(min_size=16, max_size=16),
         data=st.binary(min_size=1),
+        blocksize=st.integers(min_value=1, max_value=16384),
         authdata=st.none() | st.binary(min_size=1),
     )
     def test_update(
@@ -664,12 +667,14 @@ class TestFileIO:
         mode: Modes,
         nonce: bytes,
         data: bytes,
+        blocksize: int,
         authdata: bytes,
         backend1: Backends,
         backend2: Backends,
     ):
         filebuf = io.BytesIO(data)
         as_encrypted = io.BytesIO()
+        as_decrypted = io.BytesIO()
 
         encryptor, decryptor = get_encryptor_decryptor(
             key,
@@ -687,11 +692,19 @@ class TestFileIO:
             encryptor.authenticate(authdata)
             decryptor.authenticate(authdata)
 
-        as_encrypted.write(encryptor.update(len(data)))  # type: ignore
+        while True:
+            enc_data = encryptor.update(blocksize)
+            if enc_data is None:
+                break
+            as_encrypted.write(enc_data)
         as_encrypted.seek(0)
 
-        as_decrypted = decryptor.update(len(data))
-        assert as_decrypted == data
+        while True:
+            dec_data = decryptor.update(blocksize)
+            if dec_data is None:
+                break
+            as_decrypted.write(dec_data)
+        assert as_decrypted.getvalue() == data
 
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)

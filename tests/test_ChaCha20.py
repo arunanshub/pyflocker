@@ -336,6 +336,7 @@ class TestFileIO:
         key=CHACHA20_KEY_SIZES,
         nonce=CHACHA20_NONCE_SIZES,
         data=st.binary(min_size=1),
+        blocksize=st.integers(min_value=1, max_value=16384),
         authdata=st.none() | st.binary(min_size=1),
     )
     def test_update(
@@ -343,20 +344,22 @@ class TestFileIO:
         key: bytes,
         nonce: bytes,
         data: bytes,
+        blocksize: int,
         authdata: bytes,
         backend1: Backends,
         backend2: Backends,
     ):
         filebuf = io.BytesIO(data)
         as_encrypted = io.BytesIO()
+        as_decrypted = io.BytesIO()
 
         encryptor, decryptor = get_encryptor_decryptor(
             key,
             nonce,
             backend1,
             backend2,
-            plain_file=filebuf,  # type: ignore
-            encrypted_file=as_encrypted,  # type: ignore
+            plain_file=filebuf,
+            encrypted_file=as_encrypted,
         )
         assert isinstance(encryptor, FileCipherWrapper)
         assert isinstance(decryptor, FileCipherWrapper)
@@ -365,11 +368,19 @@ class TestFileIO:
             encryptor.authenticate(authdata)
             decryptor.authenticate(authdata)
 
-        as_encrypted.write(encryptor.update(len(data)))  # type: ignore
+        while True:
+            enc_data = encryptor.update(blocksize)
+            if enc_data is None:
+                break
+            as_encrypted.write(enc_data)
         as_encrypted.seek(0)
 
-        as_decrypted = decryptor.update(len(data))
-        assert as_decrypted == data
+        while True:
+            dec_data = decryptor.update(blocksize)
+            if dec_data is None:
+                break
+            as_decrypted.write(dec_data)
+        assert as_decrypted.getvalue() == data
 
     @pytest.mark.parametrize("backend1", Backends)
     @pytest.mark.parametrize("backend2", Backends)
