@@ -136,7 +136,7 @@ class FileCipherWrapper:
 
     def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
-            raise exc.NotFinalized("Cipher has already been finalized.")
+            raise exc.NotFinalized("Cipher has not been finalized yet.")
         return self._tag
 
 
