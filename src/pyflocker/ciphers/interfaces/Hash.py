@@ -44,7 +44,7 @@ def new(
             The length of the digest size. Must be supplied if the hash
             function supports it.
 
-    Keyword Args:
+    Keyword Arguments:
         custom:
             A customization string. Can be supplied for hash functions
             that support domain separation.

@@ -212,7 +212,7 @@ def new(
         name: The name of the hash function.
         data: The initial chunk of message to feed to hash.
 
-    Keyword Args:
+    Keyword Arguments:
         digest_size:
             The length of the digest size. Must be supplied if the hash
             function supports it.
