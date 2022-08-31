@@ -26,8 +26,8 @@ def load_algorithm(
     """Load a specific algorithm from the given ``backend``.
 
     Args:
-        name (str): The name of the algorithm.
-        backend (:class:`Backends`): The backend to use.
+        name: The name of the algorithm.
+        backend: The backend to use.
 
     Returns:
         module: Algorithm module from the required backend.
@@ -51,7 +51,7 @@ def load_backend(
     """Load a backend.
 
     Args:
-        backend (:class:`Backends`): An attribute from :class:`Backends` class.
+        backend: An attribute from :class:`Backends` class.
 
     Returns:
         module: The backend module.
