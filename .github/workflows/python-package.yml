@@ -50,7 +50,7 @@ jobs:
 
       - name: Install dependencies
         if: steps.cache-deps.outputs.cache-hit != 'true'
-        run: poetry install --no-interaction --only test
+        run: poetry install --no-interaction --only test,dev
 
       - name: Lint with Mypy and flake8
         run: |
