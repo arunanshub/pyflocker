@@ -493,7 +493,7 @@ def locker(
     remove: bool = True,
     *,
     ext: str | None = None,
-    newfile: str | None = None,
+    newfile: str | os.PathLike[str] | None = None,
     **kwargs: typing.Any,
 ) -> None:
     """Encrypts or decrypts files with AES algorithm.
