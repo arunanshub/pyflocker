@@ -236,6 +236,11 @@ class TestPrivateKeySerde:
         [Backends.CRYPTOGRAPHY],
         scope="module",
     )
+    @pytest.mark.skipif(
+        "int(__import__('cryptography').__version__.split('.')[0]) <= 38",
+        reason="Cryptography supports passwords greater than 72 bytes since "
+        " version 38.0.0",
+    )
     def test_error_PEM_OpenSSH_password_less_than_72_bytes(
         self,
         private_key,
