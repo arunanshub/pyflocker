@@ -15,7 +15,7 @@ jobs:
     # We will create the tag and changelog locally. This tool will just create
     # the incremental changelog for Github Release.
     - name: Generate incremental changelog
-      uses: commitizen-tools/commitizen-action@0.14.1
+      uses: commitizen-tools/commitizen-action@0.15.0
       with:
         github_token: ${{ secrets.GITHUB_TOKEN }}
         changelog_increment_filename: body.md
