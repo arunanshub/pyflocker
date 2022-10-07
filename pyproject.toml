@@ -33,20 +33,26 @@ cryptography = {version = ">=35.0.0,!=37.0.0", extras = ["ssh"]}
 pre-commit = "^2.20.0"
 commitizen = "^2.29.5"
 
-# Testing and debugging dependencies
+# Testing dependencies
 [tool.poetry.group.test.dependencies]
 pytest = "^7.1.2"
 pytest-cov = "^4.0.0"
 pytest-xdist = "^2.5.0"
 pytest-randomly = "^3.12.0"
-pdbpp = "^0.10.3"
-pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
 hypothesis = "^6.50.1"
 
+# Debugging dependencies
+[tool.poetry.group.debugging]
+optional = true
+
+[tool.poetry.group.debugging.dependencies]
+pdbpp = "^0.10.3"
+pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
+
+# Documentation dependencies (currently not used by Readthedocs)
 [tool.poetry.group.docs]
 optional = true
 
-# Documentation dependencies (currently not used by Readthedocs)
 [tool.poetry.group.docs.dependencies]
 Sphinx = "^5.0.2"
 sphinx-copybutton = "^0.5.0"
