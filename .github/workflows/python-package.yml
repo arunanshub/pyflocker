@@ -36,7 +36,7 @@ jobs:
       # Windows is a piece of shit! I cannot believe that I am unable to set
       # some basic params to update the PATH.
       - name: Set up Python Poetry
-        uses: snok/install-poetry@v1.3.1
+        uses: snok/install-poetry@v1.3.2
         with:
           virtualenvs-in-project: true
 
