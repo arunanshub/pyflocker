@@ -99,10 +99,10 @@ jobs:
           tags="$(git tag --sort=creatordate)"
           output=''
           # length > 1 means we have multiple tags and we need 2nd last one
-          if [[ "$(echo "$(tags)" | grep -c ^)" != "1" ]]; then
+          if [[ "$(echo "$tags" | grep -c ^)" != "1" ]]; then
             output="$(echo "$tags" | tail -2 | head -1)"
-          else
-            echo "::set-output name=tag::$output"
+          fi
+          echo "::set-output name=tag::$output"
 
       - name: Generate Changelog
         run: |
