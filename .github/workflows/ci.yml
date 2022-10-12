@@ -87,19 +87,35 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
-
-      - name: Generate Incremental Changelog
-        uses: commitizen-tools/commitizen-action@0.15.0
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          changelog_incremental_filename: body.md
-          push: false
+          fetch-depth: 0
+
+      - name: Install commitizen
+        run: pipx install commitizen
+
+      - name: Get 2nd-last commit tag
+        id: second-last
+        run: |
+          tags="$(git tag --sort=creatordate)"
+          output=''
+          # length > 1 means we have multiple tags and we need 2nd last one
+          if [[ "$(echo "$(tags)" | grep -c ^)" != "1" ]]; then
+            output="$(echo "$tags" | tail -2 | head -1)"
+          else
+            echo "::set-output name=tag::$output"
+
+      - name: Generate Changelog
+        run: |
+          # from 2nd-last revision upto this current tag.
+          cz ch --start-rev '${{ steps.second-last.outputs.tag }}' \
+            --unreleased-version '${{ github.ref_name }}' \
+            --file-name body.md
 
       - name: Create Release
         uses: softprops/action-gh-release@v1
         with:
           body_path: body.md
-          tag_name: v${{ env.REVISION }}
+          tag_name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Poetry
