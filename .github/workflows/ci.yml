@@ -102,7 +102,7 @@ jobs:
           if [[ "$(echo "$tags" | grep -c ^)" != "1" ]]; then
             output="$(echo "$tags" | tail -2 | head -1)"
           fi
-          echo "::set-output name=tag::$output"
+          echo "tag=$output" >> "$GITHUB_OUTPUT"
 
       - name: Generate Changelog
         run: |
