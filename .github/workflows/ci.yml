@@ -67,21 +67,30 @@ jobs:
 
       - name: Test and Generate Coverage Report
         run: |
-          poetry run pytest -n auto -d --cov=src/ --cov-report=xml --cov-branch --durations=20
+          poetry run pytest -n auto -d --cov=src/ --cov-report=lcov --cov-branch --durations=20
         env:
           HYPOTHESIS_PROFILE: ci
 
       - name: Upload Coverage Report
-        uses: codecov/codecov-action@v3
-        env:
-          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        uses: coverallsapp/github-action@1.1.3
         with:
-          verbose: true
-          files: ./coverage.xml
-          fail_ci_if_error: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          path-to-lcov: "./coverage.lcov"
+          parallel: true
+          flag-name: run-${{ matrix.os }}-python-${{ matrix.python-version }}
+
+  finish-coverage:
+    needs: [build]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Finish Coverage Report
+        uses: coverallsapp/github-action@1.1.3
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          parallel-finished: true
 
   publish:
-    needs: [build]
+    needs: [build, finish-coverage]
     runs-on: ubuntu-latest
     if: ${{ github.ref_type == 'tag' }}
 
