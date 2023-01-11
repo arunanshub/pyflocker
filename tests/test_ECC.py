@@ -237,7 +237,7 @@ class TestPrivateKeySerde:
         scope="module",
     )
     @pytest.mark.skipif(
-        "int(__import__('cryptography').__version__.split('.')[0]) <= 38",
+        "int(__import__('cryptography').__version__.split('.')[0]) >= 38",
         reason="Cryptography supports passwords greater than 72 bytes since "
         " version 38.0.0",
     )
