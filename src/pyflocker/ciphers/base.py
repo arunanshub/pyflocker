@@ -255,7 +255,7 @@ class BaseHash(metaclass=ABCMeta):
         """Create a fresh hash object."""
 
     def __repr__(self) -> str:  # pragma: no cover
-        return f"<{type(self).__name__} '{self.name}' at {hex(id(self))}>"
+        return f"<{type(self).__name__} {self.name!r} at {hex(id(self))}>"
 
 
 class BaseRSAPrivateKey(metaclass=ABCMeta):
