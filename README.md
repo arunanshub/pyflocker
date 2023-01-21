@@ -146,8 +146,8 @@ Find more examples [here][examples].
 
 [MIT](https://choosealicense.com/licenses/mit/)
 
-[docs]: https://pyflocker.readthedocs.io/en/latest/index.html
-[examples]: https://pyflocker.readthedocs.io/en/latest/examples.html
+[docs]: https://pyflocker.readthedocs.io/en/latest/
+[examples]: https://pyflocker.readthedocs.io/en/latest/examples
 [pycrypto]: https://github.com/Legrandin/pycryptodome
 [pyca]: https://github.com/pyca/cryptography
 [pyca_vs_self]: https://cryptography.io/en/latest/hazmat/primitives/asymmetric/rsa.html#key-serialization
