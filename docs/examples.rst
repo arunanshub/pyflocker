@@ -1,7 +1,7 @@
 Examples
 ========
 
-The following have been adapted from `Pycryptodome's documentation <https://www.pycryptodome.org/en/latest/src/examples.html>`_.
+The following have been adapted from `Pycryptodome's documentation <https://www.pycryptodome.org/src/examples/>`_.
 
 Encrypt data with AES
 ---------------------
