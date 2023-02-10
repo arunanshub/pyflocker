@@ -45,6 +45,7 @@ repos:
       - id: flake8
         exclude: ^tests/|^docs/
         additional_dependencies:
+          - flake8-pyproject
           - flake8-bugbear
           - flake8-comprehensions
           - flake8-simplify
