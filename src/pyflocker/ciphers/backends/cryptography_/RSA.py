@@ -37,7 +37,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
     }
 
     # Key loaders indexed by the key format.
-    _LOADERS = {
+    _LOADERS: dict[
+        bytes,
+        typing.Callable[[bytes, bytes | None], typing.Any],
+    ] = {
         b"-----BEGIN OPENSSH PRIVATE KEY": serial.load_ssh_private_key,
         b"-----": serial.load_pem_private_key,
         b"0": serial.load_der_private_key,
@@ -184,7 +187,10 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         return cls(None, _key=key)
 
     @classmethod
-    def _get_loader(cls, data: bytes) -> typing.Callable:
+    def _get_loader(
+        cls,
+        data: bytes,
+    ) -> typing.Callable[[bytes, bytes | None], rsa.RSAPrivateKey]:
         """
         Returns a loader function depending on the initial bytes of the key.
         """

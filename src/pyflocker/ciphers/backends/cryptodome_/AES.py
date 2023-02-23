@@ -81,7 +81,7 @@ class AEAD(AEADCipherTemplate):
         self._mode = mode
         self._tag = None
         # creating a context is relatively expensive here
-        self._update_func = (  # type: ignore[assignment]
+        self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
 
@@ -105,7 +105,7 @@ class NonAEAD(NonAEADCipherTemplate):
         self._mode = mode
 
         # creating a context is relatively expensive here
-        self._update_func = (  # type: ignore[assignment]
+        self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
 
@@ -131,9 +131,7 @@ class AEADOneShot(AuthenticationMixin, BaseAEADOneShotCipher):
         self._mode = mode
 
         # creating a context is relatively expensive here
-        self._update_func = self._get_update_func(  # type: ignore[assignment]
-            encrypting, self._cipher
-        )
+        self._update_func = self._get_update_func(encrypting, self._cipher)
 
     def is_encrypting(self) -> bool:
         return self._encrypting

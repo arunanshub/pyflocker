@@ -215,7 +215,7 @@ class _EAX:
 
         for i in range(3):
             self._omac[i].update(
-                bytes(1) * (typing.cast("int", algo.AES.block_size) // 8 - 1)
+                bytes(1) * (algo.AES.block_size // 8 - 1)
                 + struct.pack("B", i)  # noqa: W503
             )
 

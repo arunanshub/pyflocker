@@ -1,12 +1,12 @@
 """Interface to hashing algorithms."""
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+import typing
 
 from ..backends import Backends as _Backends
 from ..backends import load_algorithm as _load_algo
 
-if TYPE_CHECKING:  # pragma: no cover
+if typing.TYPE_CHECKING:  # pragma: no cover
     from ..base import BaseHash
 
 
@@ -59,10 +59,13 @@ def new(
     Raises:
         KeyError: if the hashing function is not supported or invalid.
     """
-    return _load_algo("Hash", backend).new(
+    hash_ = _load_algo("Hash", backend).new(
         hashname,
         data,
         digest_size=digest_size,
         custom=custom,
         key=key,
     )
+    if typing.TYPE_CHECKING:
+        assert isinstance(hash_, BaseHash)
+    return hash_

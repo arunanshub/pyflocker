@@ -224,11 +224,7 @@ def encryptf(
 
     # create the salt and nonce...
     salt = os.urandom(32)
-    nonce = (
-        os.urandom(12)
-        if aes_mode == AES.MODE_GCM  # type: ignore
-        else os.urandom(16)
-    )
+    nonce = os.urandom(12) if aes_mode == AES.MODE_GCM else os.urandom(16)
 
     # ...and pack it into header and write it to the outfile
     header = _Header(MAGIC, aes_mode.value, nonce, b"", metadata, salt)

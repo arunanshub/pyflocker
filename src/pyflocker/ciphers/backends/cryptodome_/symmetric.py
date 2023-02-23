@@ -42,7 +42,7 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
         if not self._update_func:
             raise exc.AlreadyFinalized
 
-        self._update_func = None  # type: ignore
+        self._update_func = None
 
 
 class AuthenticationMixin:

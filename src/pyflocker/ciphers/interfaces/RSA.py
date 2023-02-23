@@ -1,6 +1,7 @@
 """Interface to RSA cipher and signature algorithm"""
 from __future__ import annotations
 
+import typing
 from typing import TYPE_CHECKING
 
 from ..backends import load_algorithm as _load_algo
@@ -37,7 +38,10 @@ def generate(
     Returns:
         The RSA private key.
     """
-    return _load_rsa(backend).generate(bits, e)
+    key = _load_rsa(backend).generate(bits, e)
+    if typing.TYPE_CHECKING:
+        assert isinstance(key, BaseRSAPrivateKey)
+    return key
 
 
 def load_public_key(
@@ -56,7 +60,10 @@ def load_public_key(
     Returns:
         The RSA public key.
     """
-    return _load_rsa(backend).load_public_key(data)
+    key = _load_rsa(backend).load_public_key(data)
+    if typing.TYPE_CHECKING:
+        assert isinstance(key, BaseRSAPublicKey)
+    return key
 
 
 def load_private_key(
@@ -82,4 +89,7 @@ def load_private_key(
     Returns:
         The RSA private key.
     """
-    return _load_rsa(backend).load_private_key(data, passphrase)
+    key = _load_rsa(backend).load_private_key(data, passphrase)
+    if typing.TYPE_CHECKING:
+        assert isinstance(key, BaseRSAPrivateKey)
+    return key

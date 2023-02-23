@@ -23,7 +23,7 @@ class ChaCha20(NonAEADCipherTemplate):
     def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         self._cipher = _ChaCha20.new(key=key, nonce=nonce)
         self._encrypting = encrypting
-        self._update_func = (  # type: ignore
+        self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
 
@@ -34,7 +34,7 @@ class ChaCha20Poly1305(AEADCipherTemplate):
     def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
         self._cipher = _ChaCha20_Poly1305.new(key=key, nonce=nonce)
         self._encrypting = encrypting
-        self._update_func = (  # type: ignore
+        self._update_func = (
             self._cipher.encrypt if encrypting else self._cipher.decrypt
         )
         self._tag = None
