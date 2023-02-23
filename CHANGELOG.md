@@ -1,3 +1,9 @@
+## v0.4.1 (2023-02-23)
+
+### Refactor
+
+- **pyflocker**: add type marker file for easier integration with type checkers
+
 ## v0.4.0 (2022-12-17)
 
 ### Feat

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "PyFLocker"
-version = "0.4.0"
+version = "0.4.1"
 description = "Python Cryptographic (File Locking) Library"
 authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
 license = "MIT"
@@ -66,7 +66,7 @@ build-backend = "poetry.core.masonry.api"
 # Development tools
 [tool.commitizen]
 name = "cz_conventional_commits"
-version = "0.4.0"
+version = "0.4.1"
 tag_format = "v$version"
 update_changelog_on_bump = true
 changelog_incremental = true
