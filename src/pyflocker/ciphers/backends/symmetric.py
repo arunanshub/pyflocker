@@ -32,7 +32,7 @@ class FileCipherWrapper:
             offset:
                 The difference between the length of ``in`` buffer and ``out``
                 buffer in ``update_into`` method of a BaseAEADCipher. This is
-                required because backend like ``pyca/cryptography`` needs a
+                required because backend like ``pyca/cryptography`` needs an
                 output buffer that is bigger than the input buffer.
         """
         if not isinstance(cipher, base.BaseAEADCipher):
