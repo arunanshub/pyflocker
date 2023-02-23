@@ -32,24 +32,24 @@ cryptography = {version = ">=35.0.0,!=37.0.0", extras = ["ssh"]}
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.0.0"
 commitizen = "^2.29.5"
+mypy = "^1.0.1"
 
-# Testing dependencies
 [tool.poetry.group.test.dependencies]
+# Testing dependencies
 pytest = "^7.1.2"
 pytest-cov = "^4.0.0"
 pytest-xdist = "^3.0.0"
 pytest-randomly = "^3.12.0"
 hypothesis = "^6.50.1"
 
-# Debugging dependencies
 [tool.poetry.group.debugging]
+# Debugging dependencies
 optional = true
 
 [tool.poetry.group.debugging.dependencies]
 pdbpp = "^0.10.3"
 pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
 
-# Documentation dependencies (currently not used by Readthedocs)
 [tool.poetry.group.docs]
 optional = true
 
@@ -136,3 +136,18 @@ exclude = [
     # avoid test folder
     "tests"
 ]
+
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+warn_unused_ignores = true
+
+show_error_codes = true
+pretty = true
+
+warn_redundant_casts = true
+# warn_return_any = true
+no_implicit_optional = true
+check_untyped_defs = true
+disallow_untyped_defs = true
+disallow_any_unimported = true
