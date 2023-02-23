@@ -19,7 +19,7 @@ class NonAEADCipherTemplate(base.BaseNonAEADCipher):
 
     # these are *not* class variables
     _encrypting: bool
-    _update_func: typing.Callable
+    _update_func: typing.Callable | None
 
     def is_encrypting(self) -> bool:
         return self._encrypting
