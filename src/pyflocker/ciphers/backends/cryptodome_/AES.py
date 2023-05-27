@@ -74,7 +74,7 @@ class AEAD(AEADCipherTemplate):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -98,7 +98,7 @@ class NonAEAD(NonAEADCipherTemplate):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -124,7 +124,7 @@ class AEADOneShot(AuthenticationMixin, BaseAEADOneShotCipher):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         self._cipher = _get_aes_cipher(key, mode, nonce)
         self._updated = False
         self._encrypting = encrypting
@@ -171,14 +171,14 @@ class AEADOneShot(AuthenticationMixin, BaseAEADOneShotCipher):
         if self.mode in self._write_into_buffer_unsupported:
             # the mode does not support writing into mutable buffers.
             if out is not None:
-                raise NotImplementedError(
-                    f"writing into buffer unsupported by {self.mode.name}"
-                )
+                msg = f"writing into buffer unsupported by {self.mode.name}"
+                raise NotImplementedError(msg)
         else:
             update_func_kwargs = {"output": out}
 
         if not self.is_encrypting() and tag is None:
-            raise ValueError("tag is required for decryption")
+            msg = "tag is required for decryption"
+            raise ValueError(msg)
 
         result: bytes | None = None
         with contextlib.suppress(ValueError):
@@ -258,13 +258,13 @@ def new(
         use_hmac = True
 
     if mode not in supported_modes():
-        raise exc.UnsupportedMode(f"{mode.name} not supported.")
+        msg = f"{mode.name} not supported."
+        raise exc.UnsupportedMode(msg)
 
     if mode in modes.SPECIAL:
         if file is not None:
-            raise NotImplementedError(
-                f"{mode} does not support encryption/decryption of files."
-            )
+            msg = f"{mode} does not support encryption/decryption of files."
+            raise NotImplementedError(msg)
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
     elif mode in modes.AEAD:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)

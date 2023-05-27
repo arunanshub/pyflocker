@@ -3,7 +3,6 @@ from __future__ import annotations
 import io
 
 import pytest
-
 from pyflocker.ciphers import exc
 from pyflocker.ciphers.backends import symmetric
 from pyflocker.ciphers.interfaces import AES

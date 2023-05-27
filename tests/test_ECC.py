@@ -5,7 +5,6 @@ from itertools import product
 import pytest
 from hypothesis import strategies as st
 from hypothesis.core import given
-
 from pyflocker.ciphers import ECC, ECDSA, Backends, base, exc
 from pyflocker.ciphers.backends.asymmetric import ECDH, EdDSA
 from pyflocker.ciphers.interfaces import Hash

@@ -22,7 +22,7 @@ class FileCipherWrapper:
         cipher: base.BaseAEADCipher,
         file: io.BufferedIOBase,
         offset: int = 0,
-    ):
+    ) -> None:
         """Initialize a file cipher wrapper.
 
         Args:
@@ -36,7 +36,8 @@ class FileCipherWrapper:
                 output buffer that is bigger than the input buffer.
         """
         if not isinstance(cipher, base.BaseAEADCipher):
-            raise TypeError("cipher must implement BaseAEADCipher interface.")
+            msg = "cipher must implement BaseAEADCipher interface."
+            raise TypeError(msg)
 
         # the cipher already has an internal context
         self._ctx = cipher
@@ -102,7 +103,8 @@ class FileCipherWrapper:
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self._encrypting and tag is None:
-            raise ValueError("tag is required for decryption")
+            msg = "tag is required for decryption"
+            raise ValueError(msg)
 
         buf = memoryview(bytearray(blocksize + self._offset))
         rbuf = buf[:blocksize]
@@ -136,7 +138,8 @@ class FileCipherWrapper:
 
     def calculate_tag(self) -> bytes | None:
         if self._ctx is not None:
-            raise exc.NotFinalized("Cipher has not been finalized yet.")
+            msg = "Cipher has not been finalized yet."
+            raise exc.NotFinalized(msg)
         return self._tag
 
 
@@ -157,9 +160,10 @@ class HMACWrapper(base.BaseAEADCipher):
         hashfunc: str | base.BaseHash = "sha256",
         offset: int = 0,
         tag_length: int | None = 16,
-    ):
+    ) -> None:
         if not isinstance(cipher, base.BaseNonAEADCipher):
-            raise TypeError("Only NonAEAD ciphers can be wrapped.")
+            msg = "Only NonAEAD ciphers can be wrapped."
+            raise TypeError(msg)
 
         if isinstance(hashfunc, base.BaseHash):
             # always use a fresh hash object.
@@ -187,10 +191,9 @@ class HMACWrapper(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if self._updated:
-            raise TypeError(
-                "Cannot call authenticate after update/update_into has been"
-                " called"
-            )
+            msg = "Cannot call authenticate after update/update_into has been "
+            "called"
+            raise TypeError(msg)
         self._auth.update(data)
         self._len_aad += len(data)
 
@@ -218,11 +221,11 @@ class HMACWrapper(base.BaseAEADCipher):
 
         if not self.is_encrypting():
             if tag is None:
-                raise ValueError("tag is required for decryption")
+                msg = "tag is required for decryption"
+                raise ValueError(msg)
             if len(tag) != self._tag_length:
-                raise ValueError(
-                    f"Invalid tag length: (required {self._tag_length})"
-                )
+                msg = f"Invalid tag length: (required {self._tag_length})"
+                raise ValueError(msg)
 
         self._auth.update(self._len_aad.to_bytes(8, "little"))
         self._auth.update(self._len_ct.to_bytes(8, "little"))
@@ -260,7 +263,7 @@ class _EncryptionCtx:
         cipher: base.BaseNonAEADCipher,
         auth: typing.Any,
         offset: int,
-    ):
+    ) -> None:
         self._ctx = cipher
         self._auth = auth
         self._offset = -offset or None
@@ -280,7 +283,9 @@ class _EncryptionCtx:
 
 
 class _DecryptionCtx:
-    def __init__(self, cipher: base.BaseNonAEADCipher, auth: typing.Any):
+    def __init__(
+        self, cipher: base.BaseNonAEADCipher, auth: typing.Any
+    ) -> None:
         self._ctx = cipher
         self._auth = auth
 

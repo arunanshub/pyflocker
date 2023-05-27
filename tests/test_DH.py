@@ -6,7 +6,6 @@ from itertools import product
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from pyflocker.ciphers import DH, exc
 from pyflocker.ciphers.backends import Backends
 

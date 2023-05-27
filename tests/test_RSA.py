@@ -4,7 +4,6 @@ import hashlib
 from itertools import product
 
 import pytest
-
 from pyflocker.ciphers import RSA, exc
 from pyflocker.ciphers.backends import Backends
 from pyflocker.ciphers.backends.asymmetric import MGF1, OAEP, PSS

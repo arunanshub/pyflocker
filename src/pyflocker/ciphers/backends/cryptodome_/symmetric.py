@@ -88,7 +88,8 @@ class AuthenticationMixin:
             return
 
         if tag is None:
-            raise ValueError("tag is required for finalization")
+            msg = "tag is required for finalization"
+            raise ValueError(msg)
 
         cipher, self._cipher = self._cipher, None
         self._update_func = None  # type: ignore

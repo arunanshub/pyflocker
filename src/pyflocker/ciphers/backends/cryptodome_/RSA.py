@@ -36,7 +36,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             self._key = _key
         else:
             if not isinstance(n, int):  # pragma: no cover
-                raise TypeError("n must be an integer value")
+                msg = "n must be an integer value"
+                raise TypeError(msg)
             self._key = RSA.generate(n, e=e)
 
     @property
@@ -123,12 +124,14 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e}") from e
+            msg = f"Invalid encoding or format: {e}"
+            raise ValueError(msg) from e
 
         if (
             protection is not None and protection not in PROTECTION_SCHEMES
         ):  # pragma: no cover
-            raise ValueError(f"invalid protection scheme: {protection!r}")
+            msg = f"invalid protection scheme: {protection!r}"
+            raise ValueError(msg)
 
         if passphrase:
             passphrase = memoryview(passphrase).tobytes()
@@ -142,7 +145,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             key: str | bytes = self._key.export_key(**kwargs)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
         return key if isinstance(key, bytes) else key.encode()
 
     @classmethod
@@ -161,7 +165,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             kwargs["pkcs"] = 1
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for PEM: {format!r}")
+            msg = f"Invalid format for PEM: {format!r}"
+            raise ValueError(msg)
 
     @classmethod
     def _set_der_args(
@@ -179,7 +184,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             kwargs["pkcs"] = 1
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for DER: {format!r}")
+            msg = f"Invalid format for DER: {format!r}"
+            raise ValueError(msg)
 
     @classmethod
     def _set_pkcs8_passphrase_args(
@@ -189,7 +195,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         kwargs: dict,
     ) -> None:
         if not passphrase and protection:
-            raise ValueError("Using protection without passphrase is invalid")
+            msg = "Using protection without passphrase is invalid"
+            raise ValueError(msg)
         kwargs["passphrase"] = passphrase
         kwargs["protection"] = (
             protection if protection else cls._DEFAULT_PROTECTION
@@ -202,7 +209,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         kwargs: dict,
     ) -> None:
         if protection is not None:  # pragma: no cover
-            raise ValueError("protection is meaningful only for PKCS8")
+            msg = "protection is meaningful only for PKCS8"
+            raise ValueError(msg)
         if passphrase is not None:
             kwargs["passphrase"] = passphrase
 
@@ -212,9 +220,11 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         protection: str | None,
     ) -> None:
         if protection is not None:  # pragma: no cover
-            raise ValueError("protection is meaningful only for PKCS8")
+            msg = "protection is meaningful only for PKCS8"
+            raise ValueError(msg)
         if encoding == "DER":
-            raise ValueError("cannot use DER with PKCS1 format")
+            msg = "cannot use DER with PKCS1 format"
+            raise ValueError(msg)
 
     @classmethod
     def load(
@@ -225,9 +235,11 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             key = RSA.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
-                raise ValueError("The key is not a private key")
+                msg = "The key is not a private key"
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
         return cls(None, _key=key)
 
 
@@ -310,7 +322,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         try:
             encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e}") from e
+            msg = f"Invalid encoding or format: {e}"
+            raise ValueError(msg) from e
 
         kwargs: dict[str, typing.Any] = {}
         if encoding == "OpenSSH":
@@ -323,7 +336,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         try:
             data: str | bytes = self._key.export_key(**kwargs)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
         return data if isinstance(data, bytes) else data.encode("utf-8")
 
     @staticmethod
@@ -331,30 +345,35 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         if format == "OpenSSH":
             kwargs["format"] = "OpenSSH"
             return
-        raise ValueError(f"Invalid format for OpenSSH: {format!r}")
+        msg = f"Invalid format for OpenSSH: {format!r}"
+        raise ValueError(msg)
 
     @staticmethod
     def _set_pem_args(format: str, kwargs: dict) -> None:
         if format == "SubjectPublicKeyInfo":
             kwargs["format"] = "PEM"
             return
-        raise ValueError(f"Invalid format for PEM: {format!r}")
+        msg = f"Invalid format for PEM: {format!r}"
+        raise ValueError(msg)
 
     @staticmethod
     def _set_der_args(format: str, kwargs: dict) -> None:
         if format == "SubjectPublicKeyInfo":
             kwargs["format"] = "DER"
             return
-        raise ValueError(f"Invalid format for DER: {format!r}")
+        msg = f"Invalid format for DER: {format!r}"
+        raise ValueError(msg)
 
     @classmethod
     def load(cls, data: bytes) -> RSAPublicKey:
         try:
             key = RSA.import_key(data)
             if key.has_private():
-                raise ValueError("The key is not a private key")
+                msg = "The key is not a private key"
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
         return cls(key)
 
 

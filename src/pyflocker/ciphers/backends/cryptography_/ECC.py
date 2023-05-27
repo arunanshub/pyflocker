@@ -131,11 +131,13 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             self._curve = _key.curve.name
         else:
             if not isinstance(curve, str):  # pragma: no cover
-                raise TypeError("curve name must be a string")
+                msg = "curve name must be a string"
+                raise TypeError(msg)
             try:
                 curve_obj = _Curves.CURVES[curve]()
             except KeyError as e:
-                raise ValueError(f"Invalid curve: {e.args[0]!r}") from e
+                msg = f"Invalid curve: {e.args[0]!r}"
+                raise ValueError(msg) from e
 
             if isinstance(curve_obj, ec.EllipticCurve):
                 self._key = ec.generate_private_key(curve_obj)
@@ -162,7 +164,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         algorithm: None | base.BaseEllepticCurveExchangeAlgorithm = None,
     ) -> bytes:
         if isinstance(self._key, _EdDSAPrivateKeyAdapter):
-            raise NotImplementedError("EdDSA keys cannot perform key exchange")
+            msg = "EdDSA keys cannot perform key exchange"
+            raise NotImplementedError(msg)
 
         if algorithm is None:  # pragma: no cover
             algorithm = ECDH()
@@ -204,7 +207,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         """
         if self.curve.lower().startswith("ed"):
             if algorithm is not None and not isinstance(algorithm, EdDSA):
-                raise TypeError(f"Invalid signature algorithm: {algorithm}")
+                msg = f"Invalid signature algorithm: {algorithm}"
+                raise TypeError(msg)
             assert isinstance(self._key, _EdDSAPrivateKeyAdapter)
             return EdDSASignerContext(self._key)
 
@@ -252,9 +256,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"The encoding or format is invalid: {e.args[0]!r}"
-            ) from e
+            msg = f"The encoding or format is invalid: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         protection: serial.KeySerializationEncryption
         if passphrase is None:
@@ -267,7 +270,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         try:
             return self._key.private_bytes(encd, fmt, protection)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @classmethod
     def load(
@@ -288,7 +292,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         try:
             key = cls._validate_key_type(loader(memoryview(data), passphrase))
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         return cls(None, _key=key)
 
@@ -303,7 +308,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format") from None
+            msg = "Invalid format"
+            raise ValueError(msg) from None
 
     @classmethod
     def _validate_key_type(cls, key: typing.Any) -> ec.EllipticCurvePrivateKey:
@@ -318,14 +324,16 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
                 filter(lambda t: isinstance(key, t), cls._KEY_TYPE_WRAPPERS)
             )
         except StopIteration:
-            raise ValueError("The key is not an EC private key.") from None
+            msg = "The key is not an EC private key."
+            raise ValueError(msg) from None
 
         return cls._KEY_TYPE_WRAPPERS[klass](key)
 
     @classmethod
     def _load_raw(cls, data: bytes, curve: str) -> ECCPrivateKey:
         if curve not in _Curves.EDWARDS_CURVES:
-            raise ValueError(f"Curve {curve!r} does not support Raw encoding.")
+            msg = f"Curve {curve!r} does not support Raw encoding."
+            raise ValueError(msg)
         return cls(
             None,
             _key=_EdDSAPrivateKeyAdapter.from_private_bytes(data, curve),
@@ -377,7 +385,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
 
     def __init__(self, key: ec.EllipticCurvePublicKey) -> None:
         if not isinstance(key, ec.EllipticCurvePublicKey):  # pragma: no cover
-            raise TypeError("key is not an EC public key")
+            msg = "key is not an EC public key"
+            raise TypeError(msg)
         self._key = key
         self._key_size = key.key_size
         self._curve = key.curve.name
@@ -396,7 +405,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
     ) -> VerifierContext | EdDSAVerifierContext:
         if self.curve.startswith("ed"):
             if algorithm is not None and not isinstance(algorithm, EdDSA):
-                raise TypeError(f"Invalid signature algorithm: {algorithm}")
+                msg = f"Invalid signature algorithm: {algorithm}"
+                raise TypeError(msg)
             assert isinstance(self._key, _EdDSAPublicKeyAdapter)
             return EdDSAVerifierContext(self._key)
 
@@ -442,14 +452,14 @@ class ECCPublicKey(base.BaseECCPublicKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"Invalid encoding or format: {e.args[0]!r}"
-            ) from e
+            msg = f"Invalid encoding or format: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         try:
             return self._key.public_bytes(encd, fmt)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @classmethod
     def load(cls, data: bytes, *, curve: str | None = None) -> ECCPublicKey:
@@ -460,7 +470,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
         try:
             key = cls._validate_key_type(loader(memoryview(data)))
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         assert isinstance(key, ec.EllipticCurvePublicKey)
         return cls(key)
@@ -475,7 +486,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
                 )
             )
         if curve not in _Curves.EDWARDS_CURVES:
-            raise ValueError(f"Curve {curve!r} does not support Raw encoding.")
+            msg = f"Curve {curve!r} does not support Raw encoding."
+            raise ValueError(msg)
         return cls(_EdDSAPublicKeyAdapter.from_public_bytes(data, curve))
 
     @classmethod
@@ -492,7 +504,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
             )
             return cls._KEY_TYPE_WRAPPERS[klass](key)
         except StopIteration:
-            raise ValueError("The key is not an EC public key.") from None
+            msg = "The key is not an EC public key."
+            raise ValueError(msg) from None
 
     @classmethod
     def _get_loader(cls, data: bytes) -> typing.Callable:
@@ -502,7 +515,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format.") from None
+            msg = "Invalid format."
+            raise ValueError(msg) from None
 
 
 class VerifierContext(base.BaseVerifierContext):
@@ -571,7 +585,7 @@ class EdDSAVerifierContext(base.BaseEdDSAVerifierContext):
 
 
 class _EllepticCurve(ec.EllipticCurve):
-    def __init__(self, name: str, key_size: int):
+    def __init__(self, name: str, key_size: int) -> None:
         self._name = name
         self._key_size = key_size
 

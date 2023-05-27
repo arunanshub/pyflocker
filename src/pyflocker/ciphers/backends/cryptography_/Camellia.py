@@ -2,9 +2,8 @@ from __future__ import annotations
 
 import typing
 
-from cryptography.hazmat.primitives.ciphers import Cipher
+from cryptography.hazmat.primitives.ciphers import Cipher, modes
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
-from cryptography.hazmat.primitives.ciphers import modes
 
 from ... import exc
 from ...modes import Modes
@@ -34,9 +33,10 @@ class Camellia(NonAEADCipherTemplate):
         key: bytes,
         mode: Modes,
         iv_or_nonce: bytes,
-    ):
+    ) -> None:
         if mode not in supported_modes():
-            raise exc.UnsupportedMode(f"{mode.name} not supported.")
+            msg = f"{mode.name} not supported."
+            raise exc.UnsupportedMode(msg)
 
         cipher = Cipher(
             algo.Camellia(key),

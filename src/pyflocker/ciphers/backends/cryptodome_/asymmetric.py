@@ -29,9 +29,11 @@ def get_OAEP(
         Cryptodome backend.
     """
     if not isinstance(padding, asymmetric.OAEP):  # pragma: no cover
-        raise TypeError("padding must be an OAEP object")
+        msg = "padding must be an OAEP object"
+        raise TypeError(msg)
     if not isinstance(padding.mgf, asymmetric.MGF1):
-        raise TypeError("mgf must be an MGF1 instance")
+        msg = "mgf must be an MGF1 instance"
+        raise TypeError(msg)
 
     return PKCS1_OAEP.new(
         key,
@@ -56,9 +58,11 @@ def get_PSS(key: RsaKey, padding: base.BaseAsymmetricPadding) -> typing.Any:
         An PSS signer/verifier object, depending on the key.
     """
     if not isinstance(padding, asymmetric.PSS):  # pragma: no cover
-        raise TypeError("padding must be a PSS object")
+        msg = "padding must be a PSS object"
+        raise TypeError(msg)
     if not isinstance(padding.mgf, asymmetric.MGF1):
-        raise TypeError("mgf must be an MGF1 instance")
+        msg = "mgf must be an MGF1 instance"
+        raise TypeError(msg)
 
     if padding.salt_length is None:
         return _SaltLengthMaximizer(key, padding)
@@ -90,7 +94,8 @@ def get_ECDSA(
     Returns: Signer/Verifier instance.
     """
     if not isinstance(algorithm, asymmetric.ECDSA):  # pragma: no cover
-        raise TypeError("algorithm must be an instance of ECDSA")
+        msg = "algorithm must be an instance of ECDSA"
+        raise TypeError(msg)
     return DSS.new(key, mode="fips-186-3", encoding="der")  # type: ignore
 
 
@@ -99,10 +104,11 @@ def get_EdDSA(
     algorithm: asymmetric.BaseEllepticCurveSignatureAlgorithm,
 ) -> eddsa.EdDSASigScheme:
     if not isinstance(algorithm, asymmetric.EdDSA):
-        raise TypeError("algorithm must be an instance of EdDSA")
+        msg = "algorithm must be an instance of EdDSA"
+        raise TypeError(msg)
     return eddsa.new(
         key,
-        mode=algorithm.mode,  # type: ignore
+        mode=algorithm.mode,
         context=algorithm.context,
     )
 
@@ -135,7 +141,8 @@ class _SaltLengthMaximizer:
 
     def sign(self, msghash: typing.Any) -> bytes:
         if not self._key.has_private():
-            raise TypeError("The key is not a private key.")
+            msg = "The key is not a private key."
+            raise TypeError(msg)
         return self._sign_or_verify(msghash)
 
     def verify(self, msghash: typing.Any, signature: bytes) -> None:
@@ -175,9 +182,8 @@ def get_padding_algorithm(
     try:
         return PADDINGS[type(padding)](*args, **kwargs)
     except KeyError as e:
-        raise TypeError(
-            f"Invalid padding algorithm type: {type(padding)}"
-        ) from e
+        msg = f"Invalid padding algorithm type: {type(padding)}"
+        raise TypeError(msg) from e
 
 
 def get_ec_signature_algorithm(
@@ -188,6 +194,5 @@ def get_ec_signature_algorithm(
     try:
         return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)
     except KeyError as e:
-        raise TypeError(
-            f"Invalid signature algorithm type: {type(algorithm)}"
-        ) from e
+        msg = f"Invalid signature algorithm type: {type(algorithm)}"
+        raise TypeError(msg) from e

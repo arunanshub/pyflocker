@@ -5,7 +5,6 @@ from itertools import product
 from typing import TYPE_CHECKING
 
 import pytest
-
 from pyflocker import locker
 from pyflocker.ciphers import modes
 from pyflocker.ciphers.backends import Backends

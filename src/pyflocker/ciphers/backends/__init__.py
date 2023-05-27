@@ -40,9 +40,8 @@ def load_algorithm(
     try:
         return import_module(f".{name}", _backend.__name__)
     except ImportError as e:
-        raise exc.UnsupportedAlgorithm(
-            f"{name} is not implemented by backend {backend}."
-        ) from e
+        msg = f"{name} is not implemented by backend {backend}."
+        raise exc.UnsupportedAlgorithm(msg) from e
 
 
 def load_backend(
@@ -72,7 +71,8 @@ def load_backend(
 
     # backend is not None
     if not isinstance(backend, Backends):
-        raise TypeError("argument backend must be of type Backends.")
+        msg = "argument backend must be of type Backends."
+        raise TypeError(msg)
 
     if _DEFAULT_BACKEND is None:
         _DEFAULT_BACKEND = _import_helper(backend)
@@ -98,6 +98,7 @@ def _find_backend() -> ModuleType | None:
             errors += 1
 
     if errors == len(Backends):
-        raise ImportError("No backends found.")
+        msg = "No backends found."
+        raise ImportError(msg)
 
     return None

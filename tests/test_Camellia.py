@@ -5,7 +5,6 @@ import io
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from pyflocker.ciphers import base, exc
 from pyflocker.ciphers.backends import Backends
 from pyflocker.ciphers.backends.symmetric import FileCipherWrapper

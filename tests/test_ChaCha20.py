@@ -5,7 +5,6 @@ import io
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from pyflocker.ciphers import Backends, base, exc
 from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
 from pyflocker.ciphers.interfaces import ChaCha20

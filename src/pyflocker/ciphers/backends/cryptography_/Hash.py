@@ -118,16 +118,16 @@ class Hash(base.BaseHash):
     def oid(self) -> str:  # pragma: no cover
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
-            raise AttributeError(f"OID not available for {self.name!r}")
+            msg = f"OID not available for {self.name!r}"
+            raise AttributeError(msg)
 
         if self.name in ("blake2b", "blake2s") and self.digest_size not in (
             32,
             64,
         ):
-            raise AttributeError(
-                f"OID not available for {self.name!r} with digest size"
-                f" {self.digest_size}"
-            )
+            msg = f"OID not available for {self.name!r} with digest size "
+            f"{self.digest_size}"
+            raise AttributeError(msg)
 
         return self._oid
 
@@ -182,7 +182,8 @@ class Hash(base.BaseHash):
         digest_size_kwargs = {}
         if name in VAR_DIGEST_SIZE:
             if digest_size is None:
-                raise ValueError("digest_size is required")
+                msg = "digest_size is required"
+                raise ValueError(msg)
             digest_size_kwargs = {"digest_size": digest_size}
 
         hashobj = hashes.Hash(hashfunc(**digest_size_kwargs))

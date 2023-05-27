@@ -39,7 +39,8 @@ class DHParameters(base.BaseDHParameters):
             self._params = _params
         else:
             if not isinstance(key_size, int):  # pragma: no cover
-                raise TypeError("key_size must be an integer")
+                msg = "key_size must be an integer"
+                raise TypeError(msg)
             self._params = dh.generate_parameters(generator, key_size)
 
         numbers = self._params.parameter_numbers()
@@ -80,14 +81,14 @@ class DHParameters(base.BaseDHParameters):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"The encoding or format is invalid: {e.args[0]!r}"
-            ) from e
+            msg = f"The encoding or format is invalid: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         try:
             return self._params.parameter_bytes(encd, fmt)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
@@ -95,9 +96,11 @@ class DHParameters(base.BaseDHParameters):
         try:
             params = loader(memoryview(data))
             if not isinstance(params, dh.DHParameters):
-                raise ValueError("Data is not a DH parameter.")
+                msg = "Data is not a DH parameter."
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         return cls(None, _params=params)
 
@@ -110,7 +113,8 @@ class DHParameters(base.BaseDHParameters):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format.") from None
+            msg = "Invalid format."
+            raise ValueError(msg) from None
 
     @classmethod
     def load_from_parameters(
@@ -139,7 +143,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
 
     def __init__(self, key: dh.DHPrivateKey) -> None:
         if not isinstance(key, dh.DHPrivateKey):  # pragma: no cover
-            raise ValueError("The key is not a DH private key.")
+            msg = "The key is not a DH private key."
+            raise ValueError(msg)
         self._key = key
 
         numbers = key.private_numbers()
@@ -180,9 +185,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"The encoding or format is invalid: {e.args[0]!r}"
-            ) from e
+            msg = f"The encoding or format is invalid: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         protection: serial.KeySerializationEncryption
         if passphrase is None:
@@ -195,7 +199,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         try:
             return self._key.private_bytes(encd, fmt, protection)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @property
     def x(self) -> int:
@@ -215,9 +220,11 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         try:
             key = loader(memoryview(data), passphrase)
             if not isinstance(key, dh.DHPrivateKey):
-                raise ValueError("Key is not a DH private key.")
+                msg = "Key is not a DH private key."
+                raise ValueError(msg)
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         return cls(key)
 
@@ -229,7 +236,8 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format") from None
+            msg = "Invalid format"
+            raise ValueError(msg) from None
 
 
 class DHPublicKey(base.BaseDHPublicKey):
@@ -249,7 +257,8 @@ class DHPublicKey(base.BaseDHPublicKey):
 
     def __init__(self, key: dh.DHPublicKey) -> None:
         if not isinstance(key, dh.DHPublicKey):  # pragma: no cover
-            raise ValueError("The key is not a DH public key.")
+            msg = "The key is not a DH public key."
+            raise ValueError(msg)
         self._key = key
         self._y = key.public_numbers().y
 
@@ -281,14 +290,14 @@ class DHPublicKey(base.BaseDHPublicKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"Invalid encoding or format: {e.args[0]!r}"
-            ) from e
+            msg = f"Invalid encoding or format: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         try:
             return self._key.public_bytes(encd, fmt)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @property
     def y(self) -> int:
@@ -300,9 +309,11 @@ class DHPublicKey(base.BaseDHPublicKey):
         try:
             key = loader(memoryview(data))
             if not isinstance(key, dh.DHPublicKey):
-                raise ValueError("Key is not a DH public key.")
+                msg = "Key is not a DH public key."
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         return cls(key)
 
@@ -314,7 +325,8 @@ class DHPublicKey(base.BaseDHPublicKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format.") from None
+            msg = "Invalid format."
+            raise ValueError(msg) from None
 
 
 def generate(key_size: int, g: int = 2) -> DHParameters:

@@ -154,7 +154,8 @@ class Hash(base.BaseHash):
     def oid(self) -> str:  # pragma: no cover
         """The ASN.1 Object ID."""
         if self._oid is NotImplemented:
-            raise AttributeError(f"OID not available for {self.name!r}")
+            msg = f"OID not available for {self.name!r}"
+            raise AttributeError(msg)
         return self._oid  # type: ignore
 
     def update(self, data: bytes) -> None:
@@ -182,7 +183,8 @@ class Hash(base.BaseHash):
         try:
             hashobj = self._ctx.copy()
         except AttributeError as e:
-            raise ValueError(f"copying not supported by {self.name!r}") from e
+            msg = f"copying not supported by {self.name!r}"
+            raise ValueError(msg) from e
 
         return type(self)(
             self.name,
@@ -225,7 +227,8 @@ class Hash(base.BaseHash):
         digest_size_kwargs = {}
         if name in VAR_DIGEST_SIZE:
             if digest_size is None:
-                raise ValueError("digest_size is required")
+                msg = "digest_size is required"
+                raise ValueError(msg)
             # XOFs have the `read()` API, which is frustrating!
             if name not in XOFS:
                 digest_size_kwargs = {"digest_bytes": digest_size}

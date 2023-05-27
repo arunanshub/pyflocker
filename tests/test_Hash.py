@@ -7,7 +7,6 @@ from itertools import combinations_with_replacement as repcomb
 import pytest
 from hypothesis import given
 from hypothesis import strategies as st
-
 from pyflocker.ciphers import Backends, Hash, exc
 
 if typing.TYPE_CHECKING:

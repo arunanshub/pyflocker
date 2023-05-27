@@ -56,7 +56,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             self._key = _key
         else:
             if not isinstance(n, int):  # pragma: no cover
-                raise TypeError("n must be an integer value")
+                msg = "n must be an integer value"
+                raise TypeError(msg)
             self._key = rsa.generate_private_key(e, n)
 
         # numbers
@@ -149,9 +150,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"The encoding or format is invalid: {e.args[0]!r}"
-            ) from e
+            msg = f"The encoding or format is invalid: {e.args[0]!r}"
+            raise ValueError(msg) from e
 
         protection: serial.KeySerializationEncryption
         if passphrase is None:
@@ -164,7 +164,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             return self._key.private_bytes(encd, fmt, protection)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
 
     @classmethod
     def load(
@@ -180,9 +181,11 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             key = loader(memoryview(data), passphrase)
             if not isinstance(key, rsa.RSAPrivateKey):
-                raise ValueError("Key is not an RSA Private key")
+                msg = "Key is not an RSA Private key"
+                raise ValueError(msg)
         except (ValueError, TypeError) as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         return cls(None, _key=key)
 
@@ -197,7 +200,8 @@ class RSAPrivateKey(base.BaseRSAPrivateKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format") from None
+            msg = "Invalid format"
+            raise ValueError(msg) from None
 
 
 class RSAPublicKey(base.BaseRSAPublicKey):
@@ -224,7 +228,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
 
     def __init__(self, key: rsa.RSAPublicKey) -> None:
         if not isinstance(key, rsa.RSAPublicKey):  # pragma: no cover
-            raise ValueError("The key is not an RSA public key.")
+            msg = "The key is not an RSA public key."
+            raise ValueError(msg)
         self._key = key
 
         # numbers
@@ -291,9 +296,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
             encd = self._ENCODINGS[encoding]
             fmt = self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(
-                f"Invalid encoding or format: {e.args[0]!r}"
-            ) from e
+            msg = f"Invalid encoding or format: {e.args[0]!r}"
+            raise ValueError(msg) from e
         return self._key.public_bytes(encd, fmt)
 
     @classmethod
@@ -302,9 +306,11 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         try:
             key = loader(memoryview(data))
             if not isinstance(key, rsa.RSAPublicKey):
-                raise ValueError("Key is not an RSA public key.")
+                msg = "Key is not an RSA public key."
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
 
         assert isinstance(key, rsa.RSAPublicKey)
         return cls(key)
@@ -317,7 +323,8 @@ class RSAPublicKey(base.BaseRSAPublicKey):
         try:
             return cls._LOADERS[next(filter(data.startswith, cls._LOADERS))]
         except StopIteration:
-            raise ValueError("Invalid format.") from None
+            msg = "Invalid format."
+            raise ValueError(msg) from None
 
 
 class EncryptorContext(base.BaseEncryptorContext):

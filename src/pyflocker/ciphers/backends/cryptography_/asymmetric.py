@@ -25,9 +25,11 @@ def get_OAEP(padding: base.BaseAsymmetricPadding) -> padding_.OAEP:
             cryptography backend.
     """
     if not isinstance(padding, asymmetric.OAEP):  # pragma: no cover
-        raise TypeError("padding must be an instance of OAEP.")
+        msg = "padding must be an instance of OAEP."
+        raise TypeError(msg)
     if not isinstance(padding.mgf, asymmetric.MGF1):
-        raise TypeError("MGF must be an instance of MGF1.")
+        msg = "MGF must be an instance of MGF1."
+        raise TypeError(msg)
     return padding_.OAEP(
         mgf=padding_.MGF1(
             Hash._get_hash_algorithm(padding.mgf.hashfunc),
@@ -47,9 +49,11 @@ def get_PSS(padding: base.BaseAsymmetricPadding) -> padding_.PSS:
         PSS object: An PSS signer/verifier object, depending on the key.
     """
     if not isinstance(padding, asymmetric.PSS):  # pragma: no cover
-        raise TypeError("padding must be an instance of PSS.")
+        msg = "padding must be an instance of PSS."
+        raise TypeError(msg)
     if not isinstance(padding.mgf, asymmetric.MGF1):
-        raise TypeError("MGF must be an instance of MGF1.")
+        msg = "MGF must be an instance of MGF1."
+        raise TypeError(msg)
     return padding_.PSS(
         mgf=padding_.MGF1(Hash._get_hash_algorithm(padding.mgf.hashfunc)),
         salt_length=padding_.PSS.MAX_LENGTH
@@ -67,7 +71,8 @@ def get_ECDH(algorithm: base.BaseEllepticCurveExchangeAlgorithm) -> ECDH:
     Returns: ECDH key exchange object.
     """
     if not isinstance(algorithm, asymmetric.ECDH):  # pragma: no cover
-        raise TypeError("algorithm must be an instance of ECDH")
+        msg = "algorithm must be an instance of ECDH"
+        raise TypeError(msg)
     return ECDH()
 
 
@@ -84,7 +89,8 @@ def get_ECDSA(
     Returns: Signer/Verifier callable.
     """
     if not isinstance(algorithm, asymmetric.ECDSA):  # pragma: no cover
-        raise TypeError("algorithm must be an instance of ECDSA")
+        msg = "algorithm must be an instance of ECDSA"
+        raise TypeError(msg)
     return ECDSA
 
 
@@ -118,9 +124,8 @@ def get_padding_algorithm(
     try:
         return PADDINGS[type(padding)](*args, **kwargs)
     except KeyError as e:
-        raise TypeError(
-            f"Invalid padding algorithm type: {type(padding)}"
-        ) from e
+        msg = f"Invalid padding algorithm type: {type(padding)}"
+        raise TypeError(msg) from e
 
 
 def get_ec_exchange_algorithm(
@@ -131,9 +136,8 @@ def get_ec_exchange_algorithm(
     try:
         return EC_EXCHANGE_ALGORITHMS[type(algorithm)](*args, **kwargs)
     except KeyError as e:
-        raise TypeError(
-            f"Invalid exchange algorithm type: {type(algorithm)}"
-        ) from e
+        msg = f"Invalid exchange algorithm type: {type(algorithm)}"
+        raise TypeError(msg) from e
 
 
 def get_ec_signature_algorithm(
@@ -144,6 +148,5 @@ def get_ec_signature_algorithm(
     try:
         return EC_SIGNATURE_ALGORITHMS[type(algorithm)](*args, **kwargs)
     except KeyError as e:
-        raise TypeError(
-            f"Invalid signature algorithm type: {type(algorithm)}"
-        ) from e
+        msg = f"Invalid signature algorithm type: {type(algorithm)}"
+        raise TypeError(msg) from e

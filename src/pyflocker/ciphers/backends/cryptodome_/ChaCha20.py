@@ -20,7 +20,7 @@ class ChaCha20(NonAEADCipherTemplate):
     use ``ChaCha20Poly1305``.
     """
 
-    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes) -> None:
         self._cipher = _ChaCha20.new(key=key, nonce=nonce)
         self._encrypting = encrypting
         self._update_func = (
@@ -31,7 +31,7 @@ class ChaCha20(NonAEADCipherTemplate):
 class ChaCha20Poly1305(AEADCipherTemplate):
     """ChaCha20Poly1305 Cipher class."""
 
-    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes) -> None:
         self._cipher = _ChaCha20_Poly1305.new(key=key, nonce=nonce)
         self._encrypting = encrypting
         self._update_func = (

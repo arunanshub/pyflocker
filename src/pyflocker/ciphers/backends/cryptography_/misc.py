@@ -34,7 +34,8 @@ def derive_hkdf_key(
         A pair of *cipher key* and *MAC key*.
     """
     if not isinstance(hashalgo, BaseHash):
-        raise TypeError("hashalgo must be an object implementing BaseHash")
+        msg = "hashalgo must be an object implementing BaseHash"
+        raise TypeError(msg)
 
     hash_ = _get_hash_algorithm(hashalgo)
     key = HKDF(hash_, dklen, salt, cipher_ctx).derive(master_key)
@@ -56,7 +57,8 @@ def derive_poly1305_key(ckey: bytes, nonce: bytes) -> bytes:
         ValueError: If the length of nonce is not equal to 8 or 12 bytes.
     """
     if len(nonce) not in (8, 12):
-        raise ValueError("Poly1305 nonce must be 8 or 12 bytes long.")
+        msg = "Poly1305 nonce must be 8 or 12 bytes long."
+        raise ValueError(msg)
 
     if len(nonce) == 8:  # pragma: no cover
         nonce = bytes(4) + nonce

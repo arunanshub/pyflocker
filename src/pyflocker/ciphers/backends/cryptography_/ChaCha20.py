@@ -22,9 +22,10 @@ if typing.TYPE_CHECKING:
 class ChaCha20Poly1305(base.BaseAEADCipher):
     """ChaCha20Poly1305 Cipher class."""
 
-    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
-        if not len(nonce) in (8, 12):
-            raise ValueError("A 8 or 12 byte nonce is required")
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes) -> None:
+        if len(nonce) not in (8, 12):
+            msg = "A 8 or 12 byte nonce is required"
+            raise ValueError(msg)
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 
@@ -90,7 +91,8 @@ class ChaCha20Poly1305(base.BaseAEADCipher):
         if self._ctx is None:
             raise exc.AlreadyFinalized
         if not self.is_encrypting() and tag is None:
-            raise ValueError("tag is required for decryption")
+            msg = "tag is required for decryption"
+            raise ValueError(msg)
 
         self._pad_aad()
 
@@ -127,9 +129,10 @@ class ChaCha20(NonAEADCipherTemplate):
     use ``ChaCha20Poly1305``.
     """
 
-    def __init__(self, encrypting: bool, key: bytes, nonce: bytes):
-        if not len(nonce) in (8, 12):
-            raise ValueError("A 8 or 12 byte nonce is required")
+    def __init__(self, encrypting: bool, key: bytes, nonce: bytes) -> None:
+        if len(nonce) not in (8, 12):
+            msg = "A 8 or 12 byte nonce is required"
+            raise ValueError(msg)
         if len(nonce) == 8:
             nonce = bytes(4) + nonce
 

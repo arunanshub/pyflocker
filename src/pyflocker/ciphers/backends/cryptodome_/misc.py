@@ -31,7 +31,8 @@ def derive_hkdf_key(
         A pair of *cipher key* and *MAC key*.
     """
     if not isinstance(hashalgo, BaseHash):
-        raise TypeError("hashalgo must be an object implementing BaseHash.")
+        msg = "hashalgo must be an object implementing BaseHash."
+        raise TypeError(msg)
 
     hash_ = hashalgo.new()
 

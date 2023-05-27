@@ -217,10 +217,12 @@ def encryptf(
     _assert_unique_files(infile, outfile)
 
     if aes_mode in SPECIAL:
-        raise NotImplementedError(f"{aes_mode} is not supported.")
+        msg = f"{aes_mode} is not supported."
+        raise NotImplementedError(msg)
 
     if len(metadata) > MAX_METADATA_LEN:
-        raise OverflowError("maximum metadata length exceeded (limit: 32).")
+        msg = "maximum metadata length exceeded (limit: 32)."
+        raise OverflowError(msg)
 
     # create the salt and nonce...
     salt = os.urandom(32)
@@ -537,7 +539,8 @@ def locker(
         other secure file deletion tools.
     """
     if newfile and ext:
-        raise ValueError("newfile and ext are mutually exclusive")
+        msg = "newfile and ext are mutually exclusive"
+        raise ValueError(msg)
 
     ext = ext or EXTENSION
     file = os.fspath(file)
@@ -583,7 +586,8 @@ def _assert_unique_files(
 ) -> None:
     """Check if files are unique, else raise ValueError."""
     if os.path.samefile(infile.fileno(), outfile.fileno()):
-        raise ValueError("infile and outfile are the same")
+        msg = "infile and outfile are the same"
+        raise ValueError(msg)
 
 
 def _encrypt_or_decrypt(
@@ -610,10 +614,10 @@ def _encrypt_or_decrypt(
 def _check_key_length(n: int) -> int:
     if n in (128, 192, 256):
         return n // 8
-    elif n in (16, 24, 32):
+    if n in (16, 24, 32):
         return n
-    else:
-        raise ValueError("invalid key length")
+    msg = "invalid key length"
+    raise ValueError(msg)
 
 
 def _get_header(data: bytes, metadata: bytes = METADATA) -> _Header:
@@ -627,15 +631,15 @@ def _get_header(data: bytes, metadata: bytes = METADATA) -> _Header:
             salt,
         ) = HEADER_PAYLOAD.unpack(data)
     except struct.error as e:
-        raise TypeError("The file format is invalid (Header mismatch).") from e
+        msg = "The file format is invalid (Header mismatch)."
+        raise TypeError(msg) from e
 
     if (
         magic != MAGIC
         or metadata != metadata_h[: len(metadata) - MAX_METADATA_LEN]
     ):
-        raise TypeError(
-            "The file format is invalid (Metadata/magic number mismatch)."
-        )
+        msg = "The file format is invalid (Metadata/magic number mismatch)."
+        raise TypeError(msg)
 
     if mode == Modes.MODE_GCM.value:
         nonce = nonce[:12]

@@ -11,9 +11,8 @@ import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import cmac
 from cryptography.hazmat.primitives.ciphers import Cipher as CrCipher
-from cryptography.hazmat.primitives.ciphers import aead
+from cryptography.hazmat.primitives.ciphers import aead, modes
 from cryptography.hazmat.primitives.ciphers import algorithms as algo
-from cryptography.hazmat.primitives.ciphers import modes
 
 from ... import base, exc
 from ... import modes as modes_
@@ -53,7 +52,7 @@ class AEAD(AEADCipherTemplate):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         self._encrypting = encrypting
         self._updated = False
         self._tag = None
@@ -79,7 +78,7 @@ class NonAEAD(NonAEADCipherTemplate):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         self._encrypting = encrypting
         self._mode = mode
 
@@ -103,7 +102,7 @@ class AEADOneShot(base.BaseAEADOneShotCipher):
         key: bytes,
         mode: Modes,
         nonce: bytes,
-    ):
+    ) -> None:
         cipher = _aes_cipher(key, mode, nonce)
 
         self._mode = mode
@@ -144,7 +143,8 @@ class AEADOneShot(base.BaseAEADOneShotCipher):
             return ctxt_tag[: -self._tag_length]
 
         if tag is None:
-            raise ValueError("tag is required for decryption.")
+            msg = "tag is required for decryption."
+            raise ValueError(msg)
 
         try:
             data = self._update_func(self._nonce, data + tag, self._aad)
@@ -168,7 +168,8 @@ class AEADOneShot(base.BaseAEADOneShotCipher):
             raise exc.AlreadyFinalized
 
         if not self.is_encrypting() and tag is None:
-            raise ValueError("tag is required for decryption.")
+            msg = "tag is required for decryption."
+            raise ValueError(msg)
 
         self._update_func = None
         if self._raise_on_tag_err:
@@ -185,7 +186,7 @@ class _AuthWrapper:
 
     __slots__ = ("_auth",)
 
-    def __init__(self, auth: typing.Any):
+    def __init__(self, auth: typing.Any) -> None:
         self._auth = auth
 
     def update(self, data: bytes) -> None:
@@ -209,7 +210,7 @@ class _EAX:
         "__tag",
     )
 
-    def __init__(self, key: bytes, nonce: bytes, mac_len: int = 16):
+    def __init__(self, key: bytes, nonce: bytes, mac_len: int = 16) -> None:
         self._mac_len = mac_len
         self._omac = [cmac.CMAC(algo.AES(key), defb()) for _ in range(3)]
 
@@ -375,16 +376,16 @@ def new(
     crp: typing.Any
 
     if mode not in supported_modes():
-        raise exc.UnsupportedMode(f"{mode.name} not supported.")
+        msg = f"{mode.name} not supported."
+        raise exc.UnsupportedMode(msg)
 
     if file is not None:
         use_hmac = True
 
     if mode in modes_.SPECIAL:
         if file is not None:
-            raise NotImplementedError(
-                f"{mode} does not support encryption/decryption of files."
-            )
+            msg = f"{mode} does not support encryption/decryption of files."
+            raise NotImplementedError(msg)
         crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
     elif mode in modes_.AEAD:
         crp = AEAD(encrypting, key, mode, iv_or_nonce)
@@ -425,7 +426,8 @@ def _aes_cipher(key: bytes, mode: Modes, nonce_or_iv: bytes) -> typing.Any:
 
     if mode in modes_.SPECIAL and mode == Modes.MODE_CCM:
         if not 7 <= len(nonce_or_iv) <= 13:
-            raise ValueError("Length of nonce must be between 7 and 13 bytes")
+            msg = "Length of nonce must be between 7 and 13 bytes"
+            raise ValueError(msg)
         return backend_mode(key)
 
     assert not issubclass(backend_mode, aead.AESCCM)

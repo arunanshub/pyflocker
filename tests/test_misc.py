@@ -3,7 +3,6 @@ from __future__ import annotations
 import pytest
 from hypothesis import assume, given
 from hypothesis import strategies as st
-
 from pyflocker.ciphers.backends import Backends
 from pyflocker.ciphers.backends.cryptodome_ import misc as cd_misc
 from pyflocker.ciphers.backends.cryptography_ import misc as cg_misc

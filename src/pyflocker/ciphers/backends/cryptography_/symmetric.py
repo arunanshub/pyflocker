@@ -80,7 +80,8 @@ class AuthenticationMixin:
 
         if not self.is_encrypting():
             if tag is None:
-                raise ValueError("tag is required for finalization")
+                msg = "tag is required for finalization"
+                raise ValueError(msg)
 
             ctx, self._ctx = self._ctx, None
             try:

@@ -76,11 +76,13 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             self._key = _key
         else:
             if not isinstance(curve, str):
-                raise TypeError("curve name must be a string")
+                msg = "curve name must be a string"
+                raise TypeError(msg)
             try:
                 self._key = ECC.generate(curve=_Curves.CURVES[curve])
             except KeyError as e:
-                raise ValueError(f"Invalid curve: {curve}") from e
+                msg = f"Invalid curve: {curve}"
+                raise ValueError(msg) from e
 
         self._key_size = self._key.pointQ.size_in_bits()
         self._curve = self._key.curve
@@ -137,12 +139,14 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         try:
             encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e}") from e
+            msg = f"Invalid encoding or format: {e}"
+            raise ValueError(msg) from e
 
         if (
             protection is not None and protection not in PROTECTION_SCHEMES
         ):  # pragma: no cover
-            raise ValueError(f"invalid protection scheme: {protection!r}")
+            msg = f"invalid protection scheme: {protection!r}"
+            raise ValueError(msg)
 
         if passphrase:
             passphrase = memoryview(passphrase).tobytes()
@@ -156,7 +160,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         try:
             key = self._key.export_key(**kwargs)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
         return key if isinstance(key, bytes) else key.encode()
 
     @classmethod
@@ -175,7 +180,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             kwargs["use_pkcs8"] = False
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for PEM: {format!r}")
+            msg = f"Invalid format for PEM: {format!r}"
+            raise ValueError(msg)
 
     @classmethod
     def _set_der_args(
@@ -193,7 +199,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
             kwargs["use_pkcs8"] = False
             cls._set_pkcs1_passphrase_args(passphrase, protection, kwargs)
         else:
-            raise ValueError(f"Invalid format for DER: {format!r}")
+            msg = f"Invalid format for DER: {format!r}"
+            raise ValueError(msg)
 
     @classmethod
     def _set_pkcs8_passphrase_args(
@@ -203,7 +210,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         kwargs: dict,
     ) -> None:
         if not passphrase and protection:
-            raise ValueError("Using protection without passphrase is invalid")
+            msg = "Using protection without passphrase is invalid"
+            raise ValueError(msg)
         kwargs["passphrase"] = passphrase
         kwargs["protection"] = (
             protection if protection else cls._DEFAULT_PROTECTION
@@ -216,7 +224,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         kwargs: dict,
     ) -> None:
         if protection is not None:  # pragma: no cover
-            raise ValueError("protection is meaningful only for PKCS8")
+            msg = "protection is meaningful only for PKCS8"
+            raise ValueError(msg)
         if passphrase is not None:
             kwargs["passphrase"] = passphrase
 
@@ -245,9 +254,8 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         algorithm: None | base.BaseEllepticCurveExchangeAlgorithm = None,
     ) -> bytes:
         del peer_public_key, algorithm
-        raise NotImplementedError(
-            "key exchange is currently not supported by the backend."
-        )
+        msg = "key exchange is currently not supported by the backend."
+        raise NotImplementedError(msg)
 
     @classmethod
     def load(
@@ -258,15 +266,16 @@ class ECCPrivateKey(base.BaseECCPrivateKey):
         curve: str | None = None,
     ) -> ECCPrivateKey:
         if curve is not None:
-            raise NotImplementedError(
-                "Cryptodome does not support Raw encoded private keys yet."
-            )
+            msg = "Cryptodome does not support Raw encoded private keys yet."
+            raise NotImplementedError(msg)
         try:
             key = ECC.import_key(data, passphrase)  # type: ignore
             if not key.has_private():
-                raise ValueError("The key is not a private key")
+                msg = "The key is not a private key"
+                raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
         return cls(None, _key=key)
 
 
@@ -339,7 +348,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
         try:
             encoding, format = self._ENCODINGS[encoding], self._FORMATS[format]
         except KeyError as e:
-            raise ValueError(f"Invalid encoding or format: {e}") from e
+            msg = f"Invalid encoding or format: {e}"
+            raise ValueError(msg) from e
 
         kwargs: dict[str, typing.Any] = {}
         if encoding == "SEC1":
@@ -348,10 +358,9 @@ class ECCPublicKey(base.BaseECCPublicKey):
             self._set_openssh_args(format, kwargs)
         elif encoding == "raw":
             if self.curve in _Curves.NIST_CURVES:
-                raise ValueError(
-                    "Failed to serialize key: NIST curves do not support Raw "
-                    "encoding. Use SEC1 instead."
-                )
+                msg = "Failed to serialize key: NIST curves do not support Raw"
+                "encoding. Use SEC1 instead."
+                raise ValueError(msg)
             self._set_raw_args(format, kwargs)
         elif encoding == "PEM":
             self._set_pem_args(format, kwargs)
@@ -361,7 +370,8 @@ class ECCPublicKey(base.BaseECCPublicKey):
         try:
             data = self._key.export_key(**kwargs)
         except ValueError as e:
-            raise ValueError(f"Failed to serialize key: {e!s}") from e
+            msg = f"Failed to serialize key: {e!s}"
+            raise ValueError(msg) from e
         return data if isinstance(data, bytes) else data.encode("utf-8")
 
     @staticmethod
@@ -372,35 +382,40 @@ class ECCPublicKey(base.BaseECCPublicKey):
         elif format == "CompressedPoint":
             kwargs["compress"] = True
         else:
-            raise ValueError(f"Invalid format for SEC1: {format!r}")
+            msg = f"Invalid format for SEC1: {format!r}"
+            raise ValueError(msg)
 
     @staticmethod
     def _set_openssh_args(format: str, kwargs: dict) -> None:
         if format == "OpenSSH":
             kwargs["format"] = "OpenSSH"
             return
-        raise ValueError(f"Invalid format for OpenSSH: {format!r}")
+        msg = f"Invalid format for OpenSSH: {format!r}"
+        raise ValueError(msg)
 
     @staticmethod
     def _set_raw_args(format: str, kwargs: dict) -> None:
         if format == "raw":
             kwargs["format"] = "raw"
             return
-        raise ValueError(f"Invalid format for Raw: {format!r}")
+        msg = f"Invalid format for Raw: {format!r}"
+        raise ValueError(msg)
 
     @staticmethod
     def _set_pem_args(format: str, kwargs: dict) -> None:
         if format == "SubjectPublicKeyInfo":
             kwargs["format"] = "PEM"
             return
-        raise ValueError(f"Invalid format for PEM: {format!r}")
+        msg = f"Invalid format for PEM: {format!r}"
+        raise ValueError(msg)
 
     @staticmethod
     def _set_der_args(format: str, kwargs: dict) -> None:
         if format == "SubjectPublicKeyInfo":
             kwargs["format"] = "DER"
             return
-        raise ValueError(f"Invalid format for DER: {format!r}")
+        msg = f"Invalid format for DER: {format!r}"
+        raise ValueError(msg)
 
     def verifier(
         self,
@@ -446,9 +461,11 @@ class ECCPublicKey(base.BaseECCPublicKey):
             else:
                 key = ECC.import_key(data, curve_name=curve)
                 if key.has_private():
-                    raise ValueError("The key is not a private key")
+                    msg = "The key is not a private key"
+                    raise ValueError(msg)
         except ValueError as e:
-            raise ValueError(f"Failed to load key: {e!s}") from e
+            msg = f"Failed to load key: {e!s}"
+            raise ValueError(msg) from e
         return cls(key)
 
 
@@ -495,6 +512,7 @@ class EdDSAVerifierContext(base.BaseEdDSAVerifierContext):
                 return self._ctx.verify(msghash, signature)
             except ValueError as e:
                 raise exc.SignatureError from e
+        return None
 
 
 def generate(curve: str) -> ECCPrivateKey:
