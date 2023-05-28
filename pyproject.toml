@@ -9,15 +9,15 @@ repository = "https://github.com/arunanshub/pyflocker"
 documentation = "https://pyflocker.readthedocs.io"
 keywords = ["cryptography", "symmetric", "asymmetric", "aead", "rsa"]
 classifiers = [
-    "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Intended Audience :: Developers",
-    "Topic :: Security :: Cryptography",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.8",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "License :: OSI Approved :: MIT License",
+  "Operating System :: OS Independent",
+  "Intended Audience :: Developers",
+  "Topic :: Security :: Cryptography",
 ]
 
 [tool.poetry.urls]
@@ -27,7 +27,7 @@ classifiers = [
 [tool.poetry.dependencies]
 python = "^3.8"
 pycryptodomex = "^3.9.8"
-cryptography = {version = ">=35.0.0,!=37.0.0", extras = ["ssh"]}
+cryptography = { version = ">=35.0.0,!=37.0.0", extras = ["ssh"] }
 
 # Pre-commit hooks
 [tool.poetry.group.dev.dependencies]
@@ -58,7 +58,7 @@ optional = true
 
 [tool.poetry.group.debugging.dependencies]
 pdbpp = "^0.10.3"
-pyreadline3 = {version = "^3.4.1", markers = "sys_platform == 'win32'"}
+pyreadline3 = { version = "^3.4.1", markers = "sys_platform == 'win32'" }
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
@@ -74,16 +74,16 @@ changelog_incremental = true
 annotated_tag = true
 changelog_start_rev = "v0.3.0"
 version_files = [
-    "pyproject.toml",
-    "src/pyflocker/__init__.py",
+  "pyproject.toml",
+  "src/pyflocker/__init__.py",
 ]
 
 # testing and coverage
 [tool.coverage.report]
 exclude_lines = [
-    "pragma: no cover",
-    "if TYPE_CHECKING",
-    "if typing.TYPE_CHECKING",
+  "pragma: no cover",
+  "if TYPE_CHECKING",
+  "if typing.TYPE_CHECKING",
 ]
 
 [tool.pytest.ini_options]
@@ -113,16 +113,28 @@ disallow_any_unimported = true
 line-length = 79
 target-version = "py38"
 exclude = [
-    "docs",
-    "tests",
+  "docs",
+  "tests",
 ]
-ignore = [
-    "ANN101",
-    "ANN102",
-    "ANN401",
-    "B024",
+ignore = ["ANN101", "ANN102", "ANN401", "B024"]
+select = [
+  "ANN",
+  "B",
+  "E",
+  "F",
+  "W",
+  "I",
+  "RET",
+  "EM",
+  "UP",
+  "C90",
+  "TCH",
+  "SIM",
+  # "PLR",
+  "PIE",
 ]
-select = ["ANN", "B", "E", "F", "W", "I", "RET", "EM", "UP", "C90"]
 
 [tool.ruff.isort]
 required-imports = ["from __future__ import annotations"]
+combine-as-imports = true
+force-wrap-aliases = true
