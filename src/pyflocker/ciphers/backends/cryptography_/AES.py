@@ -10,12 +10,18 @@ from types import MappingProxyType
 import cryptography.exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
 from cryptography.hazmat.primitives import cmac
-from cryptography.hazmat.primitives.ciphers import Cipher as CrCipher
-from cryptography.hazmat.primitives.ciphers import aead, modes
-from cryptography.hazmat.primitives.ciphers import algorithms as algo
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher as CrCipher,
+    aead,
+    algorithms as algo,
+    modes,
+)
 
-from ... import base, exc
-from ... import modes as modes_
+from ... import (
+    base,
+    exc,
+    modes as modes_,
+)
 from ...modes import Modes
 from ..symmetric import (
     FileCipherWrapper,
@@ -328,7 +334,7 @@ def new(
     tag_length: int | None = 16,
     digestmod: None | base.BaseHash = None,
     file: io.BufferedReader | None = None,
-) -> AEAD | NonAEAD | FileCipherWrapper | HMACWrapper:
+) -> AEAD | NonAEAD | AEADOneShot | FileCipherWrapper | HMACWrapper:
     """Create a new backend specific AES cipher.
 
     Args:
@@ -373,39 +379,46 @@ def new(
     Note:
         Any other error that is raised is from the backend itself.
     """
-    crp: typing.Any
+    cipher: base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper
 
     if mode not in supported_modes():
         msg = f"{mode.name} not supported."
         raise exc.UnsupportedMode(msg)
 
-    if file is not None:
-        use_hmac = True
+    is_mode_aead = mode in modes_.AEAD
+    is_file = file is not None
+    use_hmac = (is_file and not is_mode_aead) or (
+        use_hmac and not is_mode_aead
+    )
 
     if mode in modes_.SPECIAL:
-        if file is not None:
-            msg = f"{mode} does not support encryption/decryption of files."
-            raise NotImplementedError(msg)
-        crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
-    elif mode in modes_.AEAD:
-        crp = AEAD(encrypting, key, mode, iv_or_nonce)
-    else:
-        if use_hmac:
-            crp = _wrap_hmac(
-                encrypting,
-                key,
-                mode,
-                iv_or_nonce,
-                digestmod if digestmod is not None else Hash.new("sha256"),
-                tag_length,
+        if is_file:
+            msg = (
+                f"{mode.name} does not support encryption/decryption of files."
             )
-        else:
-            crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
+            raise NotImplementedError(msg)
+        return AEADOneShot(encrypting, key, mode, iv_or_nonce)
+
+    if is_mode_aead:
+        cipher = AEAD(encrypting, key, mode, iv_or_nonce)
+    else:
+        cipher = NonAEAD(encrypting, key, mode, iv_or_nonce)
+
+    if use_hmac:
+        cipher = _wrap_hmac(
+            encrypting,
+            key,
+            mode,
+            iv_or_nonce,
+            digestmod or Hash.new("sha256"),
+            tag_length,
+        )
 
     if file:
-        crp = FileCipherWrapper(crp, file, offset=15)
+        assert isinstance(cipher, base.BaseAEADCipher)
+        cipher = FileCipherWrapper(cipher, file, offset=15)
 
-    return crp
+    return cipher
 
 
 def supported_modes() -> set[Modes]:
@@ -424,7 +437,7 @@ def _aes_cipher(key: bytes, mode: Modes, nonce_or_iv: bytes) -> typing.Any:
     backend_mode = SUPPORTED[mode]
     assert backend_mode is not None
 
-    if mode in modes_.SPECIAL and mode == Modes.MODE_CCM:
+    if mode == Modes.MODE_CCM:
         if not 7 <= len(nonce_or_iv) <= 13:
             msg = "Length of nonce must be between 7 and 13 bytes"
             raise ValueError(msg)

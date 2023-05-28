@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import AES
 
-from ... import exc, modes
+from ... import base, exc, modes
 from ...base import BaseAEADOneShotCipher
 from ...modes import Modes
 from ..symmetric import FileCipherWrapper, HMACWrapper
@@ -22,8 +22,6 @@ from .symmetric import (
 
 if TYPE_CHECKING:  # pragma: no cover
     import io
-
-    from ... import base
 
 SUPPORTED = MappingProxyType(
     {
@@ -252,39 +250,46 @@ def new(
     Note:
         Any other error that is raised is from the backend itself.
     """
-    crp: typing.Any
-
-    if file is not None:
-        use_hmac = True
+    cipher: base.BaseAEADCipher | base.BaseNonAEADCipher | FileCipherWrapper
 
     if mode not in supported_modes():
         msg = f"{mode.name} not supported."
         raise exc.UnsupportedMode(msg)
 
+    is_mode_aead = mode in modes.AEAD
+    is_file = file is not None
+    use_hmac = (is_file and not is_mode_aead) or (
+        use_hmac and not is_mode_aead
+    )
+
     if mode in modes.SPECIAL:
-        if file is not None:
-            msg = f"{mode} does not support encryption/decryption of files."
-            raise NotImplementedError(msg)
-        crp = AEADOneShot(encrypting, key, mode, iv_or_nonce)
-    elif mode in modes.AEAD:
-        crp = AEAD(encrypting, key, mode, iv_or_nonce)
-    else:
-        if use_hmac:
-            crp = _wrap_hmac(
-                encrypting,
-                key,
-                mode,
-                iv_or_nonce,
-                digestmod if digestmod is not None else Hash.new("sha256"),
-                tag_length,
+        if is_file:
+            msg = (
+                f"{mode.name} does not support encryption/decryption of files."
             )
-        else:
-            crp = NonAEAD(encrypting, key, mode, iv_or_nonce)
+            raise NotImplementedError(msg)
+        return AEADOneShot(encrypting, key, mode, iv_or_nonce)
+
+    if is_mode_aead:
+        cipher = AEAD(encrypting, key, mode, iv_or_nonce)
+    else:
+        cipher = NonAEAD(encrypting, key, mode, iv_or_nonce)
+
+    if use_hmac:
+        cipher = _wrap_hmac(
+            encrypting,
+            key,
+            mode,
+            iv_or_nonce,
+            digestmod or Hash.new("sha256"),
+            tag_length,
+        )
 
     if file:
-        crp = FileCipherWrapper(crp, file)
+        assert isinstance(cipher, base.BaseAEADCipher)
+        cipher = FileCipherWrapper(cipher, file)
 
-    return crp
+    return cipher
 
 
 def supported_modes() -> set[Modes]:
