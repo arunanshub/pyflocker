@@ -2,8 +2,11 @@ from __future__ import annotations
 
 import typing
 
-from cryptography.hazmat.primitives.ciphers import Cipher, modes
-from cryptography.hazmat.primitives.ciphers import algorithms as algo
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher,
+    algorithms as algo,
+    modes,
+)
 
 from ... import exc
 from ...modes import Modes

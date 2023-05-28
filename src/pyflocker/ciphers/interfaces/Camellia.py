@@ -3,8 +3,10 @@ from __future__ import annotations
 
 import typing
 
-from ..backends import Backends
-from ..backends import load_algorithm as _load_algo
+from ..backends import (
+    Backends,
+    load_algorithm as _load_algo,
+)
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import io

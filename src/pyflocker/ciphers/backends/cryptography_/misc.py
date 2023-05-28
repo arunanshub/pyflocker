@@ -4,8 +4,10 @@ Miscellaneous Tools: Tools that are not common to symmetric or asymmetric.
 
 from __future__ import annotations
 
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.primitives.ciphers import algorithms as algo
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher,
+    algorithms as algo,
+)
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
 from ...base import BaseHash

@@ -6,8 +6,10 @@ import typing
 
 from cryptography import exceptions as bkx
 from cryptography.hazmat.backends import default_backend as defb
-from cryptography.hazmat.primitives.ciphers import Cipher
-from cryptography.hazmat.primitives.ciphers import algorithms as algo
+from cryptography.hazmat.primitives.ciphers import (
+    Cipher,
+    algorithms as algo,
+)
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
 from ... import base, exc

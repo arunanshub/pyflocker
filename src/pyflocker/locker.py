@@ -551,10 +551,7 @@ def locker(
 
     # make newfile name if not provided
     if newfile is None:
-        if encrypting:
-            newfile = file + ext
-        else:
-            newfile = os.path.splitext(file)[0]
+        newfile = file + ext if encrypting else os.path.splitext(file)[0]
 
     if encrypting:
         encrypt(file, newfile, password, remove, **kwargs)
