@@ -130,7 +130,6 @@ select = [
   "C90",
   "TCH",
   "SIM",
-  # "PLR",
   "PIE",
 ]
 
