@@ -735,6 +735,9 @@ class _EdDSAPublicKeyAdapter(ec.EllipticCurvePublicKey):
         )
         return cls(key, _name=curve)
 
+    def __eq__(self, other: object) -> bool:
+        return self._key == other
+
 
 def generate(curve: str) -> ECCPrivateKey:
     """
