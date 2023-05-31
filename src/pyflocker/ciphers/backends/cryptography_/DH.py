@@ -92,9 +92,10 @@ class DHParameters(base.BaseDHParameters):
 
     @classmethod
     def load(cls, data: bytes) -> DHParameters:
+        data = memoryview(data).tobytes()
         loader = cls._get_loader(data)
         try:
-            params = loader(memoryview(data))
+            params = loader(data)
             if not isinstance(params, dh.DHParameters):
                 msg = "Data is not a DH parameter."
                 raise ValueError(msg)
@@ -212,13 +213,14 @@ class DHPrivateKey(base.BaseDHPrivateKey):
         data: bytes,
         passphrase: bytes | None = None,
     ) -> DHPrivateKey:
+        data = memoryview(data).tobytes()
         loader = cls._get_loader(data)
 
         if passphrase is not None:
             passphrase = memoryview(passphrase).tobytes()
 
         try:
-            key = loader(memoryview(data), passphrase)
+            key = loader(data, passphrase)
             if not isinstance(key, dh.DHPrivateKey):
                 msg = "Key is not a DH private key."
                 raise ValueError(msg)
@@ -305,9 +307,10 @@ class DHPublicKey(base.BaseDHPublicKey):
 
     @classmethod
     def load(cls, data: bytes) -> DHPublicKey:
+        data = memoryview(data).tobytes()
         loader = cls._get_loader(data)
         try:
-            key = loader(memoryview(data))
+            key = loader(data)
             if not isinstance(key, dh.DHPublicKey):
                 msg = "Key is not a DH public key."
                 raise ValueError(msg)
