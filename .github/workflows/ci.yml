@@ -69,7 +69,9 @@ jobs:
 
       - name: Test and Generate Coverage Report
         run: |
-          poetry run pytest -n auto -d --cov=src/ --cov-report=lcov --cov-branch --durations=20
+          poetry run pytest -n auto --dist=worksteal \
+            --cov=src/ --cov-report=lcov --cov-branch --durations=10 \
+            --color=yes -rs
         env:
           HYPOTHESIS_PROFILE: ci
 
