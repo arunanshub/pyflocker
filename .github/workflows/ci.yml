@@ -36,7 +36,7 @@ jobs:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
-      - name: Lint with Mypy and Flake8
+      - name: Lint with Mypy and Ruff
         run: |
           poetry run pre-commit run -a mypy
           poetry run pre-commit run -a ruff
