@@ -5,13 +5,13 @@ import typing
 from Cryptodome.Cipher import PKCS1_OAEP
 from Cryptodome.Signature import DSS, eddsa, pss
 
-from .. import asymmetric
+from pyflocker.ciphers.backends import asymmetric
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     from Cryptodome.PublicKey.ECC import EccKey
     from Cryptodome.PublicKey.RSA import RsaKey
 
-    from ... import base
+    from pyflocker.ciphers import base
 
 
 def get_OAEP(

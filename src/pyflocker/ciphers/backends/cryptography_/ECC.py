@@ -11,8 +11,9 @@ from cryptography.hazmat.primitives.serialization import (
     PublicFormat,
 )
 
-from ... import base, exc
-from ..asymmetric import ECDH, ECDSA, EdDSA
+from pyflocker.ciphers import base, exc
+from pyflocker.ciphers.backends.asymmetric import ECDH, ECDSA, EdDSA
+
 from . import Hash
 from .asymmetric import get_ec_exchange_algorithm, get_ec_signature_algorithm
 

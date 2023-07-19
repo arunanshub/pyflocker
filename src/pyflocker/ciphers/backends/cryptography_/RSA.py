@@ -12,8 +12,9 @@ from cryptography.hazmat.primitives.serialization import (
     PublicFormat,
 )
 
-from ... import base, exc
-from ..asymmetric import OAEP, PSS
+from pyflocker.ciphers import base, exc
+from pyflocker.ciphers.backends.asymmetric import OAEP, PSS
+
 from . import Hash
 from .asymmetric import get_padding_algorithm
 

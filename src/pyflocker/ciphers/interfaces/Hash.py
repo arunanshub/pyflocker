@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import typing
 
-from ..backends import (
+from pyflocker.ciphers.backends import (
     Backends as _Backends,
     load_algorithm as _load_algo,
 )
 
 if typing.TYPE_CHECKING:  # pragma: no cover
-    from ..base import BaseHash
+    from pyflocker.ciphers.base import BaseHash
 
 
 def algorithms_available(

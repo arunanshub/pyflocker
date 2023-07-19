@@ -3,13 +3,13 @@ from __future__ import annotations
 
 import typing
 
-from ..backends import load_algorithm as _load_algo
+from pyflocker.ciphers.backends import load_algorithm as _load_algo
 
 if typing.TYPE_CHECKING:
     from types import ModuleType
 
-    from .. import base
-    from ..backends import Backends
+    from pyflocker.ciphers import base
+    from pyflocker.ciphers.backends import Backends
 
 
 def _load_ecc_cpr(backend: Backends | None) -> ModuleType:

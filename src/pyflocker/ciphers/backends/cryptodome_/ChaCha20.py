@@ -7,7 +7,8 @@ from Cryptodome.Cipher import (
     ChaCha20_Poly1305 as _ChaCha20_Poly1305,
 )
 
-from ..symmetric import FileCipherWrapper
+from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
+
 from .symmetric import AEADCipherTemplate, NonAEADCipherTemplate
 
 if typing.TYPE_CHECKING:

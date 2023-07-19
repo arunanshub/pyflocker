@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..backends import (
+from pyflocker.ciphers.backends import (
     Backends as _Backends,
     load_algorithm as _load_algo,
 )
@@ -11,7 +11,7 @@ from ..backends import (
 if TYPE_CHECKING:  # pragma: no cover
     from types import ModuleType
 
-    from .. import base
+    from pyflocker.ciphers import base
 
 
 def _load_dhe(backend: _Backends) -> ModuleType:

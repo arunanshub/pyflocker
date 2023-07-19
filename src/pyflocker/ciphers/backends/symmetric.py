@@ -6,7 +6,7 @@ import hmac
 import typing
 from functools import partial
 
-from .. import base, exc
+from pyflocker.ciphers import base, exc
 
 if typing.TYPE_CHECKING:
     import io

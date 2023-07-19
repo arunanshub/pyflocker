@@ -12,8 +12,13 @@ from cryptography.hazmat.primitives.ciphers import (
 )
 from cryptography.hazmat.primitives.poly1305 import Poly1305
 
-from ... import base, exc
-from ..symmetric import FileCipherWrapper, _DecryptionCtx, _EncryptionCtx
+from pyflocker.ciphers import base, exc
+from pyflocker.ciphers.backends.symmetric import (
+    FileCipherWrapper,
+    _DecryptionCtx,
+    _EncryptionCtx,
+)
+
 from .misc import derive_poly1305_key
 from .symmetric import NonAEADCipherTemplate
 

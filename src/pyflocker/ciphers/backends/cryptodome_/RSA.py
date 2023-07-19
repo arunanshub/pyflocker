@@ -4,8 +4,9 @@ import typing
 
 from Cryptodome.PublicKey import RSA
 
-from ... import base, exc
-from ..asymmetric import OAEP, PSS
+from pyflocker.ciphers import base, exc
+from pyflocker.ciphers.backends.asymmetric import OAEP, PSS
+
 from .asymmetric import PROTECTION_SCHEMES, get_padding_algorithm
 
 

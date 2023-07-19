@@ -3,15 +3,15 @@ from __future__ import annotations
 
 import typing
 
-from ..backends import load_algorithm as _load_algo
-from ..modes import Modes
+from pyflocker.ciphers.backends import load_algorithm as _load_algo
+from pyflocker.ciphers.modes import Modes
 
 if typing.TYPE_CHECKING:  # pragma: no cover
     import io
 
-    from .. import base
-    from ..backends import Backends
-    from ..backends.symmetric import FileCipherWrapper
+    from pyflocker.ciphers import base
+    from pyflocker.ciphers.backends import Backends
+    from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
 
 
 # Prevent type checking errors from being raised.

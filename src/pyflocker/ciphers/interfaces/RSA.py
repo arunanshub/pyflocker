@@ -4,13 +4,13 @@ from __future__ import annotations
 import typing
 from typing import TYPE_CHECKING
 
-from ..backends import load_algorithm as _load_algo
+from pyflocker.ciphers.backends import load_algorithm as _load_algo
 
 if TYPE_CHECKING:  # pragma: no cover
     from types import ModuleType
 
-    from ..backends import Backends
-    from ..base import BaseRSAPrivateKey, BaseRSAPublicKey
+    from pyflocker.ciphers.backends import Backends
+    from pyflocker.ciphers.base import BaseRSAPrivateKey, BaseRSAPublicKey
 
 
 def _load_rsa(backend: Backends | None) -> ModuleType:

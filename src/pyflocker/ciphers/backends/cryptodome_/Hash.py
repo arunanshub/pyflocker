@@ -22,7 +22,7 @@ from Cryptodome.Hash import (
     cSHAKE256,
 )
 
-from ... import base, exc
+from pyflocker.ciphers import base, exc
 
 HASHES = {
     "sha224": SHA224.new,

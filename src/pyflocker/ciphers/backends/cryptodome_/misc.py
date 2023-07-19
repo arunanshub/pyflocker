@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from Cryptodome.Protocol import KDF
 
-from ...base import BaseHash
+from pyflocker.ciphers.base import BaseHash
 
 
 def derive_hkdf_key(

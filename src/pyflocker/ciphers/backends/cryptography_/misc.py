@@ -10,7 +10,8 @@ from cryptography.hazmat.primitives.ciphers import (
 )
 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
 
-from ...base import BaseHash
+from pyflocker.ciphers.base import BaseHash
+
 from .Hash import _get_hash_algorithm
 
 

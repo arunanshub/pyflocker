@@ -6,7 +6,7 @@ import typing
 
 from cryptography import exceptions as bkx
 
-from ... import base, exc
+from pyflocker.ciphers import base, exc
 
 
 class NonAEADCipherTemplate(base.BaseNonAEADCipher):

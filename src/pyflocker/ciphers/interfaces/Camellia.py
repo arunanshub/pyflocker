@@ -3,7 +3,7 @@ from __future__ import annotations
 
 import typing
 
-from ..backends import (
+from pyflocker.ciphers.backends import (
     Backends,
     load_algorithm as _load_algo,
 )
@@ -11,9 +11,9 @@ from ..backends import (
 if typing.TYPE_CHECKING:  # pragma: no cover
     import io
 
-    from .. import base
-    from ..backends.symmetric import FileCipherWrapper
-    from ..modes import Modes
+    from pyflocker.ciphers import base
+    from pyflocker.ciphers.backends.symmetric import FileCipherWrapper
+    from pyflocker.ciphers.modes import Modes
 
 
 def supported_modes(backend: Backends) -> set[Modes]:

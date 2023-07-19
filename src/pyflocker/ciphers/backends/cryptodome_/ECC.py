@@ -5,8 +5,9 @@ import typing
 from Cryptodome.PublicKey import ECC
 from Cryptodome.Signature import eddsa
 
-from ... import base, exc
-from ..asymmetric import ECDSA, EdDSA
+from pyflocker.ciphers import base, exc
+from pyflocker.ciphers.backends.asymmetric import ECDSA, EdDSA
+
 from .asymmetric import PROTECTION_SCHEMES, get_ec_signature_algorithm
 
 

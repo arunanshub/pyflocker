@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import typing
 
-from ... import base, exc
+from pyflocker.ciphers import base, exc
 
 
 class NonAEADCipherTemplate(base.BaseNonAEADCipher):

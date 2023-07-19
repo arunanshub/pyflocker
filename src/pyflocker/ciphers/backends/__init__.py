@@ -4,7 +4,7 @@ import enum
 import typing
 from importlib import import_module
 
-from .. import exc
+from pyflocker.ciphers import exc
 
 _DEFAULT_BACKEND = None
 

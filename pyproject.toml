@@ -132,6 +132,7 @@ select = [
   "TCH",
   "SIM",
   "PIE",
+  "TID",
 ]
 
 [tool.ruff.isort]

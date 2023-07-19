@@ -8,10 +8,11 @@ from typing import TYPE_CHECKING
 
 from Cryptodome.Cipher import AES
 
-from ... import base, exc, modes
-from ...base import BaseAEADOneShotCipher
-from ...modes import Modes
-from ..symmetric import FileCipherWrapper, HMACWrapper
+from pyflocker.ciphers import base, exc, modes
+from pyflocker.ciphers.backends.symmetric import FileCipherWrapper, HMACWrapper
+from pyflocker.ciphers.base import BaseAEADOneShotCipher
+from pyflocker.ciphers.modes import Modes
+
 from . import Hash
 from .misc import derive_hkdf_key
 from .symmetric import (

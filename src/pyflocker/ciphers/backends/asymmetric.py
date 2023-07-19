@@ -5,16 +5,16 @@ import typing
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
-from ..base import (
+from pyflocker.ciphers.base import (
     BaseAsymmetricPadding,
     BaseEllepticCurveExchangeAlgorithm,
     BaseEllepticCurveSignatureAlgorithm,
     BaseMGF,
 )
-from ..interfaces import Hash
+from pyflocker.ciphers.interfaces import Hash
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ..base import BaseHash
+    from pyflocker.ciphers.base import BaseHash
 
 
 def _default_hash_factory() -> BaseHash:

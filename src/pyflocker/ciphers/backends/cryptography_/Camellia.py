@@ -8,9 +8,10 @@ from cryptography.hazmat.primitives.ciphers import (
     modes,
 )
 
-from ... import exc
-from ...modes import Modes
-from ..symmetric import FileCipherWrapper, HMACWrapper
+from pyflocker.ciphers import exc
+from pyflocker.ciphers.backends.symmetric import FileCipherWrapper, HMACWrapper
+from pyflocker.ciphers.modes import Modes
+
 from . import Hash
 from .misc import derive_hkdf_key
 from .symmetric import NonAEADCipherTemplate
@@ -18,7 +19,7 @@ from .symmetric import NonAEADCipherTemplate
 if typing.TYPE_CHECKING:  # pragma: no cover
     import io
 
-    from ... import base
+    from pyflocker.ciphers import base
 
 SUPPORTED = {
     Modes.MODE_CFB: modes.CFB,

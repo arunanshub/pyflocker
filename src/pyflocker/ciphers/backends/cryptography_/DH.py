@@ -11,7 +11,7 @@ from cryptography.hazmat.primitives.serialization import (
     PublicFormat,
 )
 
-from ... import base
+from pyflocker.ciphers import base
 
 
 class DHParameters(base.BaseDHParameters):

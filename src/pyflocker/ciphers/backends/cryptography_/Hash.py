@@ -5,7 +5,7 @@ from types import MappingProxyType
 
 from cryptography.hazmat.primitives import hashes
 
-from ... import base, exc
+from pyflocker.ciphers import base, exc
 
 HASHES = MappingProxyType(
     {

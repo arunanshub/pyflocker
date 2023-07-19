@@ -6,11 +6,12 @@ from typing import TYPE_CHECKING
 from cryptography.hazmat.primitives.asymmetric import padding as padding_
 from cryptography.hazmat.primitives.asymmetric.ec import ECDH, ECDSA
 
-from .. import asymmetric
+from pyflocker.ciphers.backends import asymmetric
+
 from . import Hash
 
 if TYPE_CHECKING:  # pragma: no cover
-    from ... import base
+    from pyflocker.ciphers import base
 
 
 def get_OAEP(padding: base.BaseAsymmetricPadding) -> padding_.OAEP:
