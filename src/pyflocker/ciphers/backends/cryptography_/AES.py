@@ -232,7 +232,7 @@ class _EAX:
 
         # create a cache since cryptography allows us to calculate tag
         # only once... why...
-        self._omac_cache = []
+        self._omac_cache: list[bytes] = []
         self._omac_cache.append(self._omac[0].finalize())
 
         self._cipher = CrCipher(
@@ -300,11 +300,9 @@ class _EAX:
 
         tag = bytes(typing.cast("int", algo.AES.block_size) // 8)
         for i in range(3):
-            try:
-                tag = strxor(tag, self._omac_cache[i])
-            except IndexError:
+            if i >= len(self._omac_cache):
                 self._omac_cache.append(self._omac[i].finalize())
-                tag = strxor(tag, self._omac_cache[i])
+            tag = strxor(tag, self._omac_cache[i])
         self.__tag, self.__ctx = tag[: self._mac_len], None
 
     def finalize_with_tag(self, tag: bytes) -> None:
