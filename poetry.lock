@@ -563,13 +563,13 @@ sphinx-basic-ng = "*"
 
 [[package]]
 name = "hypothesis"
-version = "6.92.9"
+version = "6.93.0"
 description = "A library for property-based testing"
 optional = false
 python-versions = ">=3.8"
 files = [
-    {file = "hypothesis-6.92.9-py3-none-any.whl", hash = "sha256:8c1ab9f3c883fe63a712bb6c8c1b5be4185cad52775cd7703c040fc0d0111572"},
-    {file = "hypothesis-6.92.9.tar.gz", hash = "sha256:629f31788243559d35d3101ef8e94caf736cf8efaad3f0dd66ec7dbb31b8ef19"},
+    {file = "hypothesis-6.93.0-py3-none-any.whl", hash = "sha256:bfe6173e36c8cf0779a79de757a8a7151568b2703cb14dcbc186517c7a79144b"},
+    {file = "hypothesis-6.93.0.tar.gz", hash = "sha256:e9ceaa5bbd244471fa1c28272fb2b0c68bb6ee014473394d63519ed02bd2d4de"},
 ]
 
 [package.dependencies]
