@@ -6,6 +6,7 @@
     ":maintainLockFilesWeekly",
     ":semanticCommitTypeAll(build)",
     ":label(dependencies)",
+    ":enablePreCommit",
     ":automergeMinor",
     ":rebaseStalePrs"
   ],
