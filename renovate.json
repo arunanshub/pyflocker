@@ -9,5 +9,5 @@
     ":enablePreCommit",
     ":automergeMinor",
     ":rebaseStalePrs"
-  ],
+  ]
 }
