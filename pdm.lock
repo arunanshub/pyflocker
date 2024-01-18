@@ -5,7 +5,7 @@
 groups = ["default", "debugging", "dev", "docs", "test", "furo"]
 strategy = ["cross_platform", "inherit_metadata"]
 lock_version = "4.4.1"
-content_hash = "sha256:8037cb8f3924ccc3533deee3f98b91f14174843ee20c107d3eaa28391ad2004d"
+content_hash = "sha256:78265e96930fd345e8813818384136f25d8e706cb969b75e29eeb18c9464fe31"
 
 [[package]]
 name = "alabaster"
@@ -953,17 +953,6 @@ groups = ["debugging"]
 marker = "platform_system == \"Windows\""
 files = [
     {file = "pyreadline-2.1.zip", hash = "sha256:4530592fc2e85b25b1a9f79664433da09237c1a270e4d78ea5aa3a2c7229e2d1"},
-]
-
-[[package]]
-name = "pyreadline3"
-version = "3.4.1"
-summary = "A python implementation of GNU readline."
-groups = ["debugging"]
-marker = "sys_platform == \"win32\""
-files = [
-    {file = "pyreadline3-3.4.1-py3-none-any.whl", hash = "sha256:b0efb6516fd4fb07b45949053826a62fa4cb353db5be2bbb4a7aa1fdd1e345fb"},
-    {file = "pyreadline3-3.4.1.tar.gz", hash = "sha256:6f3d1f7b8a31ba32b73917cefc1f28cc660562f39aea8646d30bd6eff21f7bae"},
 ]
 
 [[package]]
