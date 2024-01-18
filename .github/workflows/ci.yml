@@ -67,7 +67,7 @@ jobs:
           cache: true
 
       - name: Install Dependencies
-        run: pdm install
+        run: pdm install -dG test
 
       - name: Test and Generate Coverage Report
         run: |
