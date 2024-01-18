@@ -33,7 +33,7 @@ jobs:
         run: pdm install
 
       - name: Cache Pre-Commit Dependencies
-        uses: actions/cache@v3
+        uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
           key: pre-commit-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
