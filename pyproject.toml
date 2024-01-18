@@ -1,13 +1,7 @@
-[tool.poetry]
-name = "PyFLocker"
-version = "0.4.1"
-description = "Python Cryptographic (File Locking) Library"
-authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
-license = "MIT"
-readme = "README.md"
-repository = "https://github.com/arunanshub/pyflocker"
-documentation = "https://pyflocker.readthedocs.io"
-keywords = ["cryptography", "symmetric", "asymmetric", "aead", "rsa"]
+[project]
+authors = [
+  {name = "Arunanshu Biswas", email = "mydellpc07@gmail.com"},
+]
 classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.8",
@@ -19,61 +13,77 @@ classifiers = [
   "Intended Audience :: Developers",
   "Topic :: Security :: Cryptography",
 ]
+dependencies = [
+  "pycryptodomex>=3.9.8",
+  "cryptography[ssh]!=37.0.0,>=35.0.0",
+]
+description = "Python Cryptographic (File Locking) Library"
+keywords = [
+  "cryptography",
+  "encryption",
+  "python",
+  "pypi",
+  "symmetric key",
+  "asymmetric key",
+  "aes",
+  "chacha20",
+  "camellia",
+  "rsa",
+  "dsa",
+  "ecc",
+  "file encryption",
+  "secure communication",
+  "cryptography library",
+]
+license = {text = "MIT"}
+name = "PyFLocker"
+readme = "README.md"
+requires-python = ">=3.9"
+version = "0.4.1"
 
-[tool.poetry.urls]
+[project.urls]
 "Bug Tracker" = "https://github.com/arunanshub/pyflocker/issues"
-"Changelog" = "https://github.com/arunanshub/pyflocker/blob/master/CHANGELOG.md"
-
-[tool.poetry.dependencies]
-python = "^3.8"
-pycryptodomex = "^3.9.8"
-cryptography = { version = ">=35.0.0,!=37.0.0", extras = ["ssh"] }
-
-# Pre-commit hooks
-[tool.poetry.group.dev.dependencies]
-pre-commit = "^3.0.0"
-commitizen = "^3.0.0"
-mypy = "^1.0.1"
-
-# Testing dependencies
-[tool.poetry.group.test.dependencies]
-pytest = "^7.1.2"
-pytest-cov = "^4.0.0"
-pytest-xdist = "^3.0.0"
-pytest-randomly = "^3.12.0"
-pytest-sugar = "^0.9.7"
-hypothesis = "^6.50.1"
-
-# Docs dependencies
-[tool.poetry.group.docs]
-optional = true
-
-[tool.poetry.group.docs.dependencies]
-Sphinx = "^7.0.0"
-sphinx-copybutton = "^0.5.0"
-furo = ">=2022.2.14"
-
-# Debugging dependencies
-[tool.poetry.group.debugging]
-optional = true
-
-[tool.poetry.group.debugging.dependencies]
-pdbpp = "^0.10.3"
-pyreadline3 = { version = "^3.4.1", markers = "sys_platform == 'win32'" }
+Changelog = "https://github.com/arunanshub/pyflocker/blob/master/CHANGELOG.md"
+documentation = "https://pyflocker.readthedocs.io"
+repository = "https://github.com/arunanshub/pyflocker"
 
 [build-system]
-requires = ["poetry-core>=1.0.0"]
-build-backend = "poetry.core.masonry.api"
+build-backend = "pdm.backend"
+requires = ["pdm-backend"]
 
-# semver commits
+[tool.pdm]
+[tool.pdm.dev-dependencies]
+debugging = [
+  "pdbpp>=0.10.3",
+  'pyreadline3>=3.4.1; sys_platform == "win32"',
+]
+dev = [
+  "pre-commit>=3.5.0",
+  "commitizen>=3.13.0",
+  "mypy>=1.8.0",
+]
+docs = [
+  "furo>=2022.2.14",
+  "sphinx>=7.1.2",
+  "sphinx-copybutton>=0.5.2",
+]
+test = [
+  "pytest>=7.4.4",
+  "pytest-cov>=4.0.0",
+  "pytest-xdist>=3.0.0",
+  "pytest-randomly>=3.12.0",
+  "pytest-sugar>=0.9.7",
+  "hypothesis>=6.50.1",
+]
+
 [tool.commitizen]
+annotated_tag = true
+changelog_incremental = true
+changelog_start_rev = "v0.3.0"
 name = "cz_conventional_commits"
-version = "0.4.1"
 tag_format = "v$version"
 update_changelog_on_bump = true
-changelog_incremental = true
-annotated_tag = true
-changelog_start_rev = "v0.3.0"
+version = "0.4.1"
 version_files = [
   "pyproject.toml",
   "src/pyflocker/__init__.py",
@@ -100,24 +110,23 @@ python_version = "3.10"
 warn_unused_configs = true
 warn_unused_ignores = true
 
-show_error_codes = true
 pretty = true
+show_error_codes = true
 
 warn_redundant_casts = true
 # warn_return_any = true
-no_implicit_optional = true
 check_untyped_defs = true
-disallow_untyped_defs = true
 disallow_any_unimported = true
+disallow_untyped_defs = true
+no_implicit_optional = true
 
 [tool.ruff]
-line-length = 79
-target-version = "py38"
 exclude = [
   "docs",
   "tests",
 ]
 ignore = ["ANN101", "ANN102", "ANN401", "B024"]
+line-length = 79
 select = [
   "ANN",
   "B",
@@ -134,8 +143,9 @@ select = [
   "PIE",
   "TID",
 ]
+target-version = "py38"
 
 [tool.ruff.isort]
-required-imports = ["from __future__ import annotations"]
 combine-as-imports = true
 force-wrap-aliases = true
+required-imports = ["from __future__ import annotations"]
