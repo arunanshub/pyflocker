@@ -582,7 +582,7 @@ files = [
 
 [[package]]
 name = "hypothesis"
-version = "6.98.0"
+version = "6.98.3"
 requires_python = ">=3.8"
 summary = "A library for property-based testing"
 groups = ["test"]
@@ -592,8 +592,8 @@ dependencies = [
     "sortedcontainers<3.0.0,>=2.1.0",
 ]
 files = [
-    {file = "hypothesis-6.98.0-py3-none-any.whl", hash = "sha256:2e6d7e971887226dc808df786f9441f2b811f385e6d5097ab7106facf3983b13"},
-    {file = "hypothesis-6.98.0.tar.gz", hash = "sha256:6851fc21f8841d82729f6c30fed4cd14da914906967b0d4dcb944ad594e47910"},
+    {file = "hypothesis-6.98.3-py3-none-any.whl", hash = "sha256:13fd80af383508f5a4707e0148120437d962d6a3ed8f5554b4daea5777a34fc6"},
+    {file = "hypothesis-6.98.3.tar.gz", hash = "sha256:1844d92ca65a42185e1d78956400455e644f88264e1611ebdc8d6aa71b402773"},
 ]
 
 [[package]]
@@ -829,7 +829,7 @@ files = [
 
 [[package]]
 name = "pre-commit"
-version = "3.6.0"
+version = "3.6.1"
 requires_python = ">=3.9"
 summary = "A framework for managing and maintaining multi-language pre-commit hooks."
 groups = ["dev"]
@@ -841,8 +841,8 @@ dependencies = [
     "virtualenv>=20.10.0",
 ]
 files = [
-    {file = "pre_commit-3.6.0-py2.py3-none-any.whl", hash = "sha256:c255039ef399049a5544b6ce13d135caba8f2c28c3b4033277a788f434308376"},
-    {file = "pre_commit-3.6.0.tar.gz", hash = "sha256:d30bad9abf165f7785c15a21a1f46da7d0677cb00ee7ff4c579fd38922efe15d"},
+    {file = "pre_commit-3.6.1-py2.py3-none-any.whl", hash = "sha256:9fe989afcf095d2c4796ce7c553cf28d4d4a9b9346de3cda079bcf40748454a4"},
+    {file = "pre_commit-3.6.1.tar.gz", hash = "sha256:c90961d8aa706f75d60935aba09469a6b0bcb8345f127c3fbee4bdc5f114cf4b"},
 ]
 
 [[package]]
