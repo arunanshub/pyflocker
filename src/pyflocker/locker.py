@@ -315,7 +315,7 @@ def decryptf(
     _assert_unique_files(infile, outfile)
 
     # extract the header from the file
-    header = _get_header(infile.read(HEADER_PAYLOAD.size), metadata)
+    header = _get_heaer(infile.read(HEADER_PAYLOAD.size), metadata)
 
     # Derive the key with the key derivation function.
     if kdf is None:
