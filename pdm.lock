@@ -264,7 +264,7 @@ files = [
 
 [[package]]
 name = "commitizen"
-version = "3.15.0"
+version = "3.16.0"
 requires_python = ">=3.8"
 summary = "Python commitizen client tool"
 groups = ["dev"]
@@ -282,8 +282,8 @@ dependencies = [
     "tomlkit<1.0.0,>=0.5.3",
 ]
 files = [
-    {file = "commitizen-3.15.0-py3-none-any.whl", hash = "sha256:5f9f9097f1f14c943982fe159905b1e895f4686f15b7aaa62a1e913fa89f2d6f"},
-    {file = "commitizen-3.15.0.tar.gz", hash = "sha256:10b9cc1013a87aaca30562f9f5ac6ddaad47c336f7eee6fbfd11e92b820eee39"},
+    {file = "commitizen-3.16.0-py3-none-any.whl", hash = "sha256:a880005352fd35b908d9c3951e71e155b157f4a4ec61ca9c080a9637bf98e0a1"},
+    {file = "commitizen-3.16.0.tar.gz", hash = "sha256:1269619d383d12809f436ff196fb786a3d49fc50987562e6e566cd9c2908735c"},
 ]
 
 [[package]]
@@ -582,7 +582,7 @@ files = [
 
 [[package]]
 name = "hypothesis"
-version = "6.98.12"
+version = "6.98.15"
 requires_python = ">=3.8"
 summary = "A library for property-based testing"
 groups = ["test"]
@@ -592,8 +592,8 @@ dependencies = [
     "sortedcontainers<3.0.0,>=2.1.0",
 ]
 files = [
-    {file = "hypothesis-6.98.12-py3-none-any.whl", hash = "sha256:ecb7326fe0101f42f42eb0b6d4886fec600b2b38c33c22ba99a58e0f6c93c651"},
-    {file = "hypothesis-6.98.12.tar.gz", hash = "sha256:584ef03a847464b0d14a63e53fcc3335a75b1f1eb3bcc770a03ff950ee4e279e"},
+    {file = "hypothesis-6.98.15-py3-none-any.whl", hash = "sha256:5b40fd81fce9e0b35f0a47e10eb41f375a6b9e8551d0e1084c83b8b0d0d1bb6b"},
+    {file = "hypothesis-6.98.15.tar.gz", hash = "sha256:1e31210951511b24ce8b3b6e04d791c466385a30ac3af571bf2223954b025d77"},
 ]
 
 [[package]]
@@ -818,13 +818,13 @@ files = [
 
 [[package]]
 name = "pluggy"
-version = "1.3.0"
+version = "1.4.0"
 requires_python = ">=3.8"
 summary = "plugin and hook calling mechanisms for python"
 groups = ["test"]
 files = [
-    {file = "pluggy-1.3.0-py3-none-any.whl", hash = "sha256:d89c696a773f8bd377d18e5ecda92b7a3793cbe66c87060a6fb58c7b6e1061f7"},
-    {file = "pluggy-1.3.0.tar.gz", hash = "sha256:cf61ae8f126ac6f7c451172cf30e3e43d3ca77615509771b3a984a0730651e12"},
+    {file = "pluggy-1.4.0-py3-none-any.whl", hash = "sha256:7db9f7b503d67d1c5b95f59773ebb58a8c1c288129a88665838012cfb07b8981"},
+    {file = "pluggy-1.4.0.tar.gz", hash = "sha256:8c85c2876142a764e5b7548e7d9a0e0ddb46f5185161049a79b7e974454223be"},
 ]
 
 [[package]]
@@ -933,7 +933,7 @@ files = [
 
 [[package]]
 name = "pytest"
-version = "8.0.2"
+version = "8.1.0"
 requires_python = ">=3.8"
 summary = "pytest: simple powerful testing with Python"
 groups = ["test"]
@@ -942,12 +942,12 @@ dependencies = [
     "exceptiongroup>=1.0.0rc8; python_version < \"3.11\"",
     "iniconfig",
     "packaging",
-    "pluggy<2.0,>=1.3.0",
-    "tomli>=1.0.0; python_version < \"3.11\"",
+    "pluggy<2.0,>=1.4",
+    "tomli>=1; python_version < \"3.11\"",
 ]
 files = [
-    {file = "pytest-8.0.2-py3-none-any.whl", hash = "sha256:edfaaef32ce5172d5466b5127b42e0d6d35ebbe4453f0e3505d96afd93f6b096"},
-    {file = "pytest-8.0.2.tar.gz", hash = "sha256:d4051d623a2e0b7e51960ba963193b09ce6daeb9759a451844a21e4ddedfc1bd"},
+    {file = "pytest-8.1.0-py3-none-any.whl", hash = "sha256:ee32db7af8de4629a455806befa90559f307424c07b8413ccfc30bf5b221dd7e"},
+    {file = "pytest-8.1.0.tar.gz", hash = "sha256:f8fa04ab8f98d185113ae60ea6d79c22f8143b14bc1caeced44a0ab844928323"},
 ]
 
 [[package]]
