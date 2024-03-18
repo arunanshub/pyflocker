@@ -264,7 +264,7 @@ files = [
 
 [[package]]
 name = "commitizen"
-version = "3.18.0"
+version = "3.18.4"
 requires_python = ">=3.8"
 summary = "Python commitizen client tool"
 groups = ["dev"]
@@ -282,8 +282,8 @@ dependencies = [
     "tomlkit<1.0.0,>=0.5.3",
 ]
 files = [
-    {file = "commitizen-3.18.0-py3-none-any.whl", hash = "sha256:7e3272725216aa3049e258bb438e0097e07607712325f5ce71d9a0bdf7805370"},
-    {file = "commitizen-3.18.0.tar.gz", hash = "sha256:42c1d29ba6a64ddbc6d9952f4bcc2ac7094956e27e47e96c931895e2659e6cee"},
+    {file = "commitizen-3.18.4-py3-none-any.whl", hash = "sha256:42c9b2c5fd3d6b83ebf850424227a8935d3e49f9fa636c58c072a370713b176a"},
+    {file = "commitizen-3.18.4.tar.gz", hash = "sha256:57b3051d4170e23a5317f348d1bc61b98e57ac01b04f66e0f9a25fef75e6f679"},
 ]
 
 [[package]]
@@ -582,7 +582,7 @@ files = [
 
 [[package]]
 name = "hypothesis"
-version = "6.99.2"
+version = "6.99.6"
 requires_python = ">=3.8"
 summary = "A library for property-based testing"
 groups = ["test"]
@@ -592,8 +592,8 @@ dependencies = [
     "sortedcontainers<3.0.0,>=2.1.0",
 ]
 files = [
-    {file = "hypothesis-6.99.2-py3-none-any.whl", hash = "sha256:f277f6ccb074f39d51c7f32ba5a0ff640dba9b71ef69ea1e1e09b6f7c25302f5"},
-    {file = "hypothesis-6.99.2.tar.gz", hash = "sha256:24453b1a86151be83d26e81834e29022b3e3f0fc5d71275cc3d096649a13c53c"},
+    {file = "hypothesis-6.99.6-py3-none-any.whl", hash = "sha256:f5287e0ca8be94b2129483e1268639f8675c8c041d1b1756561a374575659940"},
+    {file = "hypothesis-6.99.6.tar.gz", hash = "sha256:397e362c8d7e3a5f4654644db964759f6a7f26a8c8a46d2a9e909595d9769ed1"},
 ]
 
 [[package]]
