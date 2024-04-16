@@ -1,4 +1,5 @@
 """Interface to RSA cipher and signature algorithm"""
+
 from __future__ import annotations
 
 import typing

@@ -1,6 +1,5 @@
 """Exceptions raised by the ciphers are defined here."""
 
-
 from __future__ import annotations
 
 

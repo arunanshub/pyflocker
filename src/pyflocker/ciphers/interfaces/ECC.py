@@ -1,4 +1,5 @@
 """Interface to ECC signature algorithm and key-exchange."""
+
 from __future__ import annotations
 
 import typing

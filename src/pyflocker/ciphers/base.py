@@ -1,4 +1,4 @@
-"""Base classes for pyflocker. """
+"""Base classes for pyflocker."""
 
 from __future__ import annotations
 

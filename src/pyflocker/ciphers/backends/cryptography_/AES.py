@@ -223,8 +223,7 @@ class _EAX:
 
         for i in range(3):
             self._omac[i].update(
-                bytes(1) * (algo.AES.block_size // 8 - 1)
-                + struct.pack("B", i)  # noqa: W503
+                bytes(1) * (algo.AES.block_size // 8 - 1) + struct.pack("B", i)  # noqa: W503
             )
 
         self._omac[0].update(nonce)
@@ -386,9 +385,7 @@ def new(
 
     is_mode_aead = mode in modes_.AEAD
     is_file = file is not None
-    use_hmac = (is_file and not is_mode_aead) or (
-        use_hmac and not is_mode_aead
-    )
+    use_hmac = (is_file and not is_mode_aead) or (use_hmac and not is_mode_aead)
 
     if mode in modes_.SPECIAL:
         if is_file:

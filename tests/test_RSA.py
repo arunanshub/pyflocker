@@ -253,9 +253,7 @@ class TestPublicKeyEncoding:
     @pytest.mark.parametrize("format", ["OpenSSH"])
     def test_OpenSSH(self, public_key, format, backend, backend2):
         try:
-            serialized = public_key.serialize(
-                encoding="OpenSSH", format=format
-            )
+            serialized = public_key.serialize(encoding="OpenSSH", format=format)
         except KeyError:
             assert backend == Backends.CRYPTODOME
             return pytest.skip(

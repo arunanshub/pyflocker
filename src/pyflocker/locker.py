@@ -103,6 +103,7 @@ of the cipher is written to the file as a part of ``Header``. If the file is
 being decrypted, it is read from the ``Header`` for verifying the file
 integrity and correct decryption.
 """
+
 from __future__ import annotations
 
 import os
