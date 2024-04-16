@@ -46,6 +46,9 @@ repository = "https://github.com/arunanshub/pyflocker"
 build-backend = "pdm.backend"
 requires = ["pdm-backend"]
 
+[tool.pdm]
+distribution = true
+
 [tool.pdm.version]
 source = "scm"
 write_to = "pyflocker/_version.py"
