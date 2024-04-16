@@ -85,6 +85,9 @@ jobs:
           parallel: true
           flag-name: run-${{ matrix.os }}-python-${{ matrix.python-version }}
 
+      - name: Build the package into a wheel
+        run: pdm build
+
   finish-coverage:
     needs: [build]
     runs-on: ubuntu-latest
