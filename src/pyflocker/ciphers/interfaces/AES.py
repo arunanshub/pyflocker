@@ -1,4 +1,5 @@
 """Interface to AES cipher"""
+
 from __future__ import annotations
 
 import typing

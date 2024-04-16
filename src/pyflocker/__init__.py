@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from ._version import __version__
+
 __author__ = "Arunanshu Biswas"
-__version__ = "0.4.1"
-version_info = (*map(int, __version__.split(".")),)
+__all__ = ["__version__"]

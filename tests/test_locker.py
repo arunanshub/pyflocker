@@ -40,9 +40,11 @@ class TestLocker:
 
         infile_path.write_bytes(ENCRYPTION_DECRYPTION_DATA)
 
-        with infile_path.open("rb") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, decrypted_file_path.open("w+b") as decrypted_file:
+        with (
+            infile_path.open("rb") as infile,
+            outfile_path.open("w+b") as outfile,
+            decrypted_file_path.open("w+b") as decrypted_file,
+        ):
             # encrypt data
             locker.encryptf(
                 infile,
@@ -112,9 +114,11 @@ class TestLocker:
 
         infile_path.write_bytes(ENCRYPTION_DECRYPTION_DATA)
 
-        with infile_path.open("rb") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, decrypted_file_path.open("w+b") as decrypted_file:
+        with (
+            infile_path.open("rb") as infile,
+            outfile_path.open("w+b") as outfile,
+            decrypted_file_path.open("w+b") as decrypted_file,
+        ):
             locker.lockerf(
                 infile,
                 outfile,
@@ -241,9 +245,11 @@ class TestLockerErrors:
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile_path"
 
-        with infile_path.open("w+b") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, pytest.raises(NotImplementedError):
+        with (
+            infile_path.open("w+b") as infile,
+            outfile_path.open("w+b") as outfile,
+            pytest.raises(NotImplementedError),
+        ):
             locker.encryptf(
                 infile,
                 outfile,
@@ -255,9 +261,11 @@ class TestLockerErrors:
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile_path"
 
-        with infile_path.open("w+b") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, pytest.raises(OverflowError):
+        with (
+            infile_path.open("w+b") as infile,
+            outfile_path.open("w+b") as outfile,
+            pytest.raises(OverflowError),
+        ):
             locker.encryptf(
                 infile,
                 outfile,
@@ -282,9 +290,11 @@ class TestLockerErrors:
 
         infile_path.write_bytes(ENCRYPTION_DECRYPTION_DATA)
 
-        with infile_path.open("rb") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, decrypted_file_path.open("w+b") as decrypted_file:
+        with (
+            infile_path.open("rb") as infile,
+            outfile_path.open("w+b") as outfile,
+            decrypted_file_path.open("w+b") as decrypted_file,
+        ):
             locker.encryptf(
                 infile,
                 outfile,
@@ -305,9 +315,11 @@ class TestLockerErrors:
 
         infile_path.write_bytes(ENCRYPTION_DECRYPTION_DATA)
 
-        with infile_path.open("rb") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, decrypted_file_path.open("w+b") as decrypted_file:
+        with (
+            infile_path.open("rb") as infile,
+            outfile_path.open("w+b") as outfile,
+            decrypted_file_path.open("w+b") as decrypted_file,
+        ):
             locker.encryptf(
                 infile,
                 outfile,
@@ -328,9 +340,11 @@ class TestLockerErrors:
     def test_incorrect_dklen(self, tmp_path: Path):
         infile_path = tmp_path / "infile"
         outfile_path = tmp_path / "outfile"
-        with infile_path.open("wb") as infile, outfile_path.open(
-            "w+b"
-        ) as outfile, pytest.raises(ValueError):
+        with (
+            infile_path.open("wb") as infile,
+            outfile_path.open("w+b") as outfile,
+            pytest.raises(ValueError),
+        ):
             locker.encryptf(
                 infile,
                 outfile,

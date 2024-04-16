@@ -1,4 +1,5 @@
 """Interface to hashing algorithms."""
+
 from __future__ import annotations
 
 import typing

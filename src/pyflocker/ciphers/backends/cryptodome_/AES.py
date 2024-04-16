@@ -1,4 +1,5 @@
 """Implementation of AES cipher."""
+
 from __future__ import annotations
 
 import contextlib
@@ -259,9 +260,7 @@ def new(
 
     is_mode_aead = mode in modes.AEAD
     is_file = file is not None
-    use_hmac = (is_file and not is_mode_aead) or (
-        use_hmac and not is_mode_aead
-    )
+    use_hmac = (is_file and not is_mode_aead) or (use_hmac and not is_mode_aead)
 
     if mode in modes.SPECIAL:
         if is_file:

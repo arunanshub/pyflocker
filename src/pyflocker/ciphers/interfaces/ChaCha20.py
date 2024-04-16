@@ -1,4 +1,5 @@
 """Interface to ChaCha20(-Poly1305) cipher"""
+
 from __future__ import annotations
 
 import typing
