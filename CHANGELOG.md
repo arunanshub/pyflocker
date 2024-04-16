@@ -1,3 +1,19 @@
+## v0.4.2 (2024-04-16)
+
+### Fix
+
+- **cryptography/DH**: cryptography v41 no longer supports memoryview as data
+- **cryptography/ECC**: add support for `__eq__` operator
+
+### Refactor
+
+- use PEP-8 absolute imports
+- **AES**: simplify logic of creating an AES cipher object
+
+### Perf
+
+- **AES**: eliminate try-except block in a for loop (#281)
+
 ## v0.4.1 (2023-02-23)
 
 ### Refactor
