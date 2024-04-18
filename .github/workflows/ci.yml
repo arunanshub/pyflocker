@@ -151,6 +151,8 @@ jobs:
           cache: true
 
       - name: Publish Package
-        run: pdm publish -u __token__ -p "$PYPI_PASSWORD"
+        run:
+          pdm run python -m build
+          pdm publish -u __token__ -p "$PYPI_PASSWORD"
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}

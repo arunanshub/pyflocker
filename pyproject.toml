@@ -65,6 +65,7 @@ dev = [
     "commitizen>=3.13.0",
     "mypy>=1.8.0",
     "ruff>=0.3.7",
+    "build>=1.2.1",
 ]
 docs = ["furo>=2022.2.14", "sphinx>=7.1.2", "sphinx-copybutton>=0.5.2"]
 test = [
