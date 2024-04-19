@@ -153,12 +153,9 @@ jobs:
           cache: true
           python-version: ">=3.9"
 
-      - name: Install build dependencies
-        run: pdm install -G dev
-
       - name: Publish Package
         run: |
-          pdm run python -m build
-          pdm publish -u __token__ -p "$PYPI_PASSWORD" --no-build
+          pdm publish
         env:
-          PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          PDM_PUBLISH_USERNAME: __token__
+          PDM_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
