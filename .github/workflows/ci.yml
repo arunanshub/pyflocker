@@ -153,6 +153,9 @@ jobs:
           cache: true
           python-version: ">=3.9"
 
+      - name: Install build dependencies
+        run: pdm install -G dev
+
       - name: Publish Package
         run: |
           pdm run python -m build
