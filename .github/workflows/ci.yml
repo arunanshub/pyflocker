@@ -28,6 +28,7 @@ jobs:
         id: setup-pdm
         with:
           cache: true
+          python-version: ">=3.9"
 
       - name: Install dependencies
         run: pdm install
@@ -68,6 +69,7 @@ jobs:
         id: setup-pdm
         with:
           cache: true
+          python-version: ">=3.9"
 
       - name: Install Dependencies
         run: pdm install -dG test
@@ -149,10 +151,11 @@ jobs:
         id: setup-pdm
         with:
           cache: true
+          python-version: ">=3.9"
 
       - name: Publish Package
         run: |
           pdm run python -m build
-          pdm publish -u __token__ -p "$PYPI_PASSWORD"
+          pdm publish -u __token__ -p "$PYPI_PASSWORD" --no-build
         env:
           PYPI_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
