@@ -6,8 +6,9 @@ build:
     python: "3.10"
   jobs:
     post_create_environment:
-      - pip install pdm
-      - pdm export --without-hashes -G docs --self -o requirements-sphinx.txt
+      - pip install poetry
+      - poetry self add poetry-plugin-export
+      - poetry export --only=docs,main -o requirements-sphinx.txt
 
 sphinx:
   configuration: docs/conf.py
