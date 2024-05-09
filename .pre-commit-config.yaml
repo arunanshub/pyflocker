@@ -7,15 +7,11 @@ repos:
       - id: trailing-whitespace
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.4.1
+    rev: v0.4.3
     hooks:
       - id: ruff
-        args: [--fix, --exit-non-zero-on-fix]
-
-  - repo: 'https://github.com/psf/black'
-    rev: 24.4.1
-    hooks:
-      - id: black
+        args: [--fix]
+      - id: ruff-format
 
   - repo: local
     hooks:

@@ -17,21 +17,20 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
+
       - name: Install Python
         uses: actions/setup-python@v5
         id: setup-python
         with:
-          python-version: ">=3.9"
-
-      - name: Setup PDM
-        uses: "pdm-project/setup-pdm@v4.1"
-        id: setup-pdm
-        with:
-          cache: true
+          cache: poetry
           python-version: ">=3.9"
 
       - name: Install dependencies
-        run: pdm install
+        run: poetry install
 
       - name: Cache Pre-Commit Dependencies
         uses: actions/cache@v4
@@ -41,8 +40,7 @@ jobs:
 
       - name: Lint with Mypy and Ruff
         run: |
-          pdm run pre-commit run -a mypy
-          pdm run pre-commit run -a ruff
+          poetry run pre-commit run -a
 
   build:
     needs: [lint]
@@ -59,24 +57,23 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
+
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
         with:
+          cache: poetry
           python-version: ${{ matrix.python-version }}
 
-      - name: Setup PDM
-        uses: "pdm-project/setup-pdm@v4.1"
-        id: setup-pdm
-        with:
-          cache: true
-          python-version: ">=3.9"
-
       - name: Install Dependencies
-        run: pdm install -dG test
+        run: poetry install --only main,test
 
       - name: Test and Generate Coverage Report
         run: |
-          pdm run pytest -n auto --dist=worksteal \
+          poetry run pytest -n auto --dist=worksteal \
             --cov=src/ --cov-report=lcov --cov-branch --durations=10 \
             --color=yes -rs
         env:
@@ -91,7 +88,7 @@ jobs:
           flag-name: run-${{ matrix.os }}-python-${{ matrix.python-version }}
 
       - name: Build the package into a wheel
-        run: pdm build
+        run: poetry build
 
   finish-coverage:
     needs: [build]
@@ -141,21 +138,17 @@ jobs:
           tag_name: ${{ github.ref_name }}
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Install Poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
+
       - name: Set Up Python
         uses: actions/setup-python@v5
         with:
+          cache: poetry
           python-version: ">=3.8"
-
-      - name: Setup PDM
-        uses: "pdm-project/setup-pdm@v4.1"
-        id: setup-pdm
-        with:
-          cache: true
-          python-version: ">=3.9"
 
       - name: Publish Package
         run: |
-          pdm publish
-        env:
-          PDM_PUBLISH_USERNAME: __token__
-          PDM_PUBLISH_PASSWORD: ${{ secrets.PYPI_PASSWORD }}
+          poetry publish -u __token__ -p ${{ secrets.PYPI_PASSWORD }}
