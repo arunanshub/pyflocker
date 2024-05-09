@@ -18,7 +18,9 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
 
       - name: Install Python
         uses: actions/setup-python@v5
@@ -56,7 +58,9 @@ jobs:
           fetch-tags: true
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
 
       - name: Install Python ${{ matrix.python-version }}
         uses: actions/setup-python@v5
@@ -135,7 +139,9 @@ jobs:
           token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Poetry
-        run: pipx install poetry
+        run: |
+          pipx install poetry
+          pipx inject poetry "poetry-dynamic-versioning[plugin]"
 
       - name: Set Up Python
         uses: actions/setup-python@v5
