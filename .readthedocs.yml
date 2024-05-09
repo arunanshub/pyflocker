@@ -8,6 +8,7 @@ build:
     post_create_environment:
       # Install poetry
       - pip install poetry
+      - poetry self add "poetry-dynamic-versioning[plugin]"
       # Tell poetry to not use a virtual environment
       - poetry config virtualenvs.create false
     post_install:
