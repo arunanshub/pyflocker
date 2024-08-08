@@ -32,7 +32,7 @@ pdbpp = "^0.10.3"
 
 [tool.poetry.group.docs.dependencies]
 furo = "^2024.5.6"
-sphinx = "^7.3.7"
+sphinx = "^8.0.0"
 sphinx-copybutton = "^0.5.2"
 
 [tool.poetry.group.test.dependencies]
