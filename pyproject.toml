@@ -19,7 +19,7 @@ repository = "https://github.com/arunanshub/pyflocker"
 [tool.poetry.dependencies]
 python = ">=3.9"
 pycryptodomex = ">=3.9.8"
-cryptography = { version = ">=35.0.0,<37.0.0 || >37.0.0", extras = ["ssh"] }
+cryptography = { version = ">=35.0.0, <37.0.0 || >37.0.0", extras = ["ssh"] }
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.7.0"
