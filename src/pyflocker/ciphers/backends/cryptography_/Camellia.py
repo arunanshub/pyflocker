@@ -23,7 +23,6 @@ if typing.TYPE_CHECKING:  # pragma: no cover
 
 SUPPORTED = {
     Modes.MODE_CFB: modes.CFB,
-    Modes.MODE_CTR: modes.CTR,
     Modes.MODE_OFB: modes.OFB,
 }
 
