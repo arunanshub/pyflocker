@@ -1,5 +1,9 @@
+[build-system]
+requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
+build-backend = "poetry_dynamic_versioning.backend"
+
 [tool.poetry]
-name = "pyflocker"
+name = "PyFLocker"
 version = "0.0.0" # placeholder which is ultimately replaced by poetry-dynamic-versioning
 description = "Python Cryptographic (File Locking) Library"
 authors = ["Arunanshu Biswas <mydellpc07@gmail.com>"]
@@ -7,7 +11,7 @@ license = "MIT"
 readme = "README.md"
 include = [
   # include generated version file in the wheel
-  { path = "src/pyflocker/_version.py", format = ["sdist", "wheel"] }
+  { path = "src/pyflocker/_version.py", format = ["sdist", "wheel"] },
 ]
 
 [tool.poetry.urls]
@@ -32,7 +36,7 @@ pdbpp = "^0.10.3"
 
 [tool.poetry.group.docs.dependencies]
 furo = "^2024.5.6"
-sphinx = "^7.3.7"
+sphinx = { version = "^8.0.0", python = ">=3.10" }
 sphinx-copybutton = "^0.5.2"
 
 [tool.poetry.group.test.dependencies]
@@ -43,12 +47,7 @@ pytest-randomly = "^3.15.0"
 pytest-sugar = "^1.0.0"
 hypothesis = "^6.100.5"
 
-[build-system]
-requires = ["poetry-core>=1.0.0", "poetry-dynamic-versioning>=1.0.0,<2.0.0"]
-build-backend = "poetry_dynamic_versioning.backend"
-
 # ======================= Other tools ================================
-
 [tool.poetry-dynamic-versioning]
 enable = true
 vcs = "git"

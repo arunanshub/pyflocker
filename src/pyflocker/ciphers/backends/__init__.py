@@ -84,7 +84,7 @@ def load_backend(
 def _import_helper(backend: Backends) -> ModuleType:
     return import_module(
         f".{backend.name.lower()}_",
-        __spec__.parent,  # type: ignore
+        __spec__.parent,
     )
 
 
