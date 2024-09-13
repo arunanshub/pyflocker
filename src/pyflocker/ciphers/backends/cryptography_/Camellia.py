@@ -43,13 +43,9 @@ class Camellia(NonAEADCipherTemplate):
 
         cipher = Cipher(
             algo.Camellia(key),
-            SUPPORTED[mode](iv_or_nonce),  # type: ignore
+            SUPPORTED[mode](iv_or_nonce),
         )
-        self._ctx = (
-            cipher.encryptor()  # type: ignore[misc]
-            if encrypting
-            else cipher.decryptor()  # type: ignore[misc]
-        )
+        self._ctx = cipher.encryptor() if encrypting else cipher.decryptor()
         self._encrypting = encrypting
 
 
