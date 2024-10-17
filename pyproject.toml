@@ -29,7 +29,7 @@ cryptography = { version = ">=35.0.0, <37.0.0 || >37.0.0", extras = ["ssh"] }
 pre-commit = "^3.7.0"
 commitizen = "^3.25.0"
 mypy = "^1.10.0"
-ruff = "^0.6.0"
+ruff = "^0.7.0"
 
 [tool.poetry.group.debugging.dependencies]
 pdbpp = "^0.10.3"
