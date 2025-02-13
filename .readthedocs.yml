@@ -6,16 +6,11 @@ build:
     python: "3.10"
   jobs:
     post_create_environment:
-      # Install poetry
-      # https://python-poetry.org/docs/#installing-manually
-      - pip install poetry
-      - pip install "poetry-dynamic-versioning[plugin]"
+      # Install PDM
+      - pip install pdm
     post_install:
       # Install dependencies with 'docs' dependency group
-      # https://python-poetry.org/docs/managing-dependencies/#dependency-groups
-      # VIRTUAL_ENV needs to be set manually for now.
-      # See https://github.com/readthedocs/readthedocs.org/pull/11152/
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH poetry install --only=docs,main
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH pdm install --only=docs,main
 
 sphinx:
   configuration: docs/conf.py
