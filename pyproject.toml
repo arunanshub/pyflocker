@@ -26,12 +26,13 @@ dev = [
     "ruff>=0.9.6",
 ]
 test = [
-  "pytest>=8.3.4",
-  "pytest-cov>=6.0.0",
-  "pytest-xdist>=3.6.1",
-  "pytest-randomly>=3.16.0",
-  "pytest-sugar>=1.0.0",
-  "hypothesis>=6.125.3",
+    "pytest>=8.3.4",
+    "pytest-cov>=6.0.0",
+    "pytest-xdist>=3.6.1",
+    "pytest-randomly>=3.16.0",
+    "pytest-sugar>=1.0.0",
+    "hypothesis>=6.125.3",
+    "pyreadline3>=3.5.4; sys_platform == \"win32\"",
 ]
 docs = ["furo>=2024.8.6", "sphinx>=7.4.7", "sphinx-copybutton>=0.5.2"]
 debugging = ["pdbpp>=0.10.3"]
@@ -95,7 +96,3 @@ required-imports = ["from __future__ import annotations"]
 
 [tool.pdm.version]
 source = "scm"
-write_template = """
-__version__ = "{}"
-"""
-write_to = "pyflocker/_version.py"
