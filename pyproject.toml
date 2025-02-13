@@ -18,11 +18,13 @@ Changelog = "https://github.com/arunanshub/pyflocker/blob/master/CHANGELOG.md"
 Documentation = "https://pyflocker.readthedocs.io"
 Repository = "https://github.com/arunanshub/pyflocker"
 
-[tool.pdm.version]
-source = "scm"
-
 [dependency-groups]
-dev = ["pre-commit>=4.1.0", "commitizen>=4.2.1", "mypy>=1.15.0", "ruff>=0.9.6"]
+dev = [
+    "pre-commit>=4.1.0",
+    "commitizen>=4.2.1",
+    "mypy>=1.15.0",
+    "ruff>=0.9.6",
+]
 test = [
   "pytest>=8.3.4",
   "pytest-cov>=6.0.0",
@@ -90,3 +92,10 @@ target-version = "py39"
 combine-as-imports = true
 force-wrap-aliases = true
 required-imports = ["from __future__ import annotations"]
+
+[tool.pdm.version]
+source = "scm"
+write_template = """
+__version__ = "{}"
+"""
+write_to = "pyflocker/_version.py"
