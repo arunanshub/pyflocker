@@ -32,6 +32,9 @@ jobs:
           python-version: "3.12"
           cache: true
 
+      - name: Install uv
+        run: pipx install uv
+
       - name: Install dependencies
         run: pdm install --dev
 
@@ -72,6 +75,9 @@ jobs:
         with:
           python-version: ${{ matrix.python-version }}
           cache: true
+
+      - name: Install uv
+        run: pipx install uv
 
       - name: Enable UV support for PDM
         run: pdm config use_uv True
