@@ -1,7 +1,9 @@
+# Build System Configuration
 [build-system]
 requires = ["pdm-backend"]
 build-backend = "pdm.backend"
 
+# Core Project Metadata
 [project]
 name = "PyFLocker"
 dynamic = ["version"]
@@ -12,30 +14,33 @@ readme = "README.md"
 requires-python = ">=3.9"
 dependencies = ["pycryptodomex>=3.9.8", "cryptography[ssh]!=37.0.0,>=35.0.0"]
 
+# Project URLs
 [project.urls]
 "Bug Tracker" = "https://github.com/arunanshub/pyflocker/issues"
 Changelog = "https://github.com/arunanshub/pyflocker/blob/master/CHANGELOG.md"
 Documentation = "https://pyflocker.readthedocs.io"
 Repository = "https://github.com/arunanshub/pyflocker"
 
+# Development Dependencies
 [dependency-groups]
-dev = [
-    "pre-commit>=4.1.0",
-    "commitizen>=4.2.1",
-    "mypy>=1.15.0",
-    "ruff>=0.9.6",
-]
+dev = ["pre-commit>=4.1.0", "commitizen>=4.2.1", "mypy>=1.15.0", "ruff>=0.9.6"]
 test = [
-    "pytest>=8.3.4",
-    "pytest-cov>=6.0.0",
-    "pytest-xdist>=3.6.1",
-    "pytest-randomly>=3.16.0",
-    "pytest-sugar>=1.0.0",
-    "hypothesis>=6.125.3",
+  "pytest>=8.3.4",
+  "pytest-cov>=6.0.0",
+  "pytest-xdist>=3.6.1",
+  "pytest-randomly>=3.16.0",
+  "pytest-sugar>=1.0.0",
+  "hypothesis>=6.125.3",
+  "pyreadline3>=3.5.4",
 ]
 docs = ["furo>=2024.8.6", "sphinx>=7.4.7", "sphinx-copybutton>=0.5.2"]
 debugging = ["pdbpp>=0.10.3"]
 
+# Version Management Configuration
+[tool.pdm.version]
+source = "scm"
+
+# Commitizen Configuration
 [tool.commitizen]
 annotated_tag = true
 changelog_incremental = true
@@ -45,6 +50,11 @@ tag_format = "v$version"
 update_changelog_on_bump = true
 version = "0.4.2"
 
+# Testing Configuration
+[tool.pytest.ini_options]
+addopts = "--strict-config --strict-markers"
+
+# Coverage Configuration
 [tool.coverage.report]
 exclude_lines = [
   "pragma: no cover",
@@ -52,9 +62,7 @@ exclude_lines = [
   "if typing.TYPE_CHECKING",
 ]
 
-[tool.pytest.ini_options]
-addopts = "--strict-config --strict-markers"
-
+# Type Checking Configuration
 [tool.mypy]
 python_version = "3.9"
 warn_unused_configs = true
@@ -67,31 +75,31 @@ disallow_any_unimported = true
 disallow_untyped_defs = true
 no_implicit_optional = true
 
+# Code Style and Linting Configuration
 [tool.ruff]
 exclude = ["docs/*", "tests/*", "src/pyflocker/_version.py"]
-select = [
-  "ANN",
-  "B",
-  "E",
-  "F",
-  "W",
-  "I",
-  "RET",
-  "EM",
-  "UP",
-  "C90",
-  "SIM",
-  "PIE",
-  "TID",
-]
-ignore = ["ANN401", "B024"]
 line-length = 80
 target-version = "py39"
 
-[tool.ruff.isort]
+[tool.ruff.lint]
+select = [
+  "ANN", # Type annotations
+  "B",   # Bugbear
+  "E",   # pycodestyle errors
+  "F",   # Pyflakes
+  "W",   # pycodestyle warnings
+  "I",   # isort
+  "RET", # Return statements
+  "EM",  # Error messages
+  "UP",  # pyupgrade
+  "C90", # McCabe complexity
+  "SIM", # Code simplification
+  "PIE", # Misc. rules
+  "TID", # Type inference
+]
+ignore = ["ANN401", "B024"]
+
+[tool.ruff.lint.isort]
 combine-as-imports = true
 force-wrap-aliases = true
 required-imports = ["from __future__ import annotations"]
-
-[tool.pdm.version]
-source = "scm"
