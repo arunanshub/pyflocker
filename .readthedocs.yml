@@ -10,7 +10,7 @@ build:
       - pip install pdm
     post_install:
       # Install dependencies with 'docs' dependency group
-      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH pdm install --only=docs,main
+      - VIRTUAL_ENV=$READTHEDOCS_VIRTUALENV_PATH pdm install -G docs
 
 sphinx:
   configuration: docs/conf.py
