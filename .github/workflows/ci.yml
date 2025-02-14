@@ -35,6 +35,9 @@ jobs:
       - name: Install uv
         run: pipx install uv
 
+      - name: Configure PDM to use uv
+        run: pdm config use_uv True
+
       - name: Install dependencies
         run: pdm install --dev
 
