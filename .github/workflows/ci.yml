@@ -73,6 +73,9 @@ jobs:
           python-version: ${{ matrix.python-version }}
           cache: true
 
+      - name: Enable UV support for PDM
+        run: pdm config use_uv True
+
       - name: Install Dependencies
         run: pdm install
 
