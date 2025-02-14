@@ -17,23 +17,18 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Install PDM
-        run: pipx install pdm
-
-      - name: Install Python
-        uses: actions/setup-python@v5
-        id: setup-python
-        with:
-          python-version: "3.12"
-
-      - name: Setup PDM cache
+      - name: Install PDM with Python 3.12
         uses: pdm-project/setup-pdm@v4
+        id: setup-pdm
         with:
           python-version: "3.12"
           cache: true
 
       - name: Install uv
         run: pipx install uv
+
+      - name: Configure PDM to use uv
+        run: pdm config use_uv True
 
       - name: Install dependencies
         run: pdm install --dev
@@ -42,7 +37,7 @@ jobs:
         uses: actions/cache@v4
         with:
           path: ~/.cache/pre-commit
-          key: pre-commit-${{ steps.setup-python.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
+          key: pre-commit-${{ steps.setup-pdm.outputs.python-version }}-${{ hashFiles('.pre-commit-config.yaml') }}
 
       - name: Lint with Mypy and Ruff
         run: pdm run pre-commit run -a
@@ -62,15 +57,7 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
-      - name: Install PDM
-        run: pipx install pdm
-
-      - name: Install Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
-        with:
-          python-version: ${{ matrix.python-version }}
-
-      - name: Setup PDM cache
+      - name: Install PDM with Python ${{ matrix.python-version }}
         uses: pdm-project/setup-pdm@v4
         with:
           python-version: ${{ matrix.python-version }}
