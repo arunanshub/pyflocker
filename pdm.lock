@@ -5,7 +5,7 @@
 groups = ["default", "debugging", "dev", "docs", "test"]
 strategy = ["inherit_metadata"]
 lock_version = "4.5.0"
-content_hash = "sha256:c4f4a1110ed14096aeca657d5e3430b215e15cbb653e72b6486c4bccf9f6f4f8"
+content_hash = "sha256:f44b65658e982d8a9e77f2e042fd39316138700686b1256bba3d65c32df0b706"
 
 [[metadata.targets]]
 requires_python = ">=3.9"
@@ -1005,18 +1005,6 @@ groups = ["debugging"]
 marker = "platform_system == \"Windows\""
 files = [
     {file = "pyreadline-2.1.zip", hash = "sha256:4530592fc2e85b25b1a9f79664433da09237c1a270e4d78ea5aa3a2c7229e2d1"},
-]
-
-[[package]]
-name = "pyreadline3"
-version = "3.5.4"
-requires_python = ">=3.8"
-summary = "A python implementation of GNU readline."
-groups = ["test"]
-marker = "sys_platform == \"win32\""
-files = [
-    {file = "pyreadline3-3.5.4-py3-none-any.whl", hash = "sha256:eaf8e6cc3c49bcccf145fc6067ba8643d1df34d604a1ec0eccbf7a18e6d3fae6"},
-    {file = "pyreadline3-3.5.4.tar.gz", hash = "sha256:8d57d53039a1c75adba8e50dd3d992b28143480816187ea5efbd5c78e6c885b7"},
 ]
 
 [[package]]
